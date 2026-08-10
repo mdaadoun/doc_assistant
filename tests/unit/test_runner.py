@@ -32,3 +32,10 @@ def test_run_project_tests_docker_suite() -> None:
     result = run_project_tests(test_path="tests/unit/test_docker.py")
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
+
+
+def test_run_project_tests_base_model_suite() -> None:
+    """Verify test runner successfully executes the base domain model test suite."""
+    result = run_project_tests(test_path="tests/unit/test_base_model.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0

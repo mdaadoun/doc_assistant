@@ -194,7 +194,33 @@ Parses and audits `docker-compose.yml` declarations, service configurations (`ap
 - **Purpose:** Programmatically audits repository for required Docker files, services, ports, dependencies, and persistent volumes.
 - **Return Value:** Structured audit dictionary containing `valid`, `missing_files`, `missing_services`, `missing_volumes`, `services`, and `volumes`.
 
+---
 
+## 9. Base Domain Model & Schema Infrastructure (`src/models/base.py`)
 
+### Overview
+Defines `BaseDomainModel`, the foundational immutable base class for all domain DTOs and request/response payloads in the corporate document assistant using Pydantic V2 configuration (`frozen=True`, `extra="forbid"`).
 
+### Classes & Functions
 
+#### `BaseDomainModel(BaseModel)`
+- **Purpose:** Abstract base domain schema enforcing immutability, extra field forbidding, enum value extraction, and strict assignment validation.
+- **Model Configuration:**
+  - `frozen = True`: Enforces model immutability after initialization.
+  - `extra = "forbid"`: Rejects undeclared input fields.
+  - `use_enum_values = True`: Converts enum members to raw values during serialization.
+  - `validate_assignment = True`: Enforces assignment validation.
+  - `arbitrary_types_allowed = False`: Requires strict, registered types.
+
+#### `BaseDomainModel.to_dict(self, **kwargs: Any) -> dict[str, Any]`
+- **Purpose:** Converts model instance to a standard Python dictionary via Pydantic V2 `model_dump()`.
+- **Return Value:** Dictionary representation of model fields.
+
+#### `BaseDomainModel.to_json(self, **kwargs: Any) -> str`
+- **Purpose:** Serializes model instance into a JSON string via Pydantic V2 `model_dump_json()`.
+- **Return Value:** JSON formatted string payload.
+
+#### `BaseDomainModel.from_dict(cls: type[T], data: dict[str, Any]) -> T`
+- **Purpose:** Class method that validates a dictionary payload and returns a typed model instance via Pydantic V2 `model_validate()`.
+- **Parameters:** `data` dictionary containing field keys and values.
+- **Return Value:** Strongly-typed model instance inheriting from `BaseDomainModel`.

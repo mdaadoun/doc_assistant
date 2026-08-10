@@ -83,7 +83,15 @@ Multi-container Docker orchestration tool defining services, networks, and volum
 ### Container Skeleton
 Base infrastructure container configuration establishing service dependencies, health ordering, and port/volume bindings before detailed application code completion.
 
+---
 
+## 🏛️ 7. Domain Schemas & Base Models
 
+### BaseDomainModel
+The foundational base model for all domain schemas in the corporate document assistant, enforcing immutability and strict field validation.
 
+### Frozen Schema
+A Pydantic V2 model configuration (`frozen=True`) where instances are immutable and hashable after creation.
 
+### Forbid Extra
+A Pydantic V2 validation setting (`extra="forbid"`) that raises a `ValidationError` if undeclared fields are passed during instantiation.

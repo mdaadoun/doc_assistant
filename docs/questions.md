@@ -116,7 +116,18 @@ Separating services guarantees isolation, enables independent scaling, and mirro
 **Answer:**
 A named Docker volume (`qdrant_data`) maps `/qdrant/storage` outside the container layer lifecycle, preventing vector collection and HNSW index data loss across container rebuilds, code updates, or restarts.
 
+---
 
+## Phase 2.1: Base Domain Model & Immutability Architecture
 
+### Q1: Why use `frozen=True` for domain models in a RAG system?
+**Answer:**
+In a complex RAG architecture, retrieved document chunks, search candidates, and generated context payloads pass through multiple pipeline stages (retrieval, RRF fusion, re-ranking, confidence guarding, generation). Immutability guarantees side-effect-free processing and thread safety across concurrent operations.
 
+### Q2: How does `extra="forbid"` improve system robustness and security?
+**Answer:**
+It prevents unintended payloads or unknown fields from entering the domain layer, ensuring strict boundary validation and mitigating potential payload injection attacks.
 
+### Q3: What is the performance implication of Pydantic V2 frozen models?
+**Answer:**
+Pydantic V2 core is implemented in Rust, making schema validation and immutability checks significantly faster than V1. Frozen instances can also be safely hashed and cached in memory.
