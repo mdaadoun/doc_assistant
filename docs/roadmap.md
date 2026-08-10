@@ -35,7 +35,7 @@
 **Tasks:**
 - [ ] 2.1: Define base domain model (BaseDomainModel with frozen=True)
 - [ ] 2.2: Create ChunkDocument, RetrievalResult, ChatRequest, ChatResponse, Citation schemas
-- [ ] 2.3: Create DebugRetrievalResponse and FinOpsMetadata schemas
+- [x] 2.3: Create DebugRetrievalResponse and FinOpsMetadata schemas
 - [ ] 2.4: Define AppBaseError and domain exception hierarchy (IngestionError, RetrievalError, GenerationError, ConfigurationError)
 **Deliverables:** Complete Pydantic V2 schema set, exception hierarchy.
 **Verification:** All models pass Mypy strict, instantiation tests pass.

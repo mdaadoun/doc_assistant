@@ -46,3 +46,11 @@ def test_run_project_tests_domain_schemas_suite() -> None:
     result = run_project_tests(test_path="tests/unit/test_domain_schemas.py")
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
+
+
+def test_run_project_tests_debug_finops_suite() -> None:
+    """Verify test runner successfully executes the debug retrieval and FinOps schema test suite."""
+    result = run_project_tests(test_path="tests/unit/test_debug_retrieval_and_finops.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+

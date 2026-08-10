@@ -152,3 +152,24 @@ Frozen Pydantic V2 models guarantee immutability across async processing pipelin
 **Answer:**
 `FinOpsMetadata` standardizes token accounting, cost estimation, and latency metrics across LLM providers, providing actionable operational telemetry for real-time observability, budgeting, and caching analysis.
 
+---
+
+## Phase 2.3: DebugRetrievalResponse & FinOpsMetadata Telemetry Schemas
+
+### Q1: Why decouple retrieval debugging (DebugRetrievalResponse) into separate pipeline stage hit lists?
+**Answer:**
+Decoupling dense, sparse, RRF, and reranked hits allows developers and evaluators to isolate retrieval failures, tune hybrid fusion parameters, and verify cross-encoder score distributions.
+
+---
+
+### Q2: How does FinOpsMetadata contribute to production RAG governance?
+**Answer:**
+FinOpsMetadata standardizes token accounting, cost estimation, and latency metrics across LLM providers, providing actionable operational telemetry for real-time observability, budgeting, and caching analysis.
+
+---
+
+### Q3: Why enforce non-negative constraints (ge=0, ge=0.0) on FinOpsMetadata telemetry metrics?
+**Answer:**
+Boundary constraints prevent corrupted telemetry metrics or invalid negative values from propagating into downstream analytics, billing dashboards, or observability tools.
+
+

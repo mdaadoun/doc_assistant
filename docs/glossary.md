@@ -108,3 +108,7 @@ Verifiable source text reference linking generated assistant responses directly 
 ### FinOpsMetadata
 Telemetry payload tracking token counts, estimated USD costs, execution latency, and caching status per request.
 
+### DebugRetrievalResponse
+Structured diagnostic schema capturing candidate search hits at each pipeline stage: dense, sparse, RRF fusion, and final re-ranking.
+
+
