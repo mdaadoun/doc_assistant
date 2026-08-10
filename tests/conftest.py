@@ -1,6 +1,7 @@
 """Shared pytest fixtures for Doc Assistant test suite."""
 
 import pytest
+
 from core.config import Settings
 
 
