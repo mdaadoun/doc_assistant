@@ -73,6 +73,17 @@ A Makefile directive indicating that target names represent explicit commands ra
 ### Dev Shortcuts
 Convenience Makefile targets encapsulating multi-step static analysis, type checking, testing, and formatting routines.
 
+---
+
+## 🐳 6. Docker Containerization & Infrastructure
+
+### Docker Compose
+Multi-container Docker orchestration tool defining services, networks, and volumes in a unified YAML specification file (`docker-compose.yml`).
+
+### Container Skeleton
+Base infrastructure container configuration establishing service dependencies, health ordering, and port/volume bindings before detailed application code completion.
+
+
 
 
 

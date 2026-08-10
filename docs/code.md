@@ -164,6 +164,37 @@ Parses and audits project `Makefile` targets (`help`, `install`, `clean`, `lint`
 - **Purpose:** Programmatically audits existence of Makefile, target completeness against `REQUIRED_MAKEFILE_TARGETS`, and `.PHONY:` header presence.
 - **Return Value:** Audit dictionary containing `valid`, `targets`, `missing_targets`, and `has_phony`.
 
+---
+
+## 8. Docker Infrastructure & Compose Skeleton Auditor (`src/core/docker.py`)
+
+### Overview
+Parses and audits `docker-compose.yml` declarations, service configurations (`api`, `qdrant`, `frontend`), port bindings, dependency definitions, volume persistent storage (`qdrant_data`), and associated `Dockerfile` specifications.
+
+### Constants & Functions
+
+#### `REQUIRED_DOCKER_SERVICES: list[str]`
+- **Purpose:** List of mandatory container service keys (`api`, `qdrant`, `frontend`) expected in `docker-compose.yml`.
+
+#### `REQUIRED_DOCKER_FILES: list[str]`
+- **Purpose:** List of mandatory Docker infrastructure configuration file paths (`Dockerfile`, `docker-compose.yml`, `frontend/Dockerfile`).
+
+#### `REQUIRED_PORT_MAPPINGS: dict[str, list[str]]`
+- **Purpose:** Map of required host-to-container port mappings for API (`8000:8000`), Qdrant (`6333:6333`, `6334:6334`), and Frontend (`5173:5173`).
+
+#### `REQUIRED_VOLUMES: list[str]`
+- **Purpose:** List of mandatory top-level volume mounts (`qdrant_data`).
+
+#### `parse_docker_compose(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Parses `docker-compose.yml` into a structured Python dictionary using `PyYAML`.
+- **Parameters:** `project_root` optional root directory path.
+- **Return Value:** Parsed dictionary content of docker-compose file.
+
+#### `validate_docker_setup(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Programmatically audits repository for required Docker files, services, ports, dependencies, and persistent volumes.
+- **Return Value:** Structured audit dictionary containing `valid`, `missing_files`, `missing_services`, `missing_volumes`, `services`, and `volumes`.
+
+
 
 
 

@@ -102,6 +102,21 @@ The Makefile dynamically checks for the presence of `poetry` or a `.venv` direct
 **Answer:**
 The core module `src/core/makefile.py` reads Makefile content, uses regular expressions to extract target rules, checks against mandatory target requirements, and verifies the presence of `.PHONY` declarations.
 
+---
+
+## Phase 1.6: Docker Compose Skeleton & Multi-Container Infrastructure
+
+### Q1: Why separate API, Qdrant, and React into distinct containerized services in docker-compose.yml?
+**Answer:**
+Separating services guarantees isolation, enables independent scaling, and mirrors production deployment topology where vector storage, backend processing, and static frontend hosting are decoupled into discrete container images and runtime environments.
+
+---
+
+### Q2: How does volume mounting for qdrant_data protect data persistence?
+**Answer:**
+A named Docker volume (`qdrant_data`) maps `/qdrant/storage` outside the container layer lifecycle, preventing vector collection and HNSW index data loss across container rebuilds, code updates, or restarts.
+
+
 
 
 

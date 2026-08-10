@@ -1,6 +1,14 @@
-"""Shared: config, exceptions, telemetry, logging, environment, layout."""
+"""Shared: config, exceptions, telemetry, logging, environment, layout, docker."""
 
 from core.config import Settings, clear_settings_cache, get_settings
+from core.docker import (
+    REQUIRED_DOCKER_FILES,
+    REQUIRED_DOCKER_SERVICES,
+    REQUIRED_PORT_MAPPINGS,
+    REQUIRED_VOLUMES,
+    parse_docker_compose,
+    validate_docker_setup,
+)
 from core.environment import (
     MIN_PYTHON_VERSION,
     check_python_version,
@@ -24,8 +32,12 @@ from core.quality import validate_quality_configs
 __all__ = [
     "MIN_PYTHON_VERSION",
     "REQUIRED_DIRECTORIES",
+    "REQUIRED_DOCKER_FILES",
+    "REQUIRED_DOCKER_SERVICES",
     "REQUIRED_MAKEFILE_TARGETS",
     "REQUIRED_PACKAGES",
+    "REQUIRED_PORT_MAPPINGS",
+    "REQUIRED_VOLUMES",
     "Settings",
     "check_python_version",
     "clear_settings_cache",
@@ -33,7 +45,9 @@ __all__ = [
     "get_project_root",
     "get_python_version_tuple",
     "get_settings",
+    "parse_docker_compose",
     "parse_makefile_targets",
+    "validate_docker_setup",
     "validate_makefile",
     "validate_package_layout",
     "validate_poetry_config",
