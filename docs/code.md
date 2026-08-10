@@ -95,3 +95,28 @@ Audits static code quality infrastructure configuration files (`ruff.toml`, `.pr
 - **Purpose:** Aggregates audit checks across all quality tool configurations (`pyproject.toml`, `ruff.toml`, `.pre-commit-config.yaml`, `.secrets.baseline`).
 - **Return Value:** Combined validation summary payload dictionary.
 
+---
+
+## 5. Configuration Management (`src/core/config.py`)
+
+### Overview
+Manages type-safe application parameters, environment variables, vector store endpoints, retrieval defaults, model definitions, and API keys via Pydantic V2 `BaseSettings`.
+
+### Classes & Functions
+
+#### `Settings(BaseSettings)`
+- **Purpose:** Central Pydantic model defining environment properties, server configuration, vector store parameters, retrieval thresholds, model names, and API credentials.
+- **Methods:**
+  - `is_production() -> bool`: Returns `True` if `environment` is set to production.
+  - `is_openai_configured() -> bool`: Returns `True` if `openai_api_key` is non-empty.
+  - `is_cohere_configured() -> bool`: Returns `True` if `cohere_api_key` is non-empty.
+  - `get_api_key_status() -> dict[str, bool]`: Returns dictionary map of API key availability.
+
+#### `get_settings() -> Settings`
+- **Purpose:** Returns cached singleton instance of `Settings` via `@lru_cache`.
+- **Return Value:** `Settings` model instance.
+
+#### `clear_settings_cache() -> None`
+- **Purpose:** Resets LRU cache for `get_settings()`, enabling environment variable overrides in unit tests.
+
+

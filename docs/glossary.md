@@ -37,3 +37,17 @@ Enterprise secret scanner that analyzes codebases using heuristics and high-entr
 ### Secrets Baseline
 A JSON-formatted snapshot file (`.secrets.baseline`) recording known/audited secret findings to bypass false positives.
 
+---
+
+## ⚙️ 3. Configuration & Runtime Settings
+
+### BaseSettings
+Pydantic class extension (`pydantic_settings.BaseSettings`) for parsing, type-casting, and validating application configuration from system environment variables and `.env` files.
+
+### SettingsConfigDict
+Pydantic V2 metadata configuration dictionary defining model settings such as `env_file`, `env_file_encoding`, and `extra="ignore"`.
+
+### lru_cache Singleton
+Functional caching pattern leveraging Python's `functools.lru_cache` decorator to cache and reuse initialized immutable `Settings` instances across application lifecycles.
+
+

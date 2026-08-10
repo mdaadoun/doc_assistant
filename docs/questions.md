@@ -42,3 +42,24 @@ Mypy strict mode disallows untyped function signatures, implicit Optional types,
 **Answer:**
 The `.secrets.baseline` file stores audited high-entropy strings and dummy secrets. Pre-commit hooks compare new changes against this baseline, allowing pre-existing or harmless tokens while immediately flagging new credential additions before git commit.
 
+---
+
+## Phase 1.3: Pydantic Settings & Environment Configuration
+
+### Q1: Why use Pydantic BaseSettings over standard os.getenv() or python-dotenv directly?
+**Answer:**
+Pydantic `BaseSettings` guarantees type safety, automatic type casting (e.g. converting string numbers to integers/floats), boundary validation, default fallback values, and central management of environment variables and `.env` configuration files in a single unified schema.
+
+---
+
+### Q2: How does get_settings() handle singleton access and unit test isolation?
+**Answer:**
+`get_settings()` is decorated with `@functools.lru_cache` to return a single cached instance during runtime, avoiding repeated file I/O operations. For unit testing, `clear_settings_cache()` resets the LRU cache on demand, permitting clean environment variable monkeypatching without test state leakage across test cases.
+
+---
+
+### Q3: What is the purpose of extra='ignore' in SettingsConfigDict?
+**Answer:**
+`extra='ignore'` instructs Pydantic to ignore unhandled system environment variables present on host environments rather than raising strict schema validation errors, ensuring application stability across varied deployment environments.
+
+

@@ -1,44 +1,82 @@
-"""Type-safe configuration via pydantic-settings BaseSettings."""
+"""Type-safe configuration loading via Pydantic BaseSettings."""
+
+from functools import lru_cache
 
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables."""
+    """Application settings loaded from environment variables and .env file."""
 
-    # Server
-    environment: str = Field(default="development")
-    host: str = Field(default="0.0.0.0")
-    port: int = Field(default=8000)
-    log_level: str = Field(default="INFO")
+    # Server settings
+    environment: str = Field(default="development", description="Execution mode")
+    host: str = Field(default="0.0.0.0", description="Server host address")
+    port: int = Field(default=8000, description="Server port")
+    log_level: str = Field(default="INFO", description="Logger verbosity level")
 
-    # LLM Provider
-    openai_api_key: str = Field(default="")
+    # API keys
+    openai_api_key: str = Field(default="", description="OpenAI API key")
+    cohere_api_key: str = Field(default="", description="Cohere API key")
 
     # Qdrant Vector Store
-    qdrant_host: str = Field(default="localhost")
-    qdrant_port: int = Field(default=6333)
-    qdrant_collection: str = Field(default="helvetia_docs")
+    qdrant_host: str = Field(default="localhost", description="Qdrant host")
+    qdrant_port: int = Field(default=6333, description="Qdrant gRPC/HTTP port")
+    qdrant_collection: str = Field(
+        default="helvetia_docs", description="Target collection name"
+    )
 
-    # Retrieval
-    default_top_k: int = Field(default=5)
-    confidence_threshold: float = Field(default=0.35)
-    default_chunk_size: int = Field(default=512)
-    default_overlap_ratio: float = Field(default=0.10)
+    # Retrieval parameters
+    default_top_k: int = Field(default=5, description="Default retrieval top k")
+    confidence_threshold: float = Field(
+        default=0.35, description="Min similarity score threshold"
+    )
+    default_chunk_size: int = Field(default=512, description="Token size per chunk")
+    default_overlap_ratio: float = Field(
+        default=0.10, description="Overlap ratio between adjacent chunks"
+    )
 
-    # Model
-    default_model: str = Field(default="gpt-4o-mini")
-    embedding_model: str = Field(default="text-embedding-3-small")
-    temperature: float = Field(default=0.0)
-    max_tokens: int = Field(default=2048)
+    # LLM & Embedding models
+    default_model: str = Field(
+        default="gpt-4o-mini", description="Default generation LLM model"
+    )
+    embedding_model: str = Field(
+        default="text-embedding-3-small", description="Default embedding model"
+    )
+    temperature: float = Field(default=0.0, description="Sampling temperature")
+    max_tokens: int = Field(default=2048, description="Max response token limit")
 
-    # Cohere Reranker (fallback)
-    cohere_api_key: str = Field(default="")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    def is_production(self) -> bool:
+        """Return True if running in production environment."""
+        return self.environment.lower() == "production"
+
+    def is_openai_configured(self) -> bool:
+        """Check if OpenAI API key is set."""
+        return bool(self.openai_api_key and self.openai_api_key.strip())
+
+    def is_cohere_configured(self) -> bool:
+        """Check if Cohere API key is set."""
+        return bool(self.cohere_api_key and self.cohere_api_key.strip())
+
+    def get_api_key_status(self) -> dict[str, bool]:
+        """Return validation map of required external API key credentials."""
+        return {
+            "openai": self.is_openai_configured(),
+            "cohere": self.is_cohere_configured(),
+        }
 
 
+@lru_cache
 def get_settings() -> Settings:
-    """Singleton settings accessor."""
+    """Return cached singleton instance of Settings."""
     return Settings()
+
+
+def clear_settings_cache() -> None:
+    """Reset cached Settings singleton (useful for testing override cases)."""
+    get_settings.cache_clear()
+
