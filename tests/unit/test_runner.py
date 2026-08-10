@@ -11,3 +11,12 @@ def test_run_project_tests_invocation() -> None:
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
     assert "target" in result
+
+
+def test_run_project_tests_layout_suite() -> None:
+    """Verify test runner successfully executes the package layout test suite."""
+    result = run_project_tests(
+        test_path="tests/unit/test_layout.py"
+    )
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0

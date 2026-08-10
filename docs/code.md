@@ -119,4 +119,27 @@ Manages type-safe application parameters, environment variables, vector store en
 #### `clear_settings_cache() -> None`
 - **Purpose:** Resets LRU cache for `get_settings()`, enabling environment variable overrides in unit tests.
 
+---
+
+## 6. Modular Package Layout & Auditor (`src/core/layout.py`)
+
+### Overview
+Audits and verifies the existence, completeness, and package initialization of the modular domain package architecture (`api`, `retrieval`, `generation`, `ingestion`, `clients`, `models`, `core`, `cache`) and top-level directories (`src`, `frontend`, `tests`).
+
+### Constants & Functions
+
+#### `REQUIRED_PACKAGES: tuple[str, ...]`
+- **Purpose:** Immutable tuple defining mandatory Python domain packages under `src/`.
+
+#### `REQUIRED_DIRECTORIES: tuple[str, ...]`
+- **Purpose:** Immutable tuple defining mandatory root project directories.
+
+#### `get_project_root() -> Path`
+- **Purpose:** Resolves absolute `Path` to project root directory.
+
+#### `validate_package_layout(base_dir: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Programmatically audits presence of required packages, `__init__.py` entry points, and root directories.
+- **Return Value:** Structured audit dictionary containing `status`, `is_complete`, `packages`, `directories`, `missing_packages`, `missing_directories`, and `root_path`.
+
+
 

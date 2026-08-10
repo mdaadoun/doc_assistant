@@ -1,6 +1,7 @@
 """Type-safe configuration loading via Pydantic BaseSettings."""
 
 from functools import lru_cache
+from typing import Any
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -49,6 +50,12 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
+
+    def __init__(self, _env_file: str | None = None, **values: Any) -> None:
+        """Initialize settings with optional env file override."""
+        if _env_file is not None:
+            values["_env_file"] = _env_file
+        super().__init__(**values)
 
     def is_production(self) -> bool:
         """Return True if running in production environment."""

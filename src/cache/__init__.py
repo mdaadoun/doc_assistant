@@ -1,1 +1,3 @@
-"""Data layer: SHA-256 cache persistence."""
+"""Cache persistence layer: SHA-256 keyed cache storage and retrieval."""
+
+__all__: list[str] = []

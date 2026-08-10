@@ -50,4 +50,15 @@ Pydantic V2 metadata configuration dictionary defining model settings such as `e
 ### lru_cache Singleton
 Functional caching pattern leveraging Python's `functools.lru_cache` decorator to cache and reuse initialized immutable `Settings` instances across application lifecycles.
 
+---
+
+## 📦 4. Modular Package Architecture
+
+### Modular Layout
+Architectural organization separating distinct system domains (API, ingestion, retrieval, generation, clients, models, core, cache) into isolated Python packages.
+
+### Package Layout Auditor
+Programmatic validator verifying the existence and completeness of required core Python packages and directory structures.
+
+
 

@@ -1,1 +1,3 @@
-"""Presentation layer: FastAPI routes, SSE, auth."""
+"""Presentation layer: FastAPI routes, SSE streaming, authentication middleware."""
+
+__all__: list[str] = []

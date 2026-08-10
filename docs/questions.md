@@ -62,4 +62,25 @@ Pydantic `BaseSettings` guarantees type safety, automatic type casting (e.g. con
 **Answer:**
 `extra='ignore'` instructs Pydantic to ignore unhandled system environment variables present on host environments rather than raising strict schema validation errors, ensuring application stability across varied deployment environments.
 
+---
+
+## Phase 1.4: Modular Package Layout & Architecture Verification
+
+### Q1: Why use a `src/` layout instead of top-level package modules?
+**Answer:**
+A `src/` layout prevents implicit imports of the editable source directory during pytest execution when the package is not installed, ensuring tests run against installed or explicitly targeted imports.
+
+---
+
+### Q2: Why keep `frontend/` separate from `src/`?
+**Answer:**
+Decoupling `frontend/` from `src/` keeps Python build tooling (Poetry, mypy, pytest) focused on Python packages while allowing standard React/Vite web tooling (Node, npm, Vite) to manage frontend assets independently.
+
+---
+
+### Q3: How does `core.layout` support automated architecture enforcement?
+**Answer:**
+`core.layout` exports `validate_package_layout()`, which inspects the file tree against `REQUIRED_PACKAGES` and `REQUIRED_DIRECTORIES`, enabling unit tests and app dashboard runners to detect missing module scaffolds automatically.
+
+
 
