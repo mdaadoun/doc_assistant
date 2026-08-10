@@ -13,7 +13,16 @@ from core.layout import (
 
 def test_required_package_constants() -> None:
     """Verify REQUIRED_PACKAGES contains all expected core modules."""
-    expected = {"api", "retrieval", "generation", "ingestion", "clients", "models", "core", "cache"}
+    expected = {
+        "api",
+        "retrieval",
+        "generation",
+        "ingestion",
+        "clients",
+        "models",
+        "core",
+        "cache",
+    }
     assert set(REQUIRED_PACKAGES) == expected
 
 

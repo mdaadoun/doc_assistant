@@ -60,5 +60,19 @@ Architectural organization separating distinct system domains (API, ingestion, r
 ### Package Layout Auditor
 Programmatic validator verifying the existence and completeness of required core Python packages and directory structures.
 
+---
+
+## 🛠️ 5. Makefile & Developer Shortcuts
+
+### Makefile
+A build automation tool specification file defining rules, dependencies, and shell commands for target creation and development tasks.
+
+### .PHONY
+A Makefile directive indicating that target names represent explicit commands rather than output file names on disk.
+
+### Dev Shortcuts
+Convenience Makefile targets encapsulating multi-step static analysis, type checking, testing, and formatting routines.
+
+
 
 

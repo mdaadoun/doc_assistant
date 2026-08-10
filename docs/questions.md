@@ -82,5 +82,26 @@ Decoupling `frontend/` from `src/` keeps Python build tooling (Poetry, mypy, pyt
 **Answer:**
 `core.layout` exports `validate_package_layout()`, which inspects the file tree against `REQUIRED_PACKAGES` and `REQUIRED_DIRECTORIES`, enabling unit tests and app dashboard runners to detect missing module scaffolds automatically.
 
+---
+
+## Phase 1.5: Makefile Developer Shortcuts & Infrastructure Automation
+
+### Q1: Why is declaring .PHONY targets critical in a Python project Makefile?
+**Answer:**
+If a file or directory with the same name as a Makefile target exists (e.g. a directory named 'test' or 'clean'), Make assumes the target is an output file. Without `.PHONY`, Make would skip running target recipes when the corresponding file exists.
+
+---
+
+### Q2: How does the Makefile handle execution across different environment managers like Poetry and standard virtual environments?
+**Answer:**
+The Makefile dynamically checks for the presence of `poetry` or a `.venv` directory, executing tools via `poetry run` if Poetry is installed, or defaulting to `.venv/bin` binaries otherwise.
+
+---
+
+### Q3: How are Makefile targets validated programmatically in the test suite?
+**Answer:**
+The core module `src/core/makefile.py` reads Makefile content, uses regular expressions to extract target rules, checks against mandatory target requirements, and verifies the presence of `.PHONY` declarations.
+
+
 
 

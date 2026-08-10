@@ -68,7 +68,9 @@ Provides programmatic test suite execution for integration into developer dashbo
 - `test_environment.py`: Verifies runtime version detection, tuple parsing, version mocking, `pyproject.toml` discovery, and validation routines.
 - `test_pyproject.py`: Asserts `pyproject.toml` existence, Poetry package declarations, Python `^3.11` dependencies, Ruff `py311` target version, and Mypy strict mode flags.
 - `test_quality_config.py`: Validates presence and structural rules of `ruff.toml`, `.pre-commit-config.yaml`, `.secrets.baseline`, and `validate_quality_configs()`.
+- `test_makefile.py`: Asserts `Makefile` existence, target parsing, missing target detection, and `.PHONY` declaration validity.
 - `test_runner.py`: Validates programmatic execution of `run_project_tests()`.
+
 
 ---
 
@@ -140,6 +142,28 @@ Audits and verifies the existence, completeness, and package initialization of t
 #### `validate_package_layout(base_dir: Path | None = None) -> dict[str, Any]`
 - **Purpose:** Programmatically audits presence of required packages, `__init__.py` entry points, and root directories.
 - **Return Value:** Structured audit dictionary containing `status`, `is_complete`, `packages`, `directories`, `missing_packages`, `missing_directories`, and `root_path`.
+
+---
+
+## 7. Makefile & Developer Shortcut Auditor (`src/core/makefile.py`)
+
+### Overview
+Parses and audits project `Makefile` targets (`help`, `install`, `clean`, `lint`, `format`, `typecheck`, `test`, `dev`, `run`, `docker-build`, `docker-run`) and verifies `.PHONY` declaration compliance.
+
+### Constants & Functions
+
+#### `REQUIRED_MAKEFILE_TARGETS: list[str]`
+- **Purpose:** List of mandatory target names required in project Makefile.
+
+#### `parse_makefile_targets(project_root: Path | None = None) -> list[str]`
+- **Purpose:** Parses target rule names from `Makefile` via multiline regular expression matching.
+- **Parameters:** `project_root` optional root directory path.
+- **Return Value:** List of string target names defined in Makefile.
+
+#### `validate_makefile(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Programmatically audits existence of Makefile, target completeness against `REQUIRED_MAKEFILE_TARGETS`, and `.PHONY:` header presence.
+- **Return Value:** Audit dictionary containing `valid`, `targets`, `missing_targets`, and `has_phony`.
+
 
 
 

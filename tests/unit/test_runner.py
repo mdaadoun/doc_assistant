@@ -15,8 +15,13 @@ def test_run_project_tests_invocation() -> None:
 
 def test_run_project_tests_layout_suite() -> None:
     """Verify test runner successfully executes the package layout test suite."""
-    result = run_project_tests(
-        test_path="tests/unit/test_layout.py"
-    )
+    result = run_project_tests(test_path="tests/unit/test_layout.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+
+def test_run_project_tests_makefile_suite() -> None:
+    """Verify test runner successfully executes the makefile test suite."""
+    result = run_project_tests(test_path="tests/unit/test_makefile.py")
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0

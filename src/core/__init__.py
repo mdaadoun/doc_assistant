@@ -14,11 +14,17 @@ from core.layout import (
     get_project_root,
     validate_package_layout,
 )
+from core.makefile import (
+    REQUIRED_MAKEFILE_TARGETS,
+    parse_makefile_targets,
+    validate_makefile,
+)
 from core.quality import validate_quality_configs
 
 __all__ = [
     "MIN_PYTHON_VERSION",
     "REQUIRED_DIRECTORIES",
+    "REQUIRED_MAKEFILE_TARGETS",
     "REQUIRED_PACKAGES",
     "Settings",
     "check_python_version",
@@ -27,6 +33,8 @@ __all__ = [
     "get_project_root",
     "get_python_version_tuple",
     "get_settings",
+    "parse_makefile_targets",
+    "validate_makefile",
     "validate_package_layout",
     "validate_poetry_config",
     "validate_quality_configs",

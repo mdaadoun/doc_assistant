@@ -86,4 +86,3 @@ def get_settings() -> Settings:
 def clear_settings_cache() -> None:
     """Reset cached Settings singleton (useful for testing override cases)."""
     get_settings.cache_clear()
-
