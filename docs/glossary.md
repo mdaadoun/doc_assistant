@@ -111,4 +111,27 @@ Telemetry payload tracking token counts, estimated USD costs, execution latency,
 ### DebugRetrievalResponse
 Structured diagnostic schema capturing candidate search hits at each pipeline stage: dense, sparse, RRF fusion, and final re-ranking.
 
+---
+
+## ⚠️ 8. Domain Exceptions & Error Handling
+
+### AppBaseError
+The root base exception class for all domain errors within the Doc Assistant application, encapsulating error code, message, and diagnostic metadata payload dictionary.
+
+### Exception Shielding
+An architectural pattern where lower-level infrastructure or third-party exceptions are caught and wrapped into clean domain-specific exceptions before propagating across layer boundaries.
+
+### ConfigurationError
+Domain exception raised when system settings, environment variables, or API keys are missing, invalid, or corrupted.
+
+### IngestionError
+Domain exception raised during document parsing, text extraction, structural chunking, or ingestion dispatch failures.
+
+### RetrievalError
+Domain exception raised during dense vector search, BM25 sparse search, RRF fusion, or cross-encoder re-ranking failures.
+
+### GenerationError
+Domain exception raised during LLM generation, SSE response streaming, or citation extraction and validation failures.
+
+
 

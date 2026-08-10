@@ -172,4 +172,25 @@ FinOpsMetadata standardizes token accounting, cost estimation, and latency metri
 **Answer:**
 Boundary constraints prevent corrupted telemetry metrics or invalid negative values from propagating into downstream analytics, billing dashboards, or observability tools.
 
+---
+
+## Phase 2.4: Domain Exception Hierarchy & Exception Shielding
+
+### Q1: Why create a custom domain exception hierarchy (AppBaseError) instead of relying on standard Python built-in exceptions like ValueError or RuntimeError?
+**Answer:**
+A custom domain exception hierarchy isolates domain logic from infrastructure dependencies and built-in exceptions. Standard exceptions like `ValueError` can be raised by Python standard libraries or third-party packages for unrelated issues. Catching `ValueError` in an API layer risks catching unintended system errors. By deriving all application exceptions from `AppBaseError`, presentation layers can safely catch and map all domain errors to structured HTTP responses, while maintaining explicit error codes (e.g., `INGESTION_ERROR`, `RETRIEVAL_ERROR`) and contextual metadata dictionaries.
+
+---
+
+### Q2: What is Exception Shielding and how does this exception hierarchy support it in a RAG architecture?
+**Answer:**
+Exception Shielding is an architectural boundary pattern where infrastructure/adapter errors (such as Qdrant connection drops, OpenAI rate limits, or PyMuPDF file corruption) are caught at the gateway or service adapter layer and transformed into domain errors (`RetrievalError`, `GenerationError`, `IngestionError`). The presentation layer (FastAPI router) never sees raw driver stack traces or internal implementation details. Instead, it catches `AppBaseError` and returns a clean, sanitized JSON error response to the client with appropriate status codes.
+
+---
+
+### Q3: How does attaching a structured details dictionary and providing to_dict() improve observability and FinOps/operations?
+**Answer:**
+In production RAG applications, error diagnostics require context beyond a simple string message—such as the target Qdrant collection, batch index, token counts, or model identifiers. Attaching a typed details dictionary (`dict[str, Any]`) allows service components to attach this diagnostic metadata at the point of failure. The `to_dict()` method standardizes error serialization for structured JSON loggers (like structlog) and API middleware, enabling automated alert filtering, metric aggregation, and rapid root-cause analysis.
+
+
 

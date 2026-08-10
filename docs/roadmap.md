@@ -20,12 +20,12 @@
 **Entry Criteria:** Empty repository.
 **Dependencies:** None.
 **Tasks:**
-- [ ] 1.1: Initialize Poetry project with Python 3.11+ constraints
-- [ ] 1.2: Configure Ruff linter + Mypy strict + pre-commit hooks (detect-secrets)
-- [ ] 1.3: Set up pydantic-settings config loading (.env, API keys via BaseSettings)
-- [ ] 1.4: Create modular package layout (src/api, src/retrieval, src/generation, src/ingestion, src/clients, src/models, src/core, src/cache, frontend/)
-- [ ] 1.5: Create Makefile with dev shortcuts (lint, typecheck, test, format)
-- [ ] 1.6: Initialize docker-compose.yml skeleton (FastAPI, Qdrant, React)
+- [x] 1.1: Initialize Poetry project with Python 3.11+ constraints
+- [x] 1.2: Configure Ruff linter + Mypy strict + pre-commit hooks (detect-secrets)
+- [x] 1.3: Set up pydantic-settings config loading (.env, API keys via BaseSettings)
+- [x] 1.4: Create modular package layout (src/api, src/retrieval, src/generation, src/ingestion, src/clients, src/models, src/core, src/cache, frontend/)
+- [x] 1.5: Create Makefile with dev shortcuts (lint, typecheck, test, format)
+- [x] 1.6: Initialize docker-compose.yml skeleton (FastAPI, Qdrant, React)
 **Deliverables:** Clean project skeleton, passing linter + typecheck, running docker skeleton.
 **Verification:** `make lint && make typecheck` passes with 0 errors.
 
@@ -33,10 +33,10 @@
 **Entry Criteria:** Project skeleton and core dependencies installed.
 **Dependencies:** Phase 1.
 **Tasks:**
-- [ ] 2.1: Define base domain model (BaseDomainModel with frozen=True)
-- [ ] 2.2: Create ChunkDocument, RetrievalResult, ChatRequest, ChatResponse, Citation schemas
+- [x] 2.1: Define base domain model (BaseDomainModel with frozen=True)
+- [x] 2.2: Create ChunkDocument, RetrievalResult, ChatRequest, ChatResponse, Citation schemas
 - [x] 2.3: Create DebugRetrievalResponse and FinOpsMetadata schemas
-- [ ] 2.4: Define AppBaseError and domain exception hierarchy (IngestionError, RetrievalError, GenerationError, ConfigurationError)
+- [x] 2.4: Define AppBaseError and domain exception hierarchy (IngestionError, RetrievalError, GenerationError, ConfigurationError)
 **Deliverables:** Complete Pydantic V2 schema set, exception hierarchy.
 **Verification:** All models pass Mypy strict, instantiation tests pass.
 

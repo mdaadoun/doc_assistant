@@ -54,3 +54,11 @@ def test_run_project_tests_debug_finops_suite() -> None:
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
 
+
+def test_run_project_tests_exceptions_suite() -> None:
+    """Verify test runner successfully executes the domain exception hierarchy test suite."""
+    result = run_project_tests(test_path="tests/unit/test_exceptions.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+

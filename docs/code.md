@@ -266,3 +266,39 @@ Implements concrete domain schemas extending `BaseDomainModel` for document chun
 - **Purpose:** Assistant response schema containing answer text, grounded citations, confidence metrics, and FinOps telemetry.
 - **Fields:** `answer` (str), `citations` (list[Citation]), `confidence_score` (float, 0.0..1.0), `grounded` (bool), `latency_ms` (int, ge=0), `finops` (`FinOpsMetadata`).
 
+---
+
+## 11. Domain Exception Hierarchy (`src/core/exceptions.py`)
+
+### Overview
+Defines `AppBaseError`, the root exception for all application errors, and its specialized domain subclasses (`ConfigurationError`, `IngestionError`, `RetrievalError`, `GenerationError`) to provide structured error codes, diagnostic metadata payload dictionaries, serialization, and exception shielding across layer boundaries.
+
+### Classes & Functions
+
+#### `AppBaseError(Exception)` (`src/core/exceptions.py`)
+- **Purpose:** Root exception for all application domain errors, enabling unified exception handling and structured error payload serialization.
+- **Parameters:**
+  - `message: str`: Human-readable error message explaining the failure cause.
+  - `code: str = "INTERNAL_ERROR"`: Standardized string error code.
+  - `details: dict[str, Any] | None = None`: Contextual diagnostic metadata dictionary.
+- **Methods:**
+  - `to_dict() -> dict[str, Any]`: Serializes error message, code, and details dictionary into a standard representation.
+  - `__repr__() -> str`: Returns class name, code, and error message formatting string.
+
+#### `ConfigurationError(AppBaseError)` (`src/core/exceptions.py`)
+- **Purpose:** Raised on invalid, missing, or corrupted system configuration parameters.
+- **Default Code:** `"CONFIG_ERROR"`.
+
+#### `IngestionError(AppBaseError)` (`src/core/exceptions.py`)
+- **Purpose:** Raised during document parsing, text extraction, structural chunking, or ingestion dispatch failures.
+- **Default Code:** `"INGESTION_ERROR"`.
+
+#### `RetrievalError(AppBaseError)` (`src/core/exceptions.py`)
+- **Purpose:** Raised on vector store search failures, BM25 sparse indexing errors, or RRF candidate fusion failures.
+- **Default Code:** `"RETRIEVAL_ERROR"`.
+
+#### `GenerationError(AppBaseError)` (`src/core/exceptions.py`)
+- **Purpose:** Raised on LLM generation errors, stream interruptions, or citation extraction and validation failures.
+- **Default Code:** `"GENERATION_ERROR"`.
+
+

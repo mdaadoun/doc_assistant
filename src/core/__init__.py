@@ -16,6 +16,13 @@ from core.environment import (
     get_python_version_tuple,
     validate_poetry_config,
 )
+from core.exceptions import (
+    AppBaseError,
+    ConfigurationError,
+    GenerationError,
+    IngestionError,
+    RetrievalError,
+)
 from core.layout import (
     REQUIRED_DIRECTORIES,
     REQUIRED_PACKAGES,
@@ -38,6 +45,11 @@ __all__ = [
     "REQUIRED_PACKAGES",
     "REQUIRED_PORT_MAPPINGS",
     "REQUIRED_VOLUMES",
+    "AppBaseError",
+    "ConfigurationError",
+    "GenerationError",
+    "IngestionError",
+    "RetrievalError",
     "Settings",
     "check_python_version",
     "clear_settings_cache",
@@ -53,3 +65,4 @@ __all__ = [
     "validate_poetry_config",
     "validate_quality_configs",
 ]
+
