@@ -224,3 +224,45 @@ Defines `BaseDomainModel`, the foundational immutable base class for all domain 
 - **Purpose:** Class method that validates a dictionary payload and returns a typed model instance via Pydantic V2 `model_validate()`.
 - **Parameters:** `data` dictionary containing field keys and values.
 - **Return Value:** Strongly-typed model instance inheriting from `BaseDomainModel`.
+
+---
+
+## 10. Chunk, Retrieval, and Chat Domain Schemas (`src/models/chunk.py`, `src/models/retrieval.py`, `src/models/chat.py`)
+
+### Overview
+Implements concrete domain schemas extending `BaseDomainModel` for document chunk representation, vector/sparse search hit tracking, user query requests, assistant completions with grounded citations, and FinOps telemetry.
+
+### Classes & Submodules
+
+#### `ChunkMetadata(BaseDomainModel)` (`src/models/chunk.py`)
+- **Purpose:** Represents metadata metrics for document chunks during parsing and indexing.
+- **Fields:** `source_format` (str), `chunk_index` (int, ge=0), `total_chunks` (int, gt=0), `char_count` (int, ge=0), `token_count` (int, ge=0).
+
+#### `ChunkDocument(BaseDomainModel)` (`src/models/chunk.py`)
+- **Purpose:** Standardized document chunk schema containing text content and structural metadata.
+- **Fields:** `chunk_id` (str), `text` (str), `file_name` (str), `page_number` (int, ge=1), `metadata` (`ChunkMetadata`).
+
+#### `RetrievalResult(BaseDomainModel)` (`src/models/retrieval.py`)
+- **Purpose:** Represents retrieved search hit candidates from hybrid vector/sparse indices.
+- **Fields:** `chunk_id` (str), `text` (str), `file_name` (str), `page_number` (int, ge=1), `relevance_score` (float), `retrieval_method` (str).
+
+#### `DebugRetrievalResponse(BaseDomainModel)` (`src/models/retrieval.py`)
+- **Purpose:** Detailed retrieval debugging payload exposing hits across dense, sparse, RRF fusion, and re-ranking stages.
+- **Fields:** `query` (str), `dense_hits` (list[RetrievalResult]), `sparse_hits` (list[RetrievalResult]), `rrf_fused` (list[RetrievalResult]), `final_reranked` (list[RetrievalResult]).
+
+#### `ChatRequest(BaseDomainModel)` (`src/models/chat.py`)
+- **Purpose:** User request schema for interaction endpoints.
+- **Fields:** `query` (str, min_length=1), `conversation_id` (str, min_length=1), `top_k` (int, default=5, ge=1).
+
+#### `Citation(BaseDomainModel)` (`src/models/chat.py`)
+- **Purpose:** Supporting source citation referencing document chunks and pages.
+- **Fields:** `file_name` (str), `page_number` (int, ge=1), `chunk_id` (str), `excerpt` (str), `relevance_score` (float).
+
+#### `FinOpsMetadata(BaseDomainModel)` (`src/models/chat.py`)
+- **Purpose:** Telemetry tracking token usage, estimated costs, latency, and cache hits.
+- **Fields:** `prompt_tokens` (int, ge=0), `completion_tokens` (int, ge=0), `total_tokens` (int, ge=0), `estimated_cost_usd` (float, ge=0.0), `execution_time_seconds` (float, ge=0.0), `is_cached` (bool, default=False).
+
+#### `ChatResponse(BaseDomainModel)` (`src/models/chat.py`)
+- **Purpose:** Assistant response schema containing answer text, grounded citations, confidence metrics, and FinOps telemetry.
+- **Fields:** `answer` (str), `citations` (list[Citation]), `confidence_score` (float, 0.0..1.0), `grounded` (bool), `latency_ms` (int, ge=0), `finops` (`FinOpsMetadata`).
+

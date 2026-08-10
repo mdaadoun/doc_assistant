@@ -131,3 +131,24 @@ It prevents unintended payloads or unknown fields from entering the domain layer
 ### Q3: What is the performance implication of Pydantic V2 frozen models?
 **Answer:**
 Pydantic V2 core is implemented in Rust, making schema validation and immutability checks significantly faster than V1. Frozen instances can also be safely hashed and cached in memory.
+
+---
+
+## Phase 2.2: RAG Domain Schemas & Telemetry Contracts
+
+### Q1: Why use Pydantic V2 frozen models over standard Python dataclasses for domain schemas?
+**Answer:**
+Frozen Pydantic V2 models guarantee immutability across async processing pipelines, enforce strict boundary validation via field constraints, and simplify serialization/deserialization across API boundaries.
+
+---
+
+### Q2: Why separate ChunkDocument from RetrievalResult?
+**Answer:**
+`ChunkDocument` models static indexed document fragments created during document ingestion, whereas `RetrievalResult` represents dynamic search outcomes tied to a specific user query, containing relevance scores and retrieval strategy metadata (e.g. dense, sparse, rrf).
+
+---
+
+### Q3: How does FinOpsMetadata contribute to production RAG governance?
+**Answer:**
+`FinOpsMetadata` standardizes token accounting, cost estimation, and latency metrics across LLM providers, providing actionable operational telemetry for real-time observability, budgeting, and caching analysis.
+

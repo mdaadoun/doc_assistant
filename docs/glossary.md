@@ -95,3 +95,16 @@ A Pydantic V2 model configuration (`frozen=True`) where instances are immutable 
 
 ### Forbid Extra
 A Pydantic V2 validation setting (`extra="forbid"`) that raises a `ValidationError` if undeclared fields are passed during instantiation.
+
+### ChunkDocument
+Normalized text chunk with structural metadata and source file attributes used during document ingestion and vector storage.
+
+### RetrievalResult
+Standardized search hit model representing retrieved context chunks enriched with relevance scoring and strategy attributes.
+
+### Citation
+Verifiable source text reference linking generated assistant responses directly to source document pages and chunk IDs.
+
+### FinOpsMetadata
+Telemetry payload tracking token counts, estimated USD costs, execution latency, and caching status per request.
+
