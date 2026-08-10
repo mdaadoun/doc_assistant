@@ -67,4 +67,31 @@ Provides programmatic test suite execution for integration into developer dashbo
 ### Test Modules
 - `test_environment.py`: Verifies runtime version detection, tuple parsing, version mocking, `pyproject.toml` discovery, and validation routines.
 - `test_pyproject.py`: Asserts `pyproject.toml` existence, Poetry package declarations, Python `^3.11` dependencies, Ruff `py311` target version, and Mypy strict mode flags.
+- `test_quality_config.py`: Validates presence and structural rules of `ruff.toml`, `.pre-commit-config.yaml`, `.secrets.baseline`, and `validate_quality_configs()`.
 - `test_runner.py`: Validates programmatic execution of `run_project_tests()`.
+
+---
+
+## 4. Quality Configuration Auditor (`src/core/quality.py`)
+
+### Overview
+Audits static code quality infrastructure configuration files (`ruff.toml`, `.pre-commit-config.yaml`, `.secrets.baseline`) and provides programmatic health checks.
+
+### Functions
+
+#### `validate_ruff_config(base_dir: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Audits presence and rule definitions (`select`, `lint.isort`, `py311` target) in `ruff.toml`.
+- **Return Value:** Audit result payload dictionary.
+
+#### `validate_pre_commit_config(base_dir: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Verifies presence and required hooks (`ruff`, `mypy`, `detect-secrets`) in `.pre-commit-config.yaml`.
+- **Return Value:** Hook audit status dictionary.
+
+#### `validate_detect_secrets_baseline(base_dir: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Checks existence and JSON structure (`version`, `plugins_used`, `results`) of `.secrets.baseline`.
+- **Return Value:** Baseline audit outcome payload dictionary.
+
+#### `validate_quality_configs(base_dir: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Aggregates audit checks across all quality tool configurations (`pyproject.toml`, `ruff.toml`, `.pre-commit-config.yaml`, `.secrets.baseline`).
+- **Return Value:** Combined validation summary payload dictionary.
+

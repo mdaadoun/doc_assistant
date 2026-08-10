@@ -17,3 +17,23 @@ A module wrapper around test frameworks (`pytest.main()`) programmatically launc
 
 ### Static Type Guarding
 Compile-time static analysis using Mypy strict mode to enforce explicit type signatures across all packages, preventing implicit untyped escapes.
+
+---
+
+## 🧹 2. Code Quality & Static Analysis
+
+### Ruff
+Fast Python linter and formatter written in Rust, replacing Flake8, Black, and isort.
+
+### Mypy Strict Mode
+Static type checker configuration mode enforcing explicit return/argument annotations, disallowing untyped defs, and prohibiting implicit optional types.
+
+### Pre-commit Hooks
+Automated git hook framework executing static checks, formatters, and security scanners prior to committing code.
+
+### detect-secrets
+Enterprise secret scanner that analyzes codebases using heuristics and high-entropy string detection to prevent credential leakage.
+
+### Secrets Baseline
+A JSON-formatted snapshot file (`.secrets.baseline`) recording known/audited secret findings to bypass false positives.
+

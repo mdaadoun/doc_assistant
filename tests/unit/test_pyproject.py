@@ -1,6 +1,10 @@
 """Unit tests for Poetry pyproject.toml configuration and constraints."""
 
-import tomllib
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # type: ignore[no-redef]
+
 from pathlib import Path
 
 

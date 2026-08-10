@@ -7,6 +7,7 @@ from core.environment import (
     get_python_version_tuple,
     validate_poetry_config,
 )
+from core.quality import validate_quality_configs
 
 __all__ = [
     "MIN_PYTHON_VERSION",
@@ -14,4 +15,5 @@ __all__ = [
     "get_environment_info",
     "get_python_version_tuple",
     "validate_poetry_config",
+    "validate_quality_configs",
 ]
