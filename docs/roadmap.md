@@ -49,7 +49,7 @@
 - [x] 3.3: Implement Markdown parser with frontmatter extraction
 - [x] 3.4: Build recursive structural chunker (512 tokens max, 10% overlap, preserving page boundaries)
 - [x] 3.5: Create ingestion facade with format dispatcher and fail-fast validation
-- [ ] 3.6: Add differential update handling (detect changed/new/deleted files)
+- [x] 3.6: Add differential update handling (detect changed/new/deleted files)
 **Deliverables:** Working ingestion pipeline consuming PDF/DOCX/MD → ChunkDocument list.
 **Verification:** Unit tests on sample documents, chunk size assertions ≤ 512 tokens.
 

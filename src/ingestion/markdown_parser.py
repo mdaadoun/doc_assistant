@@ -10,9 +10,7 @@ from core.exceptions import IngestionError
 from ingestion.base import BaseDocumentParser
 from models.document import DocumentMetadata, PageMetadata, ParsedDocument, ParsedPage
 
-PAGE_BREAK_PATTERN = re.compile(
-    r"(?i)<!--\s*page_?break\s*-->|\\pagebreak|\\newpage"
-)
+PAGE_BREAK_PATTERN = re.compile(r"(?i)<!--\s*page_?break\s*-->|\\pagebreak|\\newpage")
 IMAGE_PATTERN = re.compile(r"!\[.*?\]\(.*?\)|<img\s+[^>]*>", re.IGNORECASE)
 HEADER_TITLE_PATTERN = re.compile(r"^#\s+(.+)$", re.MULTILINE)
 
@@ -103,7 +101,6 @@ class MarkdownParser(BaseDocumentParser):
         else:
             keywords_str = self._get_str(fm, "keywords")
 
-
         doc_meta = DocumentMetadata(
             title=title,
             author=self._get_str(fm, "author"),
@@ -156,7 +153,11 @@ class MarkdownParser(BaseDocumentParser):
         in_table = False
         for line in lines:
             stripped = line.strip()
-            if stripped.startswith("|") and stripped.endswith("|") and len(stripped) > 2:
+            if (
+                stripped.startswith("|")
+                and stripped.endswith("|")
+                and len(stripped) > 2
+            ):
                 if not in_table:
                     in_table = True
                     table_count += 1

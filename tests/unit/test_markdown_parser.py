@@ -123,7 +123,9 @@ def test_markdown_parser_empty_file(tmp_path: Path) -> None:
 def test_markdown_parser_invalid_frontmatter(tmp_path: Path) -> None:
     """Verify IngestionError is raised for malformed invalid YAML frontmatter."""
     corrupt_file = tmp_path / "invalid_fm.md"
-    corrupt_file.write_text("---\ntitle: [invalid yaml\n---\nBody text", encoding="utf-8")
+    corrupt_file.write_text(
+        "---\ntitle: [invalid yaml\n---\nBody text", encoding="utf-8"
+    )
     parser = MarkdownParser()
     with pytest.raises(IngestionError) as exc_info:
         parser.parse(corrupt_file)

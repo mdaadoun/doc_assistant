@@ -291,3 +291,24 @@ The facade executes fail-fast validation before invoking any parser. It verifies
 ### Q3: How can new document formats (e.g., HTML, TXT, EPUB) be added to the pipeline?
 **Answer:**
 Custom parsers inheriting from `BaseDocumentParser` can be registered at runtime using `IngestionFacade.register_parser(extension, parser_instance)`. This allows dynamic extension of supported formats without altering core facade code.
+
+---
+
+## 12. Differential Update Handling & State Tracking
+
+### Q1: Why use SHA-256 content hashing instead of file modification timestamps (mtime) for differential change detection?
+**Answer:**
+Modification timestamps (`mtime`) can change when files are touched, copied, or checked out via `git` without actual content changes, triggering wasteful re-indexing. SHA-256 binary content hashing guarantees true content comparison and eliminates false-positive modification signals.
+
+---
+
+### Q2: How does the ingestion facade handle deleted files during differential synchronization?
+**Answer:**
+The `DifferentialTracker` scans the target corpus against the manifest. Files present in the manifest but missing from disk are placed in the `deleted_files` list of the `DifferentialDelta`. Calling `sync_delta()` purges their tracking records from the manifest state, allowing downstream vector store adapters to purge corresponding vector index entries.
+
+---
+
+### Q3: What is the computational complexity of the differential scanning step?
+**Answer:**
+The scanning step has a time complexity of $O(N \cdot \frac{B}{C})$, where $N$ is the number of target files, $B$ is the average file size in bytes, and $C$ is the read buffer chunk size (64KB). Scanning reads raw file streams sequentially in memory-efficient buffers.
+

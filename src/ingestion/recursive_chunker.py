@@ -1,7 +1,7 @@
 """Recursive structural text chunker for RAG document ingestion."""
 
 import uuid
-from typing import Sequence
+from collections.abc import Sequence
 
 from core.exceptions import IngestionError
 from models.chunk import ChunkDocument, ChunkMetadata
@@ -122,7 +122,7 @@ class RecursiveStructuralChunker:
         result: list[str] = []
         current: list[str] = []
         for part in parts:
-            candidate = sep.join(current + [part]) if current else part
+            candidate = sep.join([*current, part]) if current else part
             if self.count_tokens(candidate) <= self.max_tokens:
                 current.append(part)
             else:
@@ -169,7 +169,7 @@ class RecursiveStructuralChunker:
             prev_words = prev.split()
             overlap_words: list[str] = []
             for word in reversed(prev_words):
-                candidate = " ".join([word] + overlap_words)
+                candidate = " ".join([word, *overlap_words])
                 if self.count_tokens(candidate) > self.overlap_tokens:
                     break
                 overlap_words.insert(0, word)

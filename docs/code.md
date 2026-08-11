@@ -405,3 +405,51 @@ Implements `IngestionFacade` orchestrating document validation, format-specific 
   - `parse_document(file_path: str | Path, format_override: str | None = None) -> ParsedDocument`: Validates document file and parses it into structured `ParsedDocument`.
   - `ingest_document(file_path: str | Path, format_override: str | None = None) -> list[ChunkDocument]`: Validates, parses, and chunks document into a `ChunkDocument` list.
   - `ingest_batch(file_paths: Sequence[str | Path], format_override: str | None = None) -> list[ChunkDocument]`: Validates, parses, and chunks a sequence of files into a flattened `ChunkDocument` list.
+  - `ingest_differential(target_paths: Sequence[str | Path] | str | Path, format_override: str | None = None) -> DifferentialResult`: Executes differential scan against manifest, purges deleted file tracking, ingests only new/modified files, updates state manifest, and returns `DifferentialResult`.
+
+---
+
+## 15. Differential Update Handling & State Tracker (`src/ingestion/tracker.py`, `src/models/differential.py`)
+
+### Overview
+Provides incremental ingestion functionality by tracking file content hashes and state snapshots in a persistent manifest. Automatically categorizes corpus files into `new_files`, `changed_files`, `deleted_files`, and `unchanged_files`, bypassing redundant document parsing and chunking computations.
+
+### Classes & Schemas
+
+#### `FileState` (`src/models/differential.py`)
+- **Purpose:** Immutable state record capturing metadata and content hash for a single ingested document file.
+- **Fields:**
+  - `file_path: str`: Normalized document file path.
+  - `content_hash: str`: SHA-256 binary hash of file contents.
+  - `file_size_bytes: int`: File size in bytes.
+  - `last_modified: float`: File modification epoch timestamp.
+  - `processed_at: str`: ISO 8601 UTC timestamp string when file was processed.
+  - `chunk_ids: list[str]`: List of chunk identifiers generated from file.
+
+#### `StateManifest` (`src/models/differential.py`)
+- **Purpose:** Repository container persisting a dictionary map of file paths to `FileState` instances.
+- **Fields:**
+  - `version: str`: Schema version string (default `"1.0.0"`).
+  - `last_synced_at: str | None`: ISO 8601 UTC timestamp of last manifest sync.
+  - `files: dict[str, FileState]`: Map of normalized file path keys to `FileState` models.
+
+#### `DifferentialDelta` (`src/models/differential.py`)
+- **Purpose:** Categorized diff payload summary returned during corpus scanning.
+- **Fields:** `new_files: list[str]`, `changed_files: list[str]`, `deleted_files: list[str]`, `unchanged_files: list[str]`.
+- **Properties:**
+  - `has_changes: bool`: Returns `True` if any new, changed, or deleted files are detected.
+  - `files_to_process: list[str]`: Returns concatenated list of `new_files` and `changed_files`.
+
+#### `DifferentialTracker` (`src/ingestion/tracker.py`)
+- **Purpose:** Service orchestrating file state hashing, scanning target paths, delta generation, and manifest JSON persistence.
+- **Parameters:**
+  - `manifest_path: str | Path | None = None`: Optional file path for persisting state manifest JSON.
+- **Methods:**
+  - `compute_file_hash(file_path: str | Path, chunk_size: int = 65536) -> str`: Computes SHA-256 hash using 64KB chunked binary reads.
+  - `scan(target_paths: Sequence[str | Path] | str | Path) -> DifferentialDelta`: Scans target files or directories against stored state manifest to produce categorized `DifferentialDelta`.
+  - `update_file_state(file_path: str | Path, chunk_ids: list[str] | None = None) -> FileState`: Computes current file hash/metadata and updates manifest state record.
+  - `remove_file_state(file_path: str | Path) -> FileState | None`: Removes tracked file entry from manifest state map.
+  - `sync_delta(delta: DifferentialDelta) -> None`: Purges all deleted file entries in `delta.deleted_files` from manifest state.
+  - `load_manifest(path: str | Path) -> StateManifest`: Parses manifest JSON file into structured `StateManifest` schema.
+  - `save_manifest(path: str | Path | None = None) -> Path`: Serializes current state manifest to formatted JSON file.
+

@@ -99,4 +99,8 @@ def test_run_project_tests_ingestion_facade_suite() -> None:
     assert result["exit_code"] == 0
 
 
-
+def test_run_project_tests_differential_tracker_suite() -> None:
+    """Verify test runner successfully executes the differential tracker test suite."""
+    result = run_project_tests(test_path="tests/unit/test_differential_tracker.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0

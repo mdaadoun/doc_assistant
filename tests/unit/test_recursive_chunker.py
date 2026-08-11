@@ -1,6 +1,7 @@
 """Unit tests for recursive structural document chunker module."""
 
 import pytest
+
 from core.exceptions import IngestionError
 from ingestion.recursive_chunker import RecursiveStructuralChunker
 from models.document import DocumentMetadata, PageMetadata, ParsedDocument, ParsedPage

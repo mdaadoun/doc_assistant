@@ -193,3 +193,19 @@ An early verification step that halts processing and raises structured `Ingestio
 
 ### FormatOverride
 An optional parameter allowing explicit specification of the target format parser regardless of file extension.
+
+### Differential Update
+Incremental ingestion process that computes deltas between disk state and previously stored manifest to skip unmodified files.
+
+### Content Hash
+Cryptographic digest (SHA-256) of raw file bytes used to detect file content modifications uniquely.
+
+### State Manifest
+Persisted inventory recording normalized file paths, content hashes, file sizes, modification times, and chunk IDs.
+
+### Differential Delta
+Categorized summary payload containing lists of new, changed, deleted, and unchanged file paths.
+
+### Differential Result
+Comprehensive execution payload containing the differential delta, newly generated document chunks, and processing statistics.
+

@@ -1,7 +1,7 @@
-"""Ingestion facade orchestrating format dispatching and fail-fast file validation."""
+"""Ingestion facade orchestrating format dispatching, differential tracking, and file validation."""
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from core.exceptions import IngestionError
 from ingestion.base import BaseDocumentParser
@@ -9,7 +9,9 @@ from ingestion.docx_parser import DOCXParser
 from ingestion.markdown_parser import MarkdownParser
 from ingestion.pdf_parser import PDFParser
 from ingestion.recursive_chunker import RecursiveStructuralChunker
+from ingestion.tracker import DifferentialTracker
 from models.chunk import ChunkDocument
+from models.differential import DifferentialResult
 from models.document import ParsedDocument
 
 
@@ -21,8 +23,9 @@ class IngestionFacade:
         parsers: dict[str, BaseDocumentParser] | None = None,
         chunker: RecursiveStructuralChunker | None = None,
         max_file_size_bytes: int | None = None,
+        tracker: DifferentialTracker | None = None,
     ) -> None:
-        """Initialize ingestion facade with format parsers, chunker, and size limits."""
+        """Initialize ingestion facade with format parsers, chunker, limits, and tracker."""
         self._parsers: dict[str, BaseDocumentParser] = {}
         if parsers is not None:
             for ext, parser in parsers.items():
@@ -35,6 +38,7 @@ class IngestionFacade:
 
         self.chunker = chunker or RecursiveStructuralChunker()
         self.max_file_size_bytes = max_file_size_bytes
+        self.tracker = tracker or DifferentialTracker()
 
     def register_parser(self, extension: str, parser: BaseDocumentParser) -> None:
         """Register a format parser for a file extension."""
@@ -142,3 +146,30 @@ class IngestionFacade:
             doc_chunks = self.ingest_document(path, format_override=format_override)
             chunks.extend(doc_chunks)
         return chunks
+
+    def ingest_differential(
+        self,
+        target_paths: Sequence[str | Path] | str | Path,
+        format_override: str | None = None,
+    ) -> DifferentialResult:
+        """Scan target paths and ingest only new or modified document files."""
+        delta = self.tracker.scan(target_paths)
+        self.tracker.sync_delta(delta)
+
+        chunks: list[ChunkDocument] = []
+        for file_path in delta.files_to_process:
+            doc_chunks = self.ingest_document(
+                file_path, format_override=format_override
+            )
+            chunks.extend(doc_chunks)
+            chunk_ids = [c.chunk_id for c in doc_chunks]
+            self.tracker.update_file_state(file_path, chunk_ids=chunk_ids)
+
+        if self.tracker.manifest_path:
+            self.tracker.save_manifest()
+
+        return DifferentialResult(
+            delta=delta,
+            chunks=chunks,
+            processed_count=len(delta.files_to_process),
+        )
