@@ -232,6 +232,27 @@ Instead of separately reading `doc.paragraphs` and `doc.tables` (which loses rel
 **Answer:**
 `doc.core_properties` attributes (title, author, subject, keywords, created, modified, last_modified_by) are mapped to `DocumentMetadata` fields. Optional attributes like creator are accessed safely via `getattr()` to prevent runtime attribute errors, while dates are formatted as ISO timestamp strings.
 
+---
+
+## 9. Markdown Parser & Frontmatter Extraction
+
+### Q1: How does the Markdown parser handle missing or invalid YAML frontmatter?
+**Answer:**
+If frontmatter is missing, it parses the entire content as body text and falls back to regex for H1 header title extraction. If YAML syntax is invalid, it catches parsing errors and raises a domain `IngestionError` with code `MARKDOWN_PARSING_ERROR`.
+
+---
+
+### Q2: Why use explicit page break markers for Markdown documents?
+**Answer:**
+Markdown files are continuous text without physical pages. Supporting explicit page break markers like `<!-- pagebreak -->` allows document authors to split long Markdown documents into distinct logical pages before chunking, preserving page provenance for downstream citations.
+
+---
+
+### Q3: How does title extraction fallback work when YAML frontmatter omits the title field?
+**Answer:**
+When frontmatter is missing or lacks a `title` key, `MarkdownParser` scans the Markdown body text using the regex `^#\s+(.+)$` to extract the first level-1 heading string as the document title.
+
+
 
 
 

@@ -349,6 +349,16 @@ Defines structured document domain models (`PageMetadata`, `ParsedPage`, `Docume
   - `_format_paragraph(p: Paragraph) -> str`: Normalizes paragraph text and prepends Markdown header levels (`#` to `######`) for heading styles.
   - `_format_table(table: Table) -> str`: Formats table rows into pipe-separated (`|`) plain text representation.
 
+#### `MarkdownParser(BaseDocumentParser)` (`src/ingestion/markdown_parser.py`)
+- **Purpose:** Markdown (.md) parser with YAML frontmatter extraction, header title fallback, page-break marker segmentation, image/table metrics calculation, and exception shielding.
+- **Methods:**
+  - `parse(file_path: str | Path) -> ParsedDocument`: Validates file existence and non-zero size, reads text content, parses frontmatter and body, and returns structured `ParsedDocument`.
+  - `_extract_frontmatter(content: str, path: Path) -> tuple[dict[str, Any], str]`: Extracts top-level YAML frontmatter between `---` delimiters using `yaml.safe_load`.
+  - `_build_parsed_document(path: Path, fm: dict[str, Any], body: str) -> ParsedDocument`: Constructs `DocumentMetadata` (with header fallback for missing title) and `ParsedPage` sequence.
+  - `_count_tables(text: str) -> int`: Counts contiguous Markdown formatted table blocks (`| ... |`).
+  - `_get_str(fm: dict[str, Any], key: str) -> str | None`: Safely extracts string values from frontmatter dictionary.
+
+
 
 
 

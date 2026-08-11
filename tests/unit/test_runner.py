@@ -76,3 +76,11 @@ def test_run_project_tests_docx_parser_suite() -> None:
     result = run_project_tests(test_path="tests/unit/test_docx_parser.py")
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
+
+
+def test_run_project_tests_markdown_parser_suite() -> None:
+    """Verify test runner successfully executes the Markdown parser test suite."""
+    result = run_project_tests(test_path="tests/unit/test_markdown_parser.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+

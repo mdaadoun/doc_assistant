@@ -161,6 +161,16 @@ Inferring page boundaries in non-paginated XML documents using explicit break el
 ### Structural Heading Normalization
 Transforming DOCX paragraph heading styles into standardized Markdown header levels (`#` to `######`) for downstream structural chunking.
 
+### MarkdownParser
+Ingestion component implementing `BaseDocumentParser` for Markdown (`.md`) files with YAML frontmatter extraction, header title fallback, and explicit page-break marker segmentation.
+
+### Frontmatter
+Metadata block located at the beginning of a Markdown document formatted in YAML between triple-dash (`---`) delimiters.
+
+### PageBreakMarker
+Special HTML comment or control keyword in document text (`<!-- pagebreak -->`, `\pagebreak`) used to delimit logical page boundaries for chunking provenance.
+
+
 
 
 
