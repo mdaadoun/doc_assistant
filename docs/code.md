@@ -381,8 +381,27 @@ Implements `RecursiveStructuralChunker` for document ingestion, dividing `Parsed
   - `_hard_split(text: str) -> list[str]`: Fallback slice for unbroken text blocks lacking structural delimiters.
   - `_apply_overlap(splits: list[str]) -> list[str]`: Prepends trailing words from previous split to current split up to `overlap_tokens` capacity.
 
+---
 
+## 14. Ingestion Facade & Format Dispatcher (`src/ingestion/facade.py`)
 
+### Overview
+Implements `IngestionFacade` orchestrating document validation, format-specific parser dispatching (`PDFParser`, `DOCXParser`, `MarkdownParser`), parsing into `ParsedDocument`, and chunking into `ChunkDocument` models.
 
+### Classes & Functions
 
-
+#### `IngestionFacade` (`src/ingestion/facade.py`)
+- **Purpose:** Central entry point for document ingestion, enforcing fail-fast file validation, extension-based format dispatching, and single/batch document chunking.
+- **Parameters:**
+  - `parsers: dict[str, BaseDocumentParser] | None = None`: Optional initial map of file extensions to parser instances (defaults to registering PDF, DOCX, and Markdown parsers).
+  - `chunker: RecursiveStructuralChunker | None = None`: Optional chunker instance (defaults to standard `RecursiveStructuralChunker()`).
+  - `max_file_size_bytes: int | None = None`: Optional byte limit threshold for input file validation.
+- **Methods:**
+  - `register_parser(extension: str, parser: BaseDocumentParser) -> None`: Registers a `BaseDocumentParser` instance for a normalized file extension string.
+  - `unregister_parser(extension: str) -> None`: Unregisters a parser mapping for the given file extension.
+  - `supported_formats() -> list[str]`: Returns a sorted list of registered format extension strings.
+  - `get_parser(extension: str) -> BaseDocumentParser`: Retrieves the registered parser for an extension or raises an `UNSUPPORTED_FORMAT` `IngestionError`.
+  - `validate_file(file_path: str | Path, format_override: str | None = None) -> Path`: Executes fail-fast checks (existence, file path check, non-zero size, size limit, and supported extension) returning resolved `Path`.
+  - `parse_document(file_path: str | Path, format_override: str | None = None) -> ParsedDocument`: Validates document file and parses it into structured `ParsedDocument`.
+  - `ingest_document(file_path: str | Path, format_override: str | None = None) -> list[ChunkDocument]`: Validates, parses, and chunks document into a `ChunkDocument` list.
+  - `ingest_batch(file_paths: Sequence[str | Path], format_override: str | None = None) -> list[ChunkDocument]`: Validates, parses, and chunks a sequence of files into a flattened `ChunkDocument` list.

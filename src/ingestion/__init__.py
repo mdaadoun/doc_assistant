@@ -2,6 +2,7 @@
 
 from ingestion.base import BaseDocumentParser
 from ingestion.docx_parser import DOCXParser
+from ingestion.facade import IngestionFacade
 from ingestion.markdown_parser import MarkdownParser
 from ingestion.pdf_parser import PDFParser
 from ingestion.recursive_chunker import RecursiveStructuralChunker
@@ -9,8 +10,10 @@ from ingestion.recursive_chunker import RecursiveStructuralChunker
 __all__: list[str] = [
     "BaseDocumentParser",
     "DOCXParser",
+    "IngestionFacade",
     "MarkdownParser",
     "PDFParser",
     "RecursiveStructuralChunker",
 ]
+
 

@@ -272,9 +272,22 @@ The chunker falls through its separator cascade (paragraph $\to$ line $\to$ sent
 **Answer:**
 The chunker calculates `overlap_tokens` as `int(max_tokens * overlap_percentage)`. For consecutive splits on a page, it extracts up to `overlap_tokens` from the tail of the preceding chunk (aligned to word boundaries) and prepends them to the current chunk while ensuring the total token count stays under `max_tokens`.
 
+---
 
+## 11. Ingestion Facade & Format Dispatcher
 
+### Q1: Why use the Facade pattern for document ingestion instead of calling individual parsers directly?
+**Answer:**
+The Facade pattern decouples consumers (such as API endpoints or indexing jobs) from format-specific parsing logic and chunking algorithms. It provides a clean, unified contract (`ingest_document` / `ingest_batch`) while enabling centralized fail-fast validation, file size checks, and easy extension to new document formats without modifying client code.
 
+---
 
+### Q2: How does the IngestionFacade handle unsupported or corrupt document files?
+**Answer:**
+The facade executes fail-fast validation before invoking any parser. It verifies file existence, path validity, non-zero file size, size limits, and registered format availability. If any check fails, it immediately raises a structured `IngestionError` with standard error codes (such as `FILE_NOT_FOUND`, `EMPTY_FILE`, `FILE_TOO_LARGE`, `UNSUPPORTED_FORMAT`) and detailed diagnostic metadata.
 
+---
 
+### Q3: How can new document formats (e.g., HTML, TXT, EPUB) be added to the pipeline?
+**Answer:**
+Custom parsers inheriting from `BaseDocumentParser` can be registered at runtime using `IngestionFacade.register_parser(extension, parser_instance)`. This allows dynamic extension of supported formats without altering core facade code.

@@ -182,9 +182,14 @@ The percentage (e.g., 10%) of maximum chunk token capacity prepended from the ta
 ### Fallback Token Density Estimator
 A deterministic token counting algorithm utilizing combined word and character density metrics to estimate token counts when offline or BPE tokenizers are unavailable.
 
+### IngestionFacade
+A unified entry-point service class that orchestrates document validation, format-specific parsing, and structural chunking.
 
+### FormatDispatcher
+A registry mechanism mapping document file extensions to their corresponding parser instances.
 
+### FailFastValidation
+An early verification step that halts processing and raises structured `IngestionError` instances upon encountering invalid files or unsupported formats before resource-intensive operations.
 
-
-
-
+### FormatOverride
+An optional parameter allowing explicit specification of the target format parser regardless of file extension.
