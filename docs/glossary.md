@@ -230,5 +230,24 @@ Offline pseudo-embedding generator using cryptographic hashing to produce unit-n
 ### Batch Chunking
 Partitioning large sequences of document chunks into fixed-size request sub-batches to adhere to remote API payload limits.
 
+---
+
+## 🔍 10. Sparse Retrieval & BM25 Indexing
+
+### BM25Okapi
+Okapi Best Matching 25 ranking function from the `rank-bm25` library; scores documents by term frequency, inverse document frequency, and document length normalization.
+
+### Sparse Retrieval
+Lexical retrieval using exact term matching (BM25) as opposed to dense vector similarity; captures keyword precision and complements semantic search.
+
+### Tokenized Corpus
+List of token lists where each inner list is the tokenized representation of one chunk document; the input format required by `BM25Okapi`.
+
+### Index Persistence
+Serialization of the tokenized corpus and chunk metadata to JSON so the BM25 index can be rebuilt without re-ingesting source documents.
+
+### k1 / b / epsilon
+BM25 hyperparameters: `k1` controls term frequency saturation, `b` controls document length normalization (0-1), and `epsilon` prevents zero IDF for terms appearing in all documents.
+
 
 

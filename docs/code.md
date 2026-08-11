@@ -537,5 +537,61 @@ Provides production-ready vector embedding adapters for multi-provider generatio
   - `dimension: int | None = None`: Vector dimension capacity override.
   - `client: Any | None = None`: Optional pre-configured client object for dependency injection.
 
+---
+
+## 18. BM25 Sparse Index Manager (`src/retrieval/bm25_index.py`, `src/retrieval/bm25_tokenizer.py`)
+
+### Overview
+Implements `BM25IndexManager` providing a full sparse retrieval lifecycle (`build`, `search`, `save`, `load`, `clear`) over `rank-bm25`'s `BM25Okapi`. Tokenization is isolated in a pure utility module (`bm25_tokenizer.py`) producing lowercase alphanumeric word tokens. Persistence uses versioned JSON storing the tokenized corpus and `ChunkDocument` metadata, enabling index rebuilds without re-ingesting source documents. Search results are mapped to the existing `RetrievalResult` domain schema with `retrieval_method="sparse"` for downstream RRF fusion.
+
+### Tokenization Utilities (`src/retrieval/bm25_tokenizer.py`)
+
+#### `tokenize(text: str) -> list[str]`
+- **Purpose:** Lowercases input text and extracts alphanumeric word tokens via regex `[a-z0-9]+`, stripping punctuation and whitespace.
+- **Return Value:** List of lowercase word token strings.
+
+#### `tokenize_corpus(texts: Sequence[str]) -> list[list[str]]`
+- **Purpose:** Maps `tokenize` over a sequence of texts to produce the tokenized corpus required by `BM25Okapi`.
+- **Return Value:** List of token lists, one per input text.
+
+### BM25 Index Manager (`src/retrieval/bm25_index.py`)
+
+#### `BM25IndexManager` (`src/retrieval/bm25_index.py`)
+- **Purpose:** Manages `BM25Okapi` sparse index over a chunk corpus with JSON persistence and domain exception shielding.
+- **Parameters:**
+  - `k1: float = 1.5`: BM25 term frequency saturation parameter.
+  - `b: float = 0.75`: BM25 document length normalization parameter (0-1).
+  - `epsilon: float = 0.25`: BM25 IDF epsilon preventing zero IDF for terms in all documents.
+- **Properties:**
+  - `is_built -> bool`: Returns `True` when `BM25Okapi` exists and the chunk list is non-empty.
+  - `size -> int`: Returns the number of indexed chunks.
+- **Methods:**
+  - `build(chunks: Sequence[ChunkDocument]) -> int`: Stores chunks, tokenizes the corpus, instantiates `BM25Okapi` with configured hyperparameters, and returns the chunk count. Empty corpus leaves the index unbuilt.
+  - `search(query: str, top_k: int = 5) -> list[RetrievalResult]`: Raises `RetrievalError` (`BM25_EMPTY_INDEX`) if unbuilt or `RetrievalError` (`INVALID_TOP_K`) if `top_k <= 0`; tokenizes the query; returns `[]` for empty queries; scores via `BM25Okapi.get_scores`; ranks descending; filters zero/negative scores; caps at `top_k`; builds `RetrievalResult` with `retrieval_method="sparse"`.
+  - `save(path: str | Path) -> Path`: Serializes `{version, k1, b, epsilon, chunks: [{chunk: model_dump, tokens}]}` to JSON; creates parent directories; wraps `OSError` in `RetrievalError`.
+  - `load(path: str | Path) -> int`: Reads JSON; validates version (`_INDEX_VERSION = 1`); restores hyperparameters; Pydantic-validates chunks via `ChunkDocument.model_validate()`; rebuilds `BM25Okapi`; returns chunk count. Wraps `OSError`/`JSONDecodeError` in `RetrievalError`; raises `BM25_INVALID_VERSION` for unsupported versions.
+  - `clear() -> None`: Resets chunks, tokenized corpus, and `BM25Okapi` to empty state.
+
+### Package Exports (`src/retrieval/__init__.py`)
+- **Purpose:** Exposes `BM25IndexManager`, `VectorStoreAdapter`, `tokenize`, and `tokenize_corpus` as the public retrieval package API.
+
+### Unit Test Verification Suite (`tests/unit/test_bm25_index.py`)
+- **Test Modules:**
+  - `test_tokenize_lowercase_alphanumeric`: Verifies lowercasing and punctuation stripping.
+  - `test_tokenize_corpus`: Verifies corpus tokenization output shape.
+  - `test_build_index_and_size`: Verifies build sets `size` and `is_built`.
+  - `test_build_empty_corpus`: Verifies empty corpus leaves index unbuilt.
+  - `test_search_returns_sparse_hits`: Verifies ranked sparse `RetrievalResult` hits.
+  - `test_search_top_k_limit`: Verifies `top_k` caps returned hits.
+  - `test_search_empty_query`: Verifies empty queries return `[]`.
+  - `test_search_before_build_raises`: Verifies `BM25_EMPTY_INDEX` error.
+  - `test_search_invalid_top_k`: Verifies `INVALID_TOP_K` error.
+  - `test_save_and_load_roundtrip`: Verifies save/load preserves corpus and search behavior.
+  - `test_save_empty_index`: Verifies empty index persistence roundtrip.
+  - `test_load_missing_file_raises`: Verifies missing-file `RetrievalError`.
+  - `test_load_invalid_version_raises`: Verifies `BM25_INVALID_VERSION` error.
+  - `test_clear_resets_state`: Verifies clear resets index state.
+- **Runner Registration:** `test_run_project_tests_bm25_index_suite` in `tests/unit/test_runner.py`.
+
 
 

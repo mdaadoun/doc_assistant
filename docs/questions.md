@@ -352,5 +352,25 @@ Embedding provider APIs may return items out-of-order during asynchronous or bat
 **Answer:**
 All third-party SDK and network errors are caught within the adapter layer and wrapped in domain-specific `RetrievalError` or `ConfigurationError` exceptions. This shields presentation and service layers from SDK implementation details and provides structured telemetry in logs.
 
+---
+
+## 15. BM25 Index Manager & Sparse Retrieval
+
+### Q1: Why persist the tokenized corpus as JSON instead of pickling the BM25Okapi object directly?
+**Answer:**
+JSON is human-readable, diffable, and version-controllable. Pickle is opaque, Python-version-sensitive, and a security risk (arbitrary code execution on load). On load we re-instantiate `BM25Okapi` from the tokenized corpus, which is fast and deterministic. The version field (`_INDEX_VERSION = 1`) guards against schema drift.
+
+---
+
+### Q2: Why return RetrievalResult with retrieval_method='sparse' instead of a dedicated BM25 hit type?
+**Answer:**
+Phase 5 requires Reciprocal Rank Fusion (RRF) to merge dense and sparse hits. Using the existing `RetrievalResult` schema means RRF can operate on a uniform list regardless of retrieval method, avoiding duplicate model types and keeping the domain layer clean. The `retrieval_method` field preserves provenance for debug payloads.
+
+---
+
+### Q3: How does the BM25 index manager handle empty queries and unbuilt indexes?
+**Answer:**
+Empty queries (after tokenization) return an empty list immediately — no BM25 scoring is attempted. Searching before build raises `RetrievalError` with code `BM25_EMPTY_INDEX`, forcing callers to build or load first. This fail-fast behavior prevents silent empty results that would mask orchestration bugs.
+
 
 

@@ -119,3 +119,9 @@ def test_run_project_tests_embedding_client_suite() -> None:
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
 
+
+def test_run_project_tests_bm25_index_suite() -> None:
+    """Verify test runner successfully executes the BM25 index test suite."""
+    result = run_project_tests(test_path="tests/unit/test_bm25_index.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
