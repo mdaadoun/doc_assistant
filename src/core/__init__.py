@@ -65,4 +65,3 @@ __all__ = [
     "validate_poetry_config",
     "validate_quality_configs",
 ]
-

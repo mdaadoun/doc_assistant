@@ -26,7 +26,9 @@ class AppBaseError(Exception):
         }
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(code={self.code!r}, message={self.message!r})"
+        return (
+            f"{self.__class__.__name__}(code={self.code!r}, message={self.message!r})"
+        )
 
 
 class ConfigurationError(AppBaseError):
@@ -75,4 +77,3 @@ class GenerationError(AppBaseError):
         details: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message=message, code=code, details=details)
-

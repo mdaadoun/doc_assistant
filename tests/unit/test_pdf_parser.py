@@ -25,11 +25,13 @@ def sample_pdf(tmp_path: Path) -> Path:
     page2 = doc.new_page(width=595, height=842)
     page2.insert_text((50, 100), "Security Policy section and guidelines.")
 
-    doc.set_metadata({
-        "title": "Enterprise SLA 2025",
-        "author": "Helvetia Team",
-        "subject": "Corporate SLA Policy",
-    })
+    doc.set_metadata(
+        {
+            "title": "Enterprise SLA 2025",
+            "author": "Helvetia Team",
+            "subject": "Corporate SLA Policy",
+        }
+    )
     doc.save(pdf_path)
     doc.close()
     return pdf_path

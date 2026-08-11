@@ -44,8 +44,8 @@
 **Entry Criteria:** Schemas and models are defined.
 **Dependencies:** Phase 2.
 **Tasks:**
-- [ ] 3.1: Implement PDF parser (PyMuPDF/pdfplumber) with page-level metadata extraction
-- [ ] 3.2: Implement DOCX parser (python-docx) with structural metadata
+- [x] 3.1: Implement PDF parser (PyMuPDF/pdfplumber) with page-level metadata extraction
+- [x] 3.2: Implement DOCX parser (python-docx) with structural metadata
 - [ ] 3.3: Implement Markdown parser with frontmatter extraction
 - [ ] 3.4: Build recursive structural chunker (512 tokens max, 10% overlap, preserving page boundaries)
 - [ ] 3.5: Create ingestion facade with format dispatcher and fail-fast validation

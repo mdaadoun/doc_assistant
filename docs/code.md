@@ -339,5 +339,16 @@ Defines structured document domain models (`PageMetadata`, `ParsedPage`, `Docume
   - `_parse_pymupdf(path: Path) -> ParsedDocument`: Parses PDF via PyMuPDF (fitz), extracting text, dimensions, and image/table metrics.
   - `_parse_pdfplumber(path: Path) -> ParsedDocument`: Parses PDF via pdfplumber, extracting text, layout bounds, and table metrics.
 
+#### `DOCXParser(BaseDocumentParser)` (`src/ingestion/docx_parser.py`)
+- **Purpose:** DOCX document parser using `python-docx` with structural element extraction (headings, tables, image counts, page breaks) and exception shielding.
+- **Methods:**
+  - `parse(file_path: str | Path) -> ParsedDocument`: Validates file path and non-zero size, opens DOCX via python-docx, delegates payload extraction to `_extract_parsed_document`, and wraps exceptions in `IngestionError`.
+  - `_extract_parsed_document(path: Path, doc: DocxDocument) -> ParsedDocument`: Extracts document-level metadata, iterates `doc.element.body` OpenXML nodes sequentially, accumulates page content across break boundaries, and returns `ParsedDocument`.
+  - `_has_page_break_before(p: Paragraph) -> bool`: Evaluates if paragraph format defines a page break before flag.
+  - `_has_page_break_after(p: Paragraph) -> bool`: Evaluates if paragraph contains explicit XML page break elements (`w:type="page"` or `w:lastRenderedPageBreak`).
+  - `_format_paragraph(p: Paragraph) -> str`: Normalizes paragraph text and prepends Markdown header levels (`#` to `######`) for heading styles.
+  - `_format_table(table: Table) -> str`: Formats table rows into pipe-separated (`|`) plain text representation.
+
+
 
 

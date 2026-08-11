@@ -8,7 +8,9 @@ from models.base import BaseDomainModel
 class ChunkMetadata(BaseDomainModel):
     """Metadata describing document chunk metrics and format."""
 
-    source_format: str = Field(..., description="Source format extension e.g. pdf, docx, md")
+    source_format: str = Field(
+        ..., description="Source format extension e.g. pdf, docx, md"
+    )
     chunk_index: int = Field(..., ge=0, description="0-indexed position in document")
     total_chunks: int = Field(..., gt=0, description="Total chunks in document")
     char_count: int = Field(..., ge=0, description="Character count in chunk")

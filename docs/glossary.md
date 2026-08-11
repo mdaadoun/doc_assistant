@@ -149,8 +149,18 @@ Pydantic V2 domain model representing an entire ingested document with global me
 ### ParsedPage
 Pydantic V2 domain schema representing a single extracted document page with text content and `PageMetadata`.
 
-### PageMetadata
-Domain metric schema recording page number, width, height, rotation, word/char count, and image/table counts.
+### DOCXParser
+Ingestion component implementing `BaseDocumentParser` using `python-docx` to parse DOCX files with structural metadata, heading normalization, and flow-based pagination.
+
+### OpenXML Body Traversal
+Iterating sequentially over raw OpenXML child nodes (`CT_P` and `CT_Tbl`) in `doc.element.body` to maintain original document flow order.
+
+### Flow-Based Pagination
+Inferring page boundaries in non-paginated XML documents using explicit break elements (`w:br w:type=page` or `page_break_before`) and section dimension properties.
+
+### Structural Heading Normalization
+Transforming DOCX paragraph heading styles into standardized Markdown header levels (`#` to `######`) for downstream structural chunking.
+
 
 
 

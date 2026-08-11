@@ -9,7 +9,9 @@ class ChatRequest(BaseDomainModel):
     """User assistant query request schema."""
 
     query: str = Field(..., min_length=1, description="User query prompt")
-    conversation_id: str = Field(..., min_length=1, description="Unique conversation session ID")
+    conversation_id: str = Field(
+        ..., min_length=1, description="Unique conversation session ID"
+    )
     top_k: int = Field(default=5, ge=1, description="Top K context chunks to retrieve")
 
 
@@ -38,7 +40,9 @@ class ChatResponse(BaseDomainModel):
     """Assistant completion response schema with grounded citations."""
 
     answer: str = Field(..., description="Generated answer text")
-    citations: list[Citation] = Field(default_factory=list, description="Supporting citations")
+    citations: list[Citation] = Field(
+        default_factory=list, description="Supporting citations"
+    )
     confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
     grounded: bool = Field(..., description="Context grounding indicator")
     latency_ms: int = Field(..., ge=0, description="Total latency in milliseconds")

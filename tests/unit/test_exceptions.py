@@ -33,7 +33,9 @@ def test_app_base_error_defaults_and_serialization() -> None:
 def test_app_base_error_with_custom_code_and_details() -> None:
     """Verify AppBaseError handles explicit code and contextual metadata dictionary."""
     details = {"component": "database", "retries": 3}
-    err = AppBaseError(message="Connection failed", code="DB_CONN_ERROR", details=details)
+    err = AppBaseError(
+        message="Connection failed", code="DB_CONN_ERROR", details=details
+    )
 
     assert err.code == "DB_CONN_ERROR"
     assert err.details == details

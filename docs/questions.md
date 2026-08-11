@@ -212,6 +212,27 @@ By retaining 1-indexed page numbers and document metadata inside `ParsedPage`, d
 **Answer:**
 Raw exceptions from PyMuPDF or pdfplumber, as well as OS-level file issues (missing files, 0-byte empty files, corrupted streams), are intercepted inside `PDFParser` and converted into domain-specific `IngestionError` instances with structured error codes (`FILE_NOT_FOUND`, `EMPTY_FILE`, `PDF_PARSING_ERROR`).
 
+---
+
+## 8. DOCX Parser & Structural Ingestion
+
+### Q1: How does DOCXParser maintain document flow order when extracting paragraphs and tables?
+**Answer:**
+Instead of separately reading `doc.paragraphs` and `doc.tables` (which loses relative element sequence), `DOCXParser` iterates sequentially over `doc.element.body` OpenXML nodes, dispatching `CT_P` nodes to paragraph formatters and `CT_Tbl` nodes to table formatters in exact document order.
+
+---
+
+### Q2: How are page numbers and page boundaries determined in DOCX files given that DOCX lacks fixed physical page metadata?
+**Answer:**
+`DOCXParser` inspects paragraph formatting for `page_break_before` flags and XML break elements (`w:br type=page` or `w:lastRenderedPageBreak`). When detected, current page buffers are flushed to a `ParsedPage` instance. If no explicit breaks exist, all document content defaults to page 1.
+
+---
+
+### Q3: How are DOCX core properties mapped to domain DocumentMetadata schemas?
+**Answer:**
+`doc.core_properties` attributes (title, author, subject, keywords, created, modified, last_modified_by) are mapped to `DocumentMetadata` fields. Optional attributes like creator are accessed safely via `getattr()` to prevent runtime attribute errors, while dates are formatted as ISO timestamp strings.
+
+
 
 
 

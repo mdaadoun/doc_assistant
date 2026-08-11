@@ -35,8 +35,12 @@ class DocumentMetadata(BaseDomainModel):
     keywords: str | None = Field(default=None, description="Document keywords")
     creator: str | None = Field(default=None, description="Document creator app")
     producer: str | None = Field(default=None, description="PDF producer engine")
-    creation_date: str | None = Field(default=None, description="Creation timestamp string")
-    mod_date: str | None = Field(default=None, description="Modification timestamp string")
+    creation_date: str | None = Field(
+        default=None, description="Creation timestamp string"
+    )
+    mod_date: str | None = Field(
+        default=None, description="Modification timestamp string"
+    )
     total_pages: int = Field(..., ge=0, description="Total pages in document")
     file_size_bytes: int = Field(..., ge=0, description="File size in bytes")
 
@@ -46,6 +50,8 @@ class ParsedDocument(BaseDomainModel):
 
     file_name: str = Field(..., description="Source file name")
     file_path: str = Field(..., description="Source file path")
-    source_format: str = Field(..., description="Source document format extension e.g. pdf")
+    source_format: str = Field(
+        ..., description="Source document format extension e.g. pdf"
+    )
     doc_metadata: DocumentMetadata = Field(..., description="Global document metadata")
     pages: list[ParsedPage] = Field(..., description="List of extracted pages")

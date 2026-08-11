@@ -47,11 +47,8 @@ def test_debug_retrieval_response_immutability_and_validation() -> None:
     with pytest.raises(ValidationError):
         debug.query = "new query"
 
-
-
     with pytest.raises(ValidationError):
         DebugRetrievalResponse.from_dict({})
-
 
 
 def test_finops_metadata_instantiation_and_defaults() -> None:

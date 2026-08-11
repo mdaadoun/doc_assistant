@@ -50,7 +50,9 @@ def test_run_project_tests_domain_schemas_suite() -> None:
 
 def test_run_project_tests_debug_finops_suite() -> None:
     """Verify test runner successfully executes the debug retrieval and FinOps schema test suite."""
-    result = run_project_tests(test_path="tests/unit/test_debug_retrieval_and_finops.py")
+    result = run_project_tests(
+        test_path="tests/unit/test_debug_retrieval_and_finops.py"
+    )
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
 
@@ -69,4 +71,8 @@ def test_run_project_tests_pdf_parser_suite() -> None:
     assert result["exit_code"] == 0
 
 
-
+def test_run_project_tests_docx_parser_suite() -> None:
+    """Verify test runner successfully executes the DOCX parser test suite."""
+    result = run_project_tests(test_path="tests/unit/test_docx_parser.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0

@@ -57,12 +57,24 @@ class PDFParser(BaseDocumentParser):
             doc_meta = DocumentMetadata(
                 title=str(raw_meta.get("title")) if raw_meta.get("title") else None,
                 author=str(raw_meta.get("author")) if raw_meta.get("author") else None,
-                subject=str(raw_meta.get("subject")) if raw_meta.get("subject") else None,
-                keywords=str(raw_meta.get("keywords")) if raw_meta.get("keywords") else None,
-                creator=str(raw_meta.get("creator")) if raw_meta.get("creator") else None,
-                producer=str(raw_meta.get("producer")) if raw_meta.get("producer") else None,
-                creation_date=str(raw_meta.get("creationDate")) if raw_meta.get("creationDate") else None,
-                mod_date=str(raw_meta.get("modDate")) if raw_meta.get("modDate") else None,
+                subject=str(raw_meta.get("subject"))
+                if raw_meta.get("subject")
+                else None,
+                keywords=str(raw_meta.get("keywords"))
+                if raw_meta.get("keywords")
+                else None,
+                creator=str(raw_meta.get("creator"))
+                if raw_meta.get("creator")
+                else None,
+                producer=str(raw_meta.get("producer"))
+                if raw_meta.get("producer")
+                else None,
+                creation_date=str(raw_meta.get("creationDate"))
+                if raw_meta.get("creationDate")
+                else None,
+                mod_date=str(raw_meta.get("modDate"))
+                if raw_meta.get("modDate")
+                else None,
                 total_pages=len(doc),
                 file_size_bytes=path.stat().st_size,
             )
@@ -120,13 +132,27 @@ class PDFParser(BaseDocumentParser):
                 raw_meta: dict[str, Any] = pdf.metadata or {}
                 doc_meta = DocumentMetadata(
                     title=str(raw_meta.get("Title")) if raw_meta.get("Title") else None,
-                    author=str(raw_meta.get("Author")) if raw_meta.get("Author") else None,
-                    subject=str(raw_meta.get("Subject")) if raw_meta.get("Subject") else None,
-                    keywords=str(raw_meta.get("Keywords")) if raw_meta.get("Keywords") else None,
-                    creator=str(raw_meta.get("Creator")) if raw_meta.get("Creator") else None,
-                    producer=str(raw_meta.get("Producer")) if raw_meta.get("Producer") else None,
-                    creation_date=str(raw_meta.get("CreationDate")) if raw_meta.get("CreationDate") else None,
-                    mod_date=str(raw_meta.get("ModDate")) if raw_meta.get("ModDate") else None,
+                    author=str(raw_meta.get("Author"))
+                    if raw_meta.get("Author")
+                    else None,
+                    subject=str(raw_meta.get("Subject"))
+                    if raw_meta.get("Subject")
+                    else None,
+                    keywords=str(raw_meta.get("Keywords"))
+                    if raw_meta.get("Keywords")
+                    else None,
+                    creator=str(raw_meta.get("Creator"))
+                    if raw_meta.get("Creator")
+                    else None,
+                    producer=str(raw_meta.get("Producer"))
+                    if raw_meta.get("Producer")
+                    else None,
+                    creation_date=str(raw_meta.get("CreationDate"))
+                    if raw_meta.get("CreationDate")
+                    else None,
+                    mod_date=str(raw_meta.get("ModDate"))
+                    if raw_meta.get("ModDate")
+                    else None,
                     total_pages=len(pdf.pages),
                     file_size_bytes=path.stat().st_size,
                 )
@@ -164,5 +190,9 @@ class PDFParser(BaseDocumentParser):
             raise IngestionError(
                 f"Failed to parse PDF with pdfplumber: {e}",
                 code="PDF_PARSING_ERROR",
-                details={"file_path": str(path), "engine": "pdfplumber", "error": str(e)},
+                details={
+                    "file_path": str(path),
+                    "engine": "pdfplumber",
+                    "error": str(e),
+                },
             ) from e
