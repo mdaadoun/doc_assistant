@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     # API keys
     openai_api_key: str = Field(default="", description="OpenAI API key")
     cohere_api_key: str = Field(default="", description="Cohere API key")
+    gemini_api_key: str = Field(default="", description="Gemini API key")
 
     # Qdrant Vector Store
     qdrant_host: str = Field(default="localhost", description="Qdrant host")
@@ -69,11 +70,16 @@ class Settings(BaseSettings):
         """Check if Cohere API key is set."""
         return bool(self.cohere_api_key and self.cohere_api_key.strip())
 
+    def is_gemini_configured(self) -> bool:
+        """Check if Gemini API key is set."""
+        return bool(self.gemini_api_key and self.gemini_api_key.strip())
+
     def get_api_key_status(self) -> dict[str, bool]:
         """Return validation map of required external API key credentials."""
         return {
             "openai": self.is_openai_configured(),
             "cohere": self.is_cohere_configured(),
+            "gemini": self.is_gemini_configured(),
         }
 
 

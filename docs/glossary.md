@@ -218,4 +218,17 @@ A similarity metric measuring the cosine of the angle between two normalized den
 ### Deterministic Point UUID
 A UUIDv5 hash derived from an arbitrary string identifier and a namespace UUID, guaranteeing identical UUID outputs for identical input chunk keys.
 
+### Embedding Client Adapter
+Unified infrastructure component that converts text input sequences into dense floating-point vector representations across multiple provider APIs.
+
+### text-embedding-3-small
+OpenAI highly efficient vector embedding model producing 1536-dimensional representations optimized for retrieval and semantic search tasks.
+
+### Deterministic Mock Embedding
+Offline pseudo-embedding generator using cryptographic hashing to produce unit-normalized float vectors for reproducible unit tests.
+
+### Batch Chunking
+Partitioning large sequences of document chunks into fixed-size request sub-batches to adhere to remote API payload limits.
+
+
 

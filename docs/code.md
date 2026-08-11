@@ -483,4 +483,59 @@ Provides `VectorStoreAdapter` encapsulating Qdrant vector database client operat
   - `delete_points(point_ids: Sequence[str], collection_name: str | None = None) -> bool`: Deletes points by their string chunk keys using UUIDv5 conversion and `PointIdsList` selector.
   - `delete_collection(collection_name: str | None = None) -> bool`: Removes target vector collection from Qdrant if present.
 
+---
+
+## 17. Embedding Client Adapters (`src/clients/`)
+
+### Overview
+Provides production-ready vector embedding adapters for multi-provider generation (OpenAI `text-embedding-3-small`, Google Gemini `text-embedding-004`, and deterministic offline `MockEmbeddingAdapter`) with strategy pattern dispatcher `EmbeddingClientAdapter`, automatic payload sub-batching, response index ordering preservation, and domain exception shielding (`RetrievalError`, `ConfigurationError`).
+
+### Infrastructure Classes & Interfaces
+
+#### `BaseEmbeddingAdapter` (`src/clients/base_embedding.py`)
+- **Purpose:** Abstract base class defining uniform embedding generation interface and batch partitioning helpers.
+- **Abstract Properties & Methods:**
+  - `dimension: int`: Vector dimension output capacity.
+  - `model_name: str`: Embedding model string identifier.
+  - `embed_text(text: str) -> list[float]`: Generates vector embedding for single string input.
+  - `embed_batch(texts: Sequence[str], batch_size: int = 100) -> list[list[float]]`: Generates vector embeddings for a sequence of text inputs in sub-batches.
+- **Helper Methods:**
+  - `_validate_text(text: str) -> str`: Strips whitespace and normalizes text string inputs.
+  - `_chunk_batch(texts: Sequence[str], batch_size: int) -> list[list[str]]`: Divides sequence of texts into chunks of `batch_size`.
+
+#### `OpenAIEmbeddingAdapter` (`src/clients/openai_embedding.py`)
+- **Purpose:** Adapter encapsulating OpenAI Embeddings API, defaulting to `text-embedding-3-small` with 1536-dimensional vectors.
+- **Parameters:**
+  - `model_name: str | None = None`: Target OpenAI embedding model (defaults to `Settings.embedding_model`).
+  - `api_key: str | None = None`: OpenAI API key (defaults to `Settings.openai_api_key`).
+  - `dimension: int | None = None`: Optional output vector dimension.
+  - `client: OpenAI | Any | None = None`: Injected client instance for testing.
+- **Methods:**
+  - `embed_text(text: str) -> list[float]`: Single string vector embedding.
+  - `embed_batch(texts: Sequence[str], batch_size: int = 100) -> list[list[float]]`: Batched vector generation with sorting by response `index` field.
+
+#### `GeminiEmbeddingAdapter` (`src/clients/gemini_embedding.py`)
+- **Purpose:** Adapter encapsulating Google Gemini Embeddings API (`text-embedding-004`).
+- **Parameters:**
+  - `model_name: str = "text-embedding-004"`: Target Gemini embedding model identifier.
+  - `api_key: str | None = None`: Gemini API key (defaults to `Settings.gemini_api_key`).
+  - `dimension: int = 768`: Gemini vector dimension.
+  - `client: Any | None = None`: Injected client instance for testing.
+
+#### `MockEmbeddingAdapter` (`src/clients/mock_embedding.py`)
+- **Purpose:** Deterministic pseudo-embedding generator using cryptographic hashing for unit testing and offline development.
+- **Parameters:**
+  - `model_name: str = "mock-embedding-v1"`: Mock model identifier.
+  - `dimension: int = 1536`: Target vector dimension size.
+
+#### `EmbeddingClientAdapter` (`src/clients/embedding.py`)
+- **Purpose:** Facade dispatcher unifying provider strategy resolution (`openai`, `gemini`, `mock`, `auto`).
+- **Parameters:**
+  - `provider: str = "openai"`: Target provider strategy name (`openai`, `gemini`, `mock`, `auto`).
+  - `model_name: str | None = None`: Target model string identifier.
+  - `api_key: str | None = None`: Optional API key override.
+  - `dimension: int | None = None`: Vector dimension capacity override.
+  - `client: Any | None = None`: Optional pre-configured client object for dependency injection.
+
+
 

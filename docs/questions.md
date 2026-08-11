@@ -332,4 +332,25 @@ All interaction methods (`ensure_collection`, `upsert_chunks`, `search`, `get_co
 **Answer:**
 `QdrantClient` natively supports `location=":memory:"`. The `VectorStoreAdapter` constructor accepts an optional pre-configured `QdrantClient` instance, allowing pytest fixtures to inject in-memory instances for fast, isolated, and offline unit testing.
 
+---
+
+## 14. Embedding Client Adapters & Multi-Provider Architecture
+
+### Q1: How does the EmbeddingClientAdapter handle provider selection and fallback when API keys are not present in the environment?
+**Answer:**
+When instantiated with `provider="auto"`, `EmbeddingClientAdapter` checks settings for configured OpenAI or Gemini API credentials. If no valid credentials are found, it logs a warning and gracefully selects `MockEmbeddingAdapter`, ensuring offline development and unit tests execute without external network calls.
+
+---
+
+### Q2: Why is response ordering preservation critical during batch embedding generation for document indexing?
+**Answer:**
+Embedding provider APIs may return items out-of-order during asynchronous or batched execution. OpenAI Embedding API returns items with an `index` attribute. Sorting response items by index ensures exact alignment between `ChunkDocument` IDs and vector embeddings before upserting to Qdrant.
+
+---
+
+### Q3: What domain exception strategy is enforced across all embedding client implementations?
+**Answer:**
+All third-party SDK and network errors are caught within the adapter layer and wrapped in domain-specific `RetrievalError` or `ConfigurationError` exceptions. This shields presentation and service layers from SDK implementation details and provides structured telemetry in logs.
+
+
 
