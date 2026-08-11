@@ -192,5 +192,26 @@ Exception Shielding is an architectural boundary pattern where infrastructure/ad
 **Answer:**
 In production RAG applications, error diagnostics require context beyond a simple string message—such as the target Qdrant collection, batch index, token counts, or model identifiers. Attaching a typed details dictionary (`dict[str, Any]`) allows service components to attach this diagnostic metadata at the point of failure. The `to_dict()` method standardizes error serialization for structured JSON loggers (like structlog) and API middleware, enabling automated alert filtering, metric aggregation, and rapid root-cause analysis.
 
+---
+
+## 7. PDF Parser & Page-Level Ingestion
+
+### Q1: Why support both PyMuPDF and pdfplumber engines in the document assistant ingestion pipeline?
+**Answer:**
+PyMuPDF (fitz) is extremely fast and light on resources for text extraction across large document sets, whereas pdfplumber excels at precise bounding-box and table layout analysis. Abstracting both behind `BaseDocumentParser` gives high performance by default with engine flexibility.
+
+---
+
+### Q2: How does capturing page-level metadata during parsing support citation generation?
+**Answer:**
+By retaining 1-indexed page numbers and document metadata inside `ParsedPage`, downstream chunkers retain precise page provenance. When the LLM generates answers, citations can point directly to specific document titles and page numbers.
+
+---
+
+### Q3: How is Exception Shielding applied in the PDF parser implementation?
+**Answer:**
+Raw exceptions from PyMuPDF or pdfplumber, as well as OS-level file issues (missing files, 0-byte empty files, corrupted streams), are intercepted inside `PDFParser` and converted into domain-specific `IngestionError` instances with structured error codes (`FILE_NOT_FOUND`, `EMPTY_FILE`, `PDF_PARSING_ERROR`).
+
+
 
 

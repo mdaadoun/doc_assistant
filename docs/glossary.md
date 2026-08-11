@@ -133,5 +133,25 @@ Domain exception raised during dense vector search, BM25 sparse search, RRF fusi
 ### GenerationError
 Domain exception raised during LLM generation, SSE response streaming, or citation extraction and validation failures.
 
+---
+
+## 📄 9. Document Ingestion & Parsers
+
+### BaseDocumentParser
+Abstract base class contract requiring a `parse(file_path)` method returning a `ParsedDocument` domain model.
+
+### PDFParser
+Ingestion component implementing `BaseDocumentParser` to parse PDF files using PyMuPDF or pdfplumber engines with page-level metadata extraction.
+
+### ParsedDocument
+Pydantic V2 domain model representing an entire ingested document with global metadata and ordered `ParsedPage` instances.
+
+### ParsedPage
+Pydantic V2 domain schema representing a single extracted document page with text content and `PageMetadata`.
+
+### PageMetadata
+Domain metric schema recording page number, width, height, rotation, word/char count, and image/table counts.
+
+
 
 

@@ -301,4 +301,43 @@ Defines `AppBaseError`, the root exception for all application errors, and its s
 - **Purpose:** Raised on LLM generation errors, stream interruptions, or citation extraction and validation failures.
 - **Default Code:** `"GENERATION_ERROR"`.
 
+---
+
+## 12. Parsed Document Schemas & PDF Parser (`src/models/document.py`, `src/ingestion/`)
+
+### Overview
+Defines structured document domain models (`PageMetadata`, `ParsedPage`, `DocumentMetadata`, `ParsedDocument`) and document parser interfaces (`BaseDocumentParser`, `PDFParser`) supporting PyMuPDF and pdfplumber engines with page-level metadata extraction and exception shielding.
+
+### Classes & Functions
+
+#### `PageMetadata(BaseDomainModel)` (`src/models/document.py`)
+- **Purpose:** Represents per-page dimensions, orientation, and content metrics.
+- **Fields:** `page_number` (int, ge=1), `width` (float, ge=0.0), `height` (float, ge=0.0), `rotation` (int), `char_count` (int, ge=0), `word_count` (int, ge=0), `image_count` (int, ge=0), `table_count` (int, ge=0).
+
+#### `ParsedPage(BaseDomainModel)` (`src/models/document.py`)
+- **Purpose:** Represents an extracted page containing text payload and metadata.
+- **Fields:** `page_number` (int, ge=1), `text` (str), `metadata` (`PageMetadata`).
+
+#### `DocumentMetadata(BaseDomainModel)` (`src/models/document.py`)
+- **Purpose:** Global document-level metadata header.
+- **Fields:** `title` (str | None), `author` (str | None), `subject` (str | None), `keywords` (str | None), `creator` (str | None), `producer` (str | None), `creation_date` (str | None), `mod_date` (str | None), `total_pages` (int, ge=0), `file_size_bytes` (int, ge=0).
+
+#### `ParsedDocument(BaseDomainModel)` (`src/models/document.py`)
+- **Purpose:** Canonical structured document representation produced by all document parsers.
+- **Fields:** `file_name` (str), `file_path` (str), `source_format` (str), `doc_metadata` (`DocumentMetadata`), `pages` (list[`ParsedPage`]).
+
+#### `BaseDocumentParser(ABC)` (`src/ingestion/base.py`)
+- **Purpose:** Abstract interface contract for format-specific document parsers.
+- **Methods:**
+  - `parse(file_path: str | Path) -> ParsedDocument`: Abstract method that parses a document file into a `ParsedDocument`.
+
+#### `PDFParser(BaseDocumentParser)` (`src/ingestion/pdf_parser.py`)
+- **Purpose:** PDF document parser supporting PyMuPDF (`pymupdf`, default) and `pdfplumber` engines with file validation and exception shielding.
+- **Parameters:** `engine: str = "pymupdf"` (valid values: `"pymupdf"`, `"pdfplumber"`).
+- **Methods:**
+  - `parse(file_path: str | Path) -> ParsedDocument`: Validates file existence and size, dispatches to engine-specific parser helper, and returns `ParsedDocument`.
+  - `_parse_pymupdf(path: Path) -> ParsedDocument`: Parses PDF via PyMuPDF (fitz), extracting text, dimensions, and image/table metrics.
+  - `_parse_pdfplumber(path: Path) -> ParsedDocument`: Parses PDF via pdfplumber, extracting text, layout bounds, and table metrics.
+
+
 
