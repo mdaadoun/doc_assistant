@@ -358,6 +358,30 @@ Defines structured document domain models (`PageMetadata`, `ParsedPage`, `Docume
   - `_count_tables(text: str) -> int`: Counts contiguous Markdown formatted table blocks (`| ... |`).
   - `_get_str(fm: dict[str, Any], key: str) -> str | None`: Safely extracts string values from frontmatter dictionary.
 
+---
+
+## 13. Recursive Structural Chunker (`src/ingestion/recursive_chunker.py`)
+
+### Overview
+Implements `RecursiveStructuralChunker` for document ingestion, dividing `ParsedDocument` instances into standardized `ChunkDocument` models (max 512 tokens, 10% overlap) using hierarchical structural splitting (`["\n\n", "\n", ". ", " ", ""]`) while strictly preserving page boundaries.
+
+### Classes & Functions
+
+#### `RecursiveStructuralChunker` (`src/ingestion/recursive_chunker.py`)
+- **Purpose:** Hierarchical text chunker enforcing token bounds, overlap ratios, page boundary isolation, and domain exception shielding.
+- **Parameters:**
+  - `max_tokens: int = 512`: Maximum token capacity per chunk.
+  - `overlap_percentage: float = 0.10`: Ratio of chunk capacity prepended from preceding split (default 10% = 51 tokens).
+  - `separators: Sequence[str] | None`: Custom sequence of structural delimiters (defaults to `["\n\n", "\n", ". ", " ", ""]`).
+- **Methods:**
+  - `count_tokens(text: str) -> int`: Calculates BPE token count via `tiktoken` (`cl100k_base`) with an offline density fallback formula `max(word_est, char_est)`.
+  - `chunk_document(document: ParsedDocument) -> list[ChunkDocument]`: Processes document page by page, constructs `ChunkDocument` schemas with global 0-indexed positions and metadata metrics.
+  - `chunk_page_text(text: str) -> list[str]`: Splits single page text payload using `_recursive_split` and applies boundary overlap via `_apply_overlap`.
+  - `_recursive_split(text: str, sep_idx: int) -> list[str]`: Recursively evaluates separator cascade to group text into segments $\le \text{max\_tokens}$.
+  - `_hard_split(text: str) -> list[str]`: Fallback slice for unbroken text blocks lacking structural delimiters.
+  - `_apply_overlap(splits: list[str]) -> list[str]`: Prepends trailing words from previous split to current split up to `overlap_tokens` capacity.
+
+
 
 
 

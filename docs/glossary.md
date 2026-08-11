@@ -170,6 +170,19 @@ Metadata block located at the beginning of a Markdown document formatted in YAML
 ### PageBreakMarker
 Special HTML comment or control keyword in document text (`<!-- pagebreak -->`, `\pagebreak`) used to delimit logical page boundaries for chunking provenance.
 
+### Recursive Structural Chunking
+A text segmentation strategy that recursively splits document text using a hierarchy of structural delimiters (paragraphs, lines, sentences, words) to produce chunks constrained within maximum token limits.
+
+### Page Boundary Preservation
+An ingestion rule requiring text chunks to remain strictly scoped within individual page boundaries to preserve accurate source page attribution.
+
+### Boundary Overlap Ratio
+The percentage (e.g., 10%) of maximum chunk token capacity prepended from the tail of a preceding split to maintain semantic continuity across adjacent chunks.
+
+### Fallback Token Density Estimator
+A deterministic token counting algorithm utilizing combined word and character density metrics to estimate token counts when offline or BPE tokenizers are unavailable.
+
+
 
 
 

@@ -84,3 +84,11 @@ def test_run_project_tests_markdown_parser_suite() -> None:
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
 
+
+def test_run_project_tests_recursive_chunker_suite() -> None:
+    """Verify test runner successfully executes the recursive chunker test suite."""
+    result = run_project_tests(test_path="tests/unit/test_recursive_chunker.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+

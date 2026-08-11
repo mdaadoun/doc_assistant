@@ -252,6 +252,27 @@ Markdown files are continuous text without physical pages. Supporting explicit p
 **Answer:**
 When frontmatter is missing or lacks a `title` key, `MarkdownParser` scans the Markdown body text using the regex `^#\s+(.+)$` to extract the first level-1 heading string as the document title.
 
+---
+
+## 10. Recursive Structural Chunker & Token Management
+
+### Q1: Why preserve page boundaries during text chunking rather than merging text across consecutive pages?
+**Answer:**
+Preserving page boundaries ensures exact citation provenance for RAG platforms. When chunks are bounded by single pages, every retrieved `ChunkDocument` can cleanly point to a specific page number without ambiguities or inaccurate citation tags in LLM responses.
+
+---
+
+### Q2: How does the recursive chunker handle continuous text or code blocks lacking natural whitespace or newline separators?
+**Answer:**
+The chunker falls through its separator cascade (paragraph $\to$ line $\to$ sentence $\to$ word $\to$ character). If no natural whitespace separator exists, it triggers a hard split fallback slicing text into fixed character windows scaled to the maximum token limit.
+
+---
+
+### Q3: How is 10% overlap calculated and applied between consecutive structural chunks?
+**Answer:**
+The chunker calculates `overlap_tokens` as `int(max_tokens * overlap_percentage)`. For consecutive splits on a page, it extracts up to `overlap_tokens` from the tail of the preceding chunk (aligned to word boundaries) and prepends them to the current chunk while ensuring the total token count stays under `max_tokens`.
+
+
 
 
 
