@@ -312,3 +312,24 @@ The `DifferentialTracker` scans the target corpus against the manifest. Files pr
 **Answer:**
 The scanning step has a time complexity of $O(N \cdot \frac{B}{C})$, where $N$ is the number of target files, $B$ is the average file size in bytes, and $C$ is the read buffer chunk size (64KB). Scanning reads raw file streams sequentially in memory-efficient buffers.
 
+---
+
+## 13. Vector Store Adapter & Qdrant Integration
+
+### Q1: Why use UUIDv5 for mapping chunk identifiers to Qdrant point IDs instead of random UUIDv4?
+**Answer:**
+Qdrant requires point IDs to be valid UUID strings or integers. UUIDv5 computes a deterministic UUID from a namespace and a string key. Using UUIDv5 ensures idempotency: re-ingesting or updating the same document chunk generates the exact same point ID in Qdrant, overwriting the existing point instead of creating duplicate entries.
+
+---
+
+### Q2: How does VectorStoreAdapter isolate the rest of the application from Qdrant client errors?
+**Answer:**
+All interaction methods (`ensure_collection`, `upsert_chunks`, `search`, `get_count`, `delete_points`, `delete_collection`) wrap internal Qdrant API calls in try-except blocks that log the error with `structlog` and re-raise a domain-level `RetrievalError` with structured context details.
+
+---
+
+### Q3: How is unit testing performed for Qdrant operations without running an external Qdrant Docker container?
+**Answer:**
+`QdrantClient` natively supports `location=":memory:"`. The `VectorStoreAdapter` constructor accepts an optional pre-configured `QdrantClient` instance, allowing pytest fixtures to inject in-memory instances for fast, isolated, and offline unit testing.
+
+

@@ -453,3 +453,34 @@ Provides incremental ingestion functionality by tracking file content hashes and
   - `load_manifest(path: str | Path) -> StateManifest`: Parses manifest JSON file into structured `StateManifest` schema.
   - `save_manifest(path: str | Path | None = None) -> Path`: Serializes current state manifest to formatted JSON file.
 
+---
+
+## 16. Qdrant Vector Store Adapter (`src/retrieval/vector_store.py`)
+
+### Overview
+Provides `VectorStoreAdapter` encapsulating Qdrant vector database client operations, including collection lifecycle management, COSINE distance similarity search, 1536-dimensional dense embedding upserts, point metadata filtering, and deletion operations with domain exception shielding.
+
+### Helper Functions & Classes
+
+#### `_to_valid_uuid(id_str: str) -> str` (`src/retrieval/vector_store.py`)
+- **Purpose:** Converts arbitrary string chunk keys into valid Qdrant UUID strings via deterministic UUIDv5 namespace mapping.
+
+#### `VectorStoreAdapter` (`src/retrieval/vector_store.py`)
+- **Purpose:** Infrastructure adapter wrapping Qdrant database interactions with standardized domain exception handling (`RetrievalError`).
+- **Parameters:**
+  - `client: QdrantClient | None = None`: Optional pre-configured Qdrant client instance for dependency injection or in-memory testing (`:memory:`).
+  - `host: str | None = None`: Hostname for Qdrant server connection (defaults to `Settings.qdrant_host`).
+  - `port: int | None = None`: Port number for Qdrant connection (defaults to `Settings.qdrant_port`).
+  - `collection_name: str | None = None`: Target vector collection name (defaults to `Settings.qdrant_collection`).
+  - `vector_dim: int = 1536`: Dimension capacity for vector embeddings (defaults to 1536).
+  - `distance: Distance = Distance.COSINE`: Vector similarity distance metric (defaults to `Distance.COSINE`).
+- **Methods:**
+  - `collection_exists(collection_name: str | None = None) -> bool`: Evaluates whether the target collection exists in Qdrant.
+  - `ensure_collection(collection_name: str | None = None, vector_dim: int | None = None, distance: Distance | None = None, recreate: bool = False) -> bool`: Verifies collection presence and creates configured Qdrant collection if missing or when `recreate=True`.
+  - `upsert_chunks(chunks: Sequence[ChunkDocument], embeddings: Sequence[list[float]], collection_name: str | None = None) -> int`: Maps `ChunkDocument` schemas and dense vector embeddings into Qdrant `PointStruct` objects using UUIDv5 keys and upserts them into the collection.
+  - `search(query_vector: list[float], top_k: int = 5, collection_name: str | None = None, filter_criteria: dict[str, Any] | None = None) -> list[RetrievalResult]`: Executes similarity search using `query_points`, applies metadata match filters if provided, and maps hits to `RetrievalResult` domain schemas.
+  - `get_count(collection_name: str | None = None) -> int`: Returns the total point count contained within the target collection.
+  - `delete_points(point_ids: Sequence[str], collection_name: str | None = None) -> bool`: Deletes points by their string chunk keys using UUIDv5 conversion and `PointIdsList` selector.
+  - `delete_collection(collection_name: str | None = None) -> bool`: Removes target vector collection from Qdrant if present.
+
+

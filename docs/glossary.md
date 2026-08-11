@@ -209,3 +209,13 @@ Categorized summary payload containing lists of new, changed, deleted, and uncha
 ### Differential Result
 Comprehensive execution payload containing the differential delta, newly generated document chunks, and processing statistics.
 
+### Vector Store Adapter
+An abstraction layer wrapping external vector database clients (e.g. Qdrant) to manage collections, upsert embeddings, and execute similarity searches.
+
+### COSINE Distance
+A similarity metric measuring the cosine of the angle between two normalized dense vector representations.
+
+### Deterministic Point UUID
+A UUIDv5 hash derived from an arbitrary string identifier and a namespace UUID, guaranteeing identical UUID outputs for identical input chunk keys.
+
+
