@@ -300,3 +300,28 @@ Constant default of 50 candidate hits fetched from sparse BM25 search for downst
 ### Sparse BM25 Search
 Lexical retrieval stage that scores query tokens against the tokenized corpus using the Okapi BM25 ranking function, capturing exact keyword precision to complement dense semantic search.
 
+---
+
+## 🔀 14. Reciprocal Rank Fusion (RRF) & Hybrid Fusion
+
+### RRF (Reciprocal Rank Fusion)
+Fusion algorithm that merges multiple ranked result lists by summing `1/(k + rank)` per item; items present in more lists rank higher regardless of raw score magnitudes or scales.
+
+### Rank constant k
+Smoothing constant in the RRF formula that dampens rank dominance; `k=60` is the standard value from the original RRF paper (Cormack et al.), used as the default in `RRF_K_DEFAULT`.
+
+### Fused score
+Sum of reciprocal-rank contributions across all input lists for a given `chunk_id`; used as the final `relevance_score` on fused `RetrievalResult` instances.
+
+### retrieval_method='rrf'
+Marker stamped on fused `RetrievalResult` instances to distinguish them from `'dense'` and `'sparse'` hits in retrieval debug payloads.
+
+### RRFusionService
+Hybrid fusion service that composes the dense top-50 hits and sparse top-50 hits into a single fused ranking using the Reciprocal Rank Fusion formula, with deterministic tie-breaking by `chunk_id` and dense payload preference on duplicates.
+
+### RRF_K_DEFAULT
+Constant default of 60 for the rank-smoothing constant `k` used in the RRF formula `1/(k + rank)`.
+
+### RRF_TOP_K_DEFAULT
+Constant default of 50 fused output hits produced by RRF fusion, matching the dense and sparse candidate pool sizes.
+

@@ -132,3 +132,10 @@ def test_run_project_tests_sparse_search_suite() -> None:
     result = run_project_tests(test_path="tests/unit/test_sparse_search.py")
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
+
+
+def test_run_project_tests_rrf_fusion_suite() -> None:
+    """Verify test runner successfully executes the RRF fusion test suite."""
+    result = run_project_tests(test_path="tests/unit/test_rrf_fusion.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0

@@ -68,9 +68,9 @@
 **Entry Criteria:** Indexed data exists in Qdrant and BM25.
 **Dependencies:** Phase 4.
 **Tasks:**
-- [ ] 5.1: Implement dense vector search (Qdrant, top 50)
-- [ ] 5.2: Implement sparse BM25 search (top 50)
-- [ ] 5.3: Build Reciprocal Rank Fusion (RRF, k=60) merging dense + sparse hits
+- [x] 5.1: Implement dense vector search (Qdrant, top 50)
+- [x] 5.2: Implement sparse BM25 search (top 50)
+- [x] 5.3: Build Reciprocal Rank Fusion (RRF, k=60) merging dense + sparse hits
 - [ ] 5.4: Expose retrieval debug data structure (dense scores, sparse scores, fused ranks)
 **Deliverables:** Working hybrid retrieval returning fused ranked candidates.
 **Verification:** Unit tests asserting RRF produces correct rankings, debug payload populated.

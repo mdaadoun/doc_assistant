@@ -432,3 +432,23 @@ The roadmap specifies top-50 for both dense and sparse retrieval. Equal candidat
 **Answer:**
 Consistency with DenseSearchService and ergonomic callers. A non-positive top_k is a caller bug, but silently clamping to 1 yields a valid, predictable result. BM25IndexManager still raises on top_k<=0 as a defensive lower-layer guard.
 
+---
+
+## 19. Reciprocal Rank Fusion & Hybrid Retrieval
+
+### Q1: Why use RRF with k=60 instead of normalizing dense and sparse scores and averaging them?
+**Answer:**
+Dense cosine and BM25 scores live on different scales and distributions; naive normalization is brittle to query drift and index changes. RRF converts ranks to `1/(k+rank)` contributions, making fusion robust to score calibration while still rewarding hits present in both lists.
+
+---
+
+### Q2: How does RRF handle a chunk appearing in both dense and sparse top-50 lists?
+**Answer:**
+Its fused score is the sum of the two reciprocal contributions, e.g., rank 1 in both lists yields `1/61 + 1/61 ≈ 0.0328` with k=60. This gives cross-retriever agreement priority over single-list high ranks, which is the core RRF design intent.
+
+---
+
+### Q3: Why prefer deterministic tie-breaking by chunk_id in the RRF sort?
+**Answer:**
+Without a tie-breaker, items with equal fused scores would be ordered by dict insertion order, which depends on input list ordering (dense vs sparse) and is not stable across calls. Sorting by `(-score, chunk_id)` guarantees reproducible rankings, important for caching, evaluation, and debugging.
+

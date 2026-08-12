@@ -714,3 +714,61 @@ Implements `SparseSearchService`, the query-time sparse retrieval stage of the h
   - `test_search_returns_custom_top_k_hits`: Verifies custom `top_k` returns exactly that many hits when available.
 - **Runner Registration:** `test_run_project_tests_sparse_search_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 22. Reciprocal Rank Fusion Service (`src/retrieval/rrf_fusion.py`)
+
+### Overview
+Implements `RRFusionService`, the hybrid fusion stage of Phase 5.3. It merges the top-50 dense vector hits (`DenseSearchService`) and top-50 sparse BM25 hits (`SparseSearchService`) into a single fused ranking using the Reciprocal Rank Fusion formula `score = Σ 1/(k + rank)` with default rank constant `k=60`. Output is a `RetrievalResult` list marked with `retrieval_method="rrf"`, ready for the Phase 5.4 debug payload and the Phase 6 re-ranker.
+
+### Module Constants
+
+#### `RRF_K_DEFAULT = 60`
+- **Purpose:** Default rank-smoothing constant in the RRF formula `1/(k + rank)`, dampening the dominance of top-ranked hits.
+
+#### `RRF_TOP_K_DEFAULT = 50`
+- **Purpose:** Default fused output limit, matching dense and sparse candidate pool sizes for balanced fusion.
+
+#### `RRF_METHOD = "rrf"`
+- **Purpose:** `retrieval_method` marker stamped on fused `RetrievalResult` instances to distinguish them from dense/sparse hits in debug payloads.
+
+### Service Class
+
+#### `RRFusionService` (`src/retrieval/rrf_fusion.py`)
+- **Purpose:** Fuses multiple ranked result lists via reciprocal rank scores, deterministically and score-calibration-agnostically.
+- **Parameters:**
+  - `k: int = RRF_K_DEFAULT`: Rank constant in the reciprocal-rank formula (clamped to a minimum of 1).
+  - `top_k: int = RRF_TOP_K_DEFAULT`: Default fused output limit (clamped to a minimum of 1).
+- **Methods:**
+  - `fuse(dense_hits: list[RetrievalResult], sparse_hits: list[RetrievalResult], top_k: int | None = None) -> list[RetrievalResult]`: Resolves `target_top_k = max(1, top_k or self.top_k)`; fast-paths empty inputs (both lists empty -> `[]`); iterates `(dense_hits, "dense")` then `(sparse_hits, "sparse")`, accumulating `score[chunk_id] += 1/(k + rank)` for each 1-based rank; stores first-seen payload per `chunk_id` with dense payload overwriting sparse on duplicates; sorts chunk IDs by `(-score, chunk_id)`, slices to `target_top_k`, builds fused `RetrievalResult` items with `relevance_score = score` and `retrieval_method = "rrf"`, logs `rrf_fusion_completed`, and returns the fused list.
+
+### Fuse Flow
+```text
+fuse(dense_hits, sparse_hits, top_k=None)
+  -> target_top_k = max(1, top_k or self.top_k)
+  -> if not dense_hits and not sparse_hits: log rrf_no_hits; return []
+  -> for (hits, method) in ((dense_hits, "dense"), (sparse_hits, "sparse")):
+       for rank, hit in enumerate(hits, start=1):
+         scores[hit.chunk_id] += 1.0 / (k + rank)
+         payloads[hit.chunk_id] = hit  # dense overwrites sparse on duplicate
+  -> ranked_ids = sorted(scores.keys(), key=lambda cid: (-scores[cid], cid))[:target_top_k]
+  -> fused = [RetrievalResult(chunk_id, text, file_name, page_number, scores[cid], "rrf") for cid in ranked_ids]
+  -> log rrf_fusion_completed(dense_hits, sparse_hits, len(fused)); return fused
+```
+
+### Package Exports (`src/retrieval/__init__.py`)
+- **Purpose:** Exposes `RRFusionService`, `RRF_K_DEFAULT`, `RRF_TOP_K_DEFAULT`, and `RRF_METHOD` alongside `BM25IndexManager`, `DenseSearchService`, `SparseSearchService`, `IndexingOrchestrator`, `IndexingResult`, `VectorStoreAdapter`, `tokenize`, and `tokenize_corpus`.
+
+### Unit Test Verification Suite (`tests/unit/test_rrf_fusion.py`)
+- **Test Modules:**
+  - `test_default_constants`: Verifies `RRF_K_DEFAULT == 60`, `RRF_TOP_K_DEFAULT == 50`, `RRF_METHOD == "rrf"`.
+  - `test_init_defaults_and_clamping`: Verifies default `k`/`top_k` and clamping of non-positive values to 1.
+  - `test_fuse_merges_and_ranks_by_rrf_score`: Verifies shared hits rank higher and unique hits are preserved.
+  - `test_fuse_uses_reciprocal_rank_formula`: Verifies fused score equals `1/(k+rank)` summed across lists.
+  - `test_fuse_returns_top_k`: Verifies fused output is limited to configured `top_k`.
+  - `test_fuse_custom_top_k_overrides_default`: Verifies per-call `top_k` overrides configured default.
+  - `test_fuse_empty_lists_returns_empty`: Verifies two empty lists return `[]`.
+  - `test_fuse_single_list_only`: Verifies fusion works with a single non-empty list.
+  - `test_fuse_dense_payload_preferred_on_duplicate`: Verifies dense payload is used when a chunk appears in both lists.
+- **Runner Registration:** `test_run_project_tests_rrf_fusion_suite` in `tests/unit/test_runner.py`.
+
