@@ -59,8 +59,8 @@
 **Tasks:**
 - [x] 4.1: Implement vector store adapter (Qdrant client, collection creation, COSINE distance, dim=1536)
 - [x] 4.2: Implement embedding client adapter (OpenAI text-embedding-3-small or equivalent, gemini/mistral)
-- [ ] 4.3: Build BM25 index manager (rank-bm25, tokenized corpus, persistence)
-- [ ] 4.4: Create indexing orchestrator (embed chunks → upsert vectors + build BM25 index)
+- [x] 4.3: Build BM25 index manager (rank-bm25, tokenized corpus, persistence)
+- [x] 4.4: Create indexing orchestrator (embed chunks → upsert vectors + build BM25 index)
 **Deliverables:** Fully indexed corpus in Qdrant + BM25 in-memory index.
 **Verification:** Qdrant collection point count matches chunk count, BM25 returns results for sample queries.
 

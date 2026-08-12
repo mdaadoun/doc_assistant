@@ -104,8 +104,9 @@ class VectorStoreAdapter:
         chunks: Sequence[ChunkDocument],
         embeddings: Sequence[list[float]],
         collection_name: str | None = None,
+        batch_size: int = 512,
     ) -> int:
-        """Upsert chunk documents and dense vectors into Qdrant collection."""
+        """Upsert chunk documents and dense vectors in batches into Qdrant."""
         if len(chunks) != len(embeddings):
             raise RetrievalError(
                 message="Mismatch between chunk count and embedding count",
@@ -136,9 +137,13 @@ class VectorStoreAdapter:
             )
 
         try:
-            self.client.upsert(collection_name=target, points=points)
-            logger.info("qdrant_upsert_success", count=len(points), collection=target)
-            return len(points)
+            total = 0
+            for i in range(0, len(points), batch_size):
+                batch = points[i : i + batch_size]
+                self.client.upsert(collection_name=target, points=batch)
+                total += len(batch)
+            logger.info("qdrant_upsert_success", count=total, collection=target)
+            return total
         except Exception as exc:
             logger.error("qdrant_upsert_failed", collection=target, error=str(exc))
             raise RetrievalError(

@@ -55,10 +55,27 @@ def sample_chunks() -> list[ChunkDocument]:
 
 
 def test_tokenize_lowercase_alphanumeric() -> None:
-    """Verify tokenizer lowercases and strips punctuation."""
+    """Verify tokenizer lowercases, strips punctuation, and removes stopwords."""
     assert tokenize("Hello, World! 123") == ["hello", "world", "123"]
     assert tokenize("") == []
     assert tokenize("---") == []
+
+
+def test_tokenize_preserves_hyphenated_compounds() -> None:
+    """Verify hyphenated compounds like FR-02 stay as single tokens."""
+    assert tokenize("FR-02 fire-damage") == ["fr-02", "fire-damage"]
+    assert tokenize("multi-word-compound") == ["multi-word-compound"]
+
+
+def test_tokenize_removes_stopwords() -> None:
+    """Verify common English stopwords are filtered out."""
+    result = tokenize("the insurance is for a building")
+    assert "the" not in result
+    assert "is" not in result
+    assert "for" not in result
+    assert "a" not in result
+    assert "insurance" in result
+    assert "building" in result
 
 
 def test_tokenize_corpus() -> None:
