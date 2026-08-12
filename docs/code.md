@@ -637,3 +637,43 @@ Implements `IndexingOrchestrator`, the coordination layer for the dual-indexing 
   - `test_index_chunks_dimension_mismatch_raises`: Verifies `EMBEDDING_DIM_MISMATCH` error.
 - **Runner Registration:** Auto-registered via `tests/runner.py` (pytest on `tests/`).
 
+---
+
+## 20. Dense Vector Search Service (`src/retrieval/dense_search.py`)
+
+### Overview
+Implements `DenseSearchService`, the query-time dense retrieval stage of the hybrid engine (Phase 5.1). It embeds a user query via `BaseEmbeddingAdapter`, validates the query and embedding dimension, verifies the target Qdrant collection exists, and delegates the top-k cosine search to `VectorStoreAdapter.search()`. The default candidate pool is 50 (`DENSE_TOP_K_DEFAULT`), satisfying the roadmap requirement for dense retrieval before RRF fusion.
+
+### Module Constant
+
+#### `DENSE_TOP_K_DEFAULT = 50`
+- **Purpose:** Default number of dense candidate hits fetched from Qdrant for downstream RRF fusion.
+
+### Service Class
+
+#### `DenseSearchService` (`src/retrieval/dense_search.py`)
+- **Purpose:** Encapsulates dense retrieval: query embedding + top-k Qdrant cosine search with fail-fast validation.
+- **Parameters:**
+  - `embedding_adapter: BaseEmbeddingAdapter`: Embedding provider adapter used to vectorize the query.
+  - `vector_store: VectorStoreAdapter`: Qdrant vector store adapter for similarity search.
+  - `top_k: int = DENSE_TOP_K_DEFAULT`: Default candidate limit (clamped to a minimum of 1).
+- **Methods:**
+  - `search(query: str, top_k: int | None = None, collection_name: str | None = None, filter_criteria: dict[str, str] | None = None) -> list[RetrievalResult]`: Validates the query is non-empty (`EMPTY_QUERY`), resolves `target_top_k = max(1, top_k or self.top_k)`, embeds the query text (wrapping provider failures in `RetrievalError`), validates the embedding dimension matches the vector store (`QUERY_DIM_MISMATCH`), verifies the collection exists (`COLLECTION_NOT_FOUND`), delegates to `vector_store.search()`, and returns ranked `RetrievalResult` hits with `retrieval_method="dense"`.
+
+### Package Exports (`src/retrieval/__init__.py`)
+- **Purpose:** Exposes `DenseSearchService` and `DENSE_TOP_K_DEFAULT` alongside `BM25IndexManager`, `IndexingOrchestrator`, `IndexingResult`, `VectorStoreAdapter`, `tokenize`, and `tokenize_corpus`.
+
+### Unit Test Verification Suite (`tests/unit/test_dense_search.py`)
+- **Test Modules:**
+  - `test_default_top_k_constant`: Verifies `DENSE_TOP_K_DEFAULT == 50`.
+  - `test_init_defaults_and_clamping`: Verifies default top_k and clamping of non-positive values to 1.
+  - `test_search_returns_dense_hits_top_k`: Verifies dense hits with `retrieval_method="dense"`.
+  - `test_search_returns_up_to_top_50`: Verifies search caps at 50 hits.
+  - `test_search_empty_query_raises`: Verifies `EMPTY_QUERY` error.
+  - `test_search_collection_missing_raises`: Verifies `COLLECTION_NOT_FOUND` error.
+  - `test_search_dimension_mismatch_raises`: Verifies `QUERY_DIM_MISMATCH` error.
+  - `test_search_embedding_failure_wrapped`: Verifies embedding provider failures are wrapped as `RetrievalError`.
+  - `test_search_passes_filter_criteria`: Verifies filter criteria are forwarded to the vector store.
+  - `test_search_returns_custom_collection_hits`: Verifies custom collection name is honored.
+- **Runner Registration:** Auto-registered via `tests/runner.py` (pytest on `tests/`).
+

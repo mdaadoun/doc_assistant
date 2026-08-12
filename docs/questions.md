@@ -392,3 +392,23 @@ It depends on the abstract `BaseEmbeddingAdapter` interface and the concrete `Ve
 **Answer:**
 Indexing an empty corpus should not trigger embedding API calls, collection creation, or BM25 construction. Returning a zeroed `IndexingResult` gives callers a consistent, typed contract (no exceptions, no side effects) and lets higher-level pipelines (e.g. the ingestion facade) handle empty batches gracefully without special-casing.
 
+---
+
+## 17. Dense Vector Search & Hybrid Retrieval
+
+### Q1: Why create a separate DenseSearchService instead of calling VectorStoreAdapter.search() directly?
+**Answer:**
+Separation of concerns: `VectorStoreAdapter` handles low-level Qdrant CRUD, while `DenseSearchService` orchestrates query embedding + validation + retrieval. This keeps the retrieval pipeline modular for later RRF fusion (5.3) and re-ranking (6.x), and enables dependency-injected testing with mock embedding adapters.
+
+---
+
+### Q2: Why default to top 50 dense hits?
+**Answer:**
+The roadmap specifies top 50 for dense retrieval to provide sufficient recall before RRF fusion merges dense and sparse results. A larger candidate pool reduces the risk of missing relevant chunks that sparse BM25 might rank differently, while 50 keeps downstream re-ranking cost bounded.
+
+---
+
+### Q3: What validation guards does DenseSearchService perform before querying Qdrant?
+**Answer:**
+It rejects empty/whitespace queries, verifies the query embedding dimension matches the vector store dimension, and checks the target collection exists. These fail-fast guards produce clear `RetrievalError` codes (`EMPTY_QUERY`, `QUERY_DIM_MISMATCH`, `COLLECTION_NOT_FOUND`) instead of opaque Qdrant failures.
+

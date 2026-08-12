@@ -271,3 +271,19 @@ Boundary validation error raised when the number of returned embeddings differs 
 ### Fail-Fast Boundary Validation
 Validating embedding count and dimension before any I/O so provider misconfiguration surfaces as a typed `RetrievalError` instead of partial or corrupt index writes.
 
+---
+
+## 🔍 12. Dense Vector Search & Hybrid Retrieval
+
+### DenseSearchService
+Query-time service that embeds a user query and retrieves top-k nearest vectors from Qdrant using cosine similarity, producing ranked `RetrievalResult` candidates for downstream RRF fusion.
+
+### DENSE_TOP_K_DEFAULT
+Constant default of 50 candidate hits fetched from dense vector search for downstream Reciprocal Rank Fusion (RRF).
+
+### Query Embedding Dimension Mismatch
+Error raised when the query embedding vector length differs from the vector store's configured dimension (e.g. 1536), preventing invalid Qdrant queries.
+
+### Dense Retrieval
+Semantic vector similarity search using dense embeddings and cosine distance, capturing meaning beyond exact keyword matches.
+
