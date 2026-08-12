@@ -10,7 +10,7 @@ from models.differential import (
     StateManifest,
 )
 from models.document import DocumentMetadata, PageMetadata, ParsedDocument, ParsedPage
-from models.retrieval import DebugRetrievalResponse, RetrievalResult
+from models.retrieval import DebugRetrievalHit, DebugRetrievalResponse, RetrievalResult
 
 __all__: list[str] = [
     "BaseDomainModel",
@@ -22,6 +22,7 @@ __all__: list[str] = [
     "ParsedDocument",
     "RetrievalResult",
     "DebugRetrievalResponse",
+    "DebugRetrievalHit",
     "ChatRequest",
     "Citation",
     "FinOpsMetadata",

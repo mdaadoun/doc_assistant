@@ -1,10 +1,25 @@
-"""Unit tests for DebugRetrievalResponse and FinOpsMetadata schemas."""
+"""Unit tests for DebugRetrievalResponse, DebugRetrievalHit, and FinOpsMetadata."""
 
 import pytest
 from pydantic import ValidationError
 
 from models.chat import FinOpsMetadata
-from models.retrieval import DebugRetrievalResponse, RetrievalResult
+from models.retrieval import DebugRetrievalHit, DebugRetrievalResponse, RetrievalResult
+
+
+def test_debug_retrieval_hit_validation() -> None:
+    """Verify DebugRetrievalHit enforces rank >= 1 and immutability."""
+    hit = DebugRetrievalHit(chunk_id="chk-1", score=0.9, rank=1, method="dense")
+    assert hit.chunk_id == "chk-1"
+    assert hit.score == 0.9
+    assert hit.rank == 1
+    assert hit.method == "dense"
+
+    with pytest.raises(ValidationError):
+        DebugRetrievalHit(chunk_id="chk-1", score=0.9, rank=0, method="dense")
+
+    with pytest.raises(ValidationError):
+        hit.rank = 2
 
 
 def test_debug_retrieval_response_defaults_and_serialization() -> None:
@@ -16,26 +31,34 @@ def test_debug_retrieval_response_defaults_and_serialization() -> None:
     assert debug_empty.rrf_fused == []
     assert debug_empty.final_reranked == []
 
-    hit = RetrievalResult(
+    dense_hit = DebugRetrievalHit(chunk_id="chk-10", score=0.95, rank=1, method="dense")
+    sparse_hit = DebugRetrievalHit(
+        chunk_id="chk-11", score=14.8, rank=1, method="sparse"
+    )
+    rrf_hit = DebugRetrievalHit(chunk_id="chk-10", score=0.0327, rank=1, method="rrf")
+    reranked = RetrievalResult(
         chunk_id="chk-10",
         text="Sample context hit",
         file_name="specs.pdf",
         page_number=1,
-        relevance_score=0.95,
-        retrieval_method="dense",
+        relevance_score=0.892,
+        retrieval_method="rerank",
     )
     debug_populated = DebugRetrievalResponse(
         query="hybrid search test",
-        dense_hits=[hit],
-        sparse_hits=[hit],
-        rrf_fused=[hit],
-        final_reranked=[hit],
+        dense_hits=[dense_hit],
+        sparse_hits=[sparse_hit],
+        rrf_fused=[rrf_hit],
+        final_reranked=[reranked],
     )
 
     dict_repr = debug_populated.to_dict()
     assert dict_repr["query"] == "hybrid search test"
     assert len(dict_repr["dense_hits"]) == 1
     assert dict_repr["dense_hits"][0]["chunk_id"] == "chk-10"
+    assert dict_repr["dense_hits"][0]["rank"] == 1
+    assert dict_repr["sparse_hits"][0]["score"] == 14.8
+    assert dict_repr["rrf_fused"][0]["method"] == "rrf"
 
     restored = DebugRetrievalResponse.from_dict(dict_repr)
     assert restored == debug_populated

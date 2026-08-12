@@ -452,3 +452,23 @@ Its fused score is the sum of the two reciprocal contributions, e.g., rank 1 in 
 **Answer:**
 Without a tie-breaker, items with equal fused scores would be ordered by dict insertion order, which depends on input list ordering (dense vs sparse) and is not stable across calls. Sorting by `(-score, chunk_id)` guarantees reproducible rankings, important for caching, evaluation, and debugging.
 
+---
+
+## 20. Retrieval Debug Data Structure & Observability
+
+### Q1: Why did you introduce a separate DebugRetrievalHit model instead of reusing RetrievalResult for the debug payload?
+**Answer:**
+The specification (FR-09) requires exposing raw dense scores, BM25 scores, and fused RRF ranks in a compact form. RetrievalResult carries heavy fields (text, file_name, page_number) that are irrelevant to debug observability. A dedicated DebugRetrievalHit keeps the debug payload small, focused, and aligned with the spec's JSON contract. It also cleanly separates the debug DTO from the production retrieval result DTO.
+
+---
+
+### Q2: How does DebugRetrievalBuilder maintain separation of concerns in the layered architecture?
+**Answer:**
+The builder lives in the Core Domain Layer and composes existing infrastructure services (DenseSearchService, SparseSearchService, RRFusionService). It performs no I/O itself; it delegates to the services and only transforms their RetrievalResult outputs into DebugRetrievalHit objects. This keeps the builder a pure orchestration component, testable with mocks, and consistent with the architecture's rule that retrieval logic must be pure and side-effect isolated.
+
+---
+
+### Q3: What happens to the final_reranked field in DebugRetrievalResponse before Phase 6 is implemented?
+**Answer:**
+final_reranked remains an empty list (default_factory=list) until the cross-encoder re-ranking stage (Phase 6) is implemented. The field is already part of the schema to maintain forward compatibility with the spec's debug payload, which includes final_reranked with cross_encoder_score and selected flags. The builder currently populates dense_hits, sparse_hits, and rrf_fused only.
+

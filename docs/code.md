@@ -246,9 +246,13 @@ Implements concrete domain schemas extending `BaseDomainModel` for document chun
 - **Purpose:** Represents retrieved search hit candidates from hybrid vector/sparse indices.
 - **Fields:** `chunk_id` (str), `text` (str), `file_name` (str), `page_number` (int, ge=1), `relevance_score` (float), `retrieval_method` (str).
 
+#### `DebugRetrievalHit(BaseDomainModel)` (`src/models/retrieval.py`)
+- **Purpose:** Compact per-stage retrieval hit exposing raw score and 1-indexed rank for debug observability.
+- **Fields:** `chunk_id` (str), `score` (float), `rank` (int, ge=1), `method` (str: dense/sparse/rrf).
+
 #### `DebugRetrievalResponse(BaseDomainModel)` (`src/models/retrieval.py`)
 - **Purpose:** Detailed retrieval debugging payload exposing hits across dense, sparse, RRF fusion, and re-ranking stages.
-- **Fields:** `query` (str), `dense_hits` (list[RetrievalResult]), `sparse_hits` (list[RetrievalResult]), `rrf_fused` (list[RetrievalResult]), `final_reranked` (list[RetrievalResult]).
+- **Fields:** `query` (str), `dense_hits` (list[DebugRetrievalHit]), `sparse_hits` (list[DebugRetrievalHit]), `rrf_fused` (list[DebugRetrievalHit]), `final_reranked` (list[RetrievalResult]).
 
 #### `ChatRequest(BaseDomainModel)` (`src/models/chat.py`)
 - **Purpose:** User request schema for interaction endpoints.
@@ -771,4 +775,66 @@ fuse(dense_hits, sparse_hits, top_k=None)
   - `test_fuse_single_list_only`: Verifies fusion works with a single non-empty list.
   - `test_fuse_dense_payload_preferred_on_duplicate`: Verifies dense payload is used when a chunk appears in both lists.
 - **Runner Registration:** `test_run_project_tests_rrf_fusion_suite` in `tests/unit/test_runner.py`.
+
+---
+
+## 23. Retrieval Debug Data Structure & Builder (`src/models/retrieval.py`, `src/retrieval/debug_retrieval.py`)
+
+### Overview
+Implements the Phase 5.4 retrieval debug data structure (specification FR-09). A compact `DebugRetrievalHit` model exposes raw dense scores, sparse BM25 scores, and fused RRF ranks per stage. A `DebugRetrievalBuilder` service orchestrates the existing `DenseSearchService`, `SparseSearchService`, and `RRFusionService` into a `DebugRetrievalResponse` payload for the `/api/v1/debug/retrieval` endpoint.
+
+### Debug Models (`src/models/retrieval.py`)
+
+#### `DebugRetrievalHit(BaseDomainModel)`
+- **Purpose:** Compact per-stage retrieval hit exposing raw score and 1-indexed rank for observability.
+- **Fields:** `chunk_id` (str), `score` (float), `rank` (int, ge=1), `method` (str: dense/sparse/rrf).
+
+#### `DebugRetrievalResponse(BaseDomainModel)`
+- **Purpose:** Debug payload exposing dense scores, sparse scores, and fused RRF ranks.
+- **Fields:**
+  - `query` (str): Original user search query.
+  - `dense_hits` (list[DebugRetrievalHit]): Dense vector hits with raw scores.
+  - `sparse_hits` (list[DebugRetrievalHit]): Sparse BM25 hits with raw scores.
+  - `rrf_fused` (list[DebugRetrievalHit]): RRF fused hits with fused ranks.
+  - `final_reranked` (list[RetrievalResult]): Final reranked hits (empty until Phase 6).
+
+### Debug Builder Service (`src/retrieval/debug_retrieval.py`)
+
+#### `_to_debug_hits(hits: list[RetrievalResult], method: str) -> list[DebugRetrievalHit]`
+- **Purpose:** Pure helper converting ranked `RetrievalResult` lists into compact `DebugRetrievalHit` lists with 1-indexed ranks.
+- **Return Value:** List of `DebugRetrievalHit` instances.
+
+#### `DebugRetrievalBuilder` (`src/retrieval/debug_retrieval.py`)
+- **Purpose:** Orchestrates dense search, sparse search, and RRF fusion to assemble a `DebugRetrievalResponse`.
+- **Parameters:**
+  - `dense_search: DenseSearchService`: Dense retrieval service.
+  - `sparse_search: SparseSearchService`: Sparse BM25 retrieval service.
+  - `rrf_fusion: RRFusionService`: RRF fusion service.
+- **Methods:**
+  - `build(query: str, dense_top_k: int | None = None, sparse_top_k: int | None = None, rrf_top_k: int | None = None) -> DebugRetrievalResponse`: Runs dense search, sparse search, RRF fusion, converts each stage to `DebugRetrievalHit` lists, and returns a `DebugRetrievalResponse`. `final_reranked` is left empty until Phase 6.
+
+### Build Flow
+```text
+DebugRetrievalBuilder.build(query, dense_top_k=None, sparse_top_k=None, rrf_top_k=None)
+  -> dense_hits = dense_search.search(query, top_k=dense_top_k)
+  -> sparse_hits = sparse_search.search(query, top_k=sparse_top_k)
+  -> fused_hits = rrf_fusion.fuse(dense_hits, sparse_hits, top_k=rrf_top_k)
+  -> response = DebugRetrievalResponse(
+       query=query,
+       dense_hits=_to_debug_hits(dense_hits, "dense"),
+       sparse_hits=_to_debug_hits(sparse_hits, "sparse"),
+       rrf_fused=_to_debug_hits(fused_hits, "rrf"),
+     )
+  -> log debug_retrieval_built; return response
+```
+
+### Package Exports
+- **`src/models/__init__.py`:** Exposes `DebugRetrievalHit` alongside `DebugRetrievalResponse` and `RetrievalResult`.
+- **`src/retrieval/__init__.py`:** Exposes `DebugRetrievalBuilder` alongside `DenseSearchService`, `SparseSearchService`, `RRFusionService`, and other retrieval components.
+
+### Unit Test Verification Suite
+- **`tests/unit/test_debug_retrieval_and_finops.py`:** Validates `DebugRetrievalHit` rank constraint (ge=1) and immutability; `DebugRetrievalResponse` defaults, serialization roundtrip, and immutability; `FinOpsMetadata` boundaries.
+- **`tests/unit/test_debug_retrieval_builder.py`:** Validates builder populates all stage hits, forwards per-stage `top_k` parameters, and handles empty pipeline.
+- **`tests/unit/test_domain_schemas.py`:** Updated to use `DebugRetrievalHit` for dense/rrf fields in `DebugRetrievalResponse`.
+- **Runner Registration:** `test_run_project_tests_debug_retrieval_builder_suite` in `tests/unit/test_runner.py`.
 

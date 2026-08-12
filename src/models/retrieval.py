@@ -18,18 +18,27 @@ class RetrievalResult(BaseDomainModel):
     )
 
 
+class DebugRetrievalHit(BaseDomainModel):
+    """Compact per-stage retrieval hit exposing raw score and rank."""
+
+    chunk_id: str = Field(..., description="Unique chunk identifier")
+    score: float = Field(..., description="Raw stage score (dense/sparse/RRF)")
+    rank: int = Field(..., ge=1, description="1-indexed rank within stage")
+    method: str = Field(..., description="Stage method: dense, sparse, or rrf")
+
+
 class DebugRetrievalResponse(BaseDomainModel):
-    """Debug payload capturing retrieval pipeline stage outputs."""
+    """Debug payload exposing dense scores, sparse scores, and fused RRF ranks."""
 
     query: str = Field(..., description="Original user search query")
-    dense_hits: list[RetrievalResult] = Field(
-        default_factory=list, description="Dense vector hits"
+    dense_hits: list[DebugRetrievalHit] = Field(
+        default_factory=list, description="Dense vector hits with raw scores"
     )
-    sparse_hits: list[RetrievalResult] = Field(
-        default_factory=list, description="Sparse BM25 hits"
+    sparse_hits: list[DebugRetrievalHit] = Field(
+        default_factory=list, description="Sparse BM25 hits with raw scores"
     )
-    rrf_fused: list[RetrievalResult] = Field(
-        default_factory=list, description="RRF fused hits"
+    rrf_fused: list[DebugRetrievalHit] = Field(
+        default_factory=list, description="RRF fused hits with fused ranks"
     )
     final_reranked: list[RetrievalResult] = Field(
         default_factory=list, description="Final reranked hits"

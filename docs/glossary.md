@@ -325,3 +325,19 @@ Constant default of 60 for the rank-smoothing constant `k` used in the RRF formu
 ### RRF_TOP_K_DEFAULT
 Constant default of 50 fused output hits produced by RRF fusion, matching the dense and sparse candidate pool sizes.
 
+---
+
+## 🔍 15. Retrieval Debug Data Structure & Observability
+
+### DebugRetrievalHit
+Compact per-stage retrieval hit exposing `chunk_id`, raw `score`, 1-indexed `rank`, and stage `method` (dense/sparse/rrf). Used in `DebugRetrievalResponse` for observability.
+
+### DebugRetrievalBuilder
+Service that orchestrates dense search, sparse search, and RRF fusion to assemble a `DebugRetrievalResponse` payload for the `/api/v1/debug/retrieval` endpoint.
+
+### Stage-wise top_k
+Per-pipeline-stage candidate limits (`dense_top_k`, `sparse_top_k`, `rrf_top_k`) allowing the debug endpoint to inspect different candidate counts per retrieval stage.
+
+### DebugRetrievalResponse
+Structured diagnostic schema capturing candidate search hits at each pipeline stage: dense, sparse, RRF fusion, and final re-ranking. `dense_hits`, `sparse_hits`, and `rrf_fused` use `DebugRetrievalHit`; `final_reranked` uses `RetrievalResult`.
+

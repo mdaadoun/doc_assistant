@@ -139,3 +139,10 @@ def test_run_project_tests_rrf_fusion_suite() -> None:
     result = run_project_tests(test_path="tests/unit/test_rrf_fusion.py")
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
+
+
+def test_run_project_tests_debug_retrieval_builder_suite() -> None:
+    """Verify test runner successfully executes the debug retrieval builder test suite."""
+    result = run_project_tests(test_path="tests/unit/test_debug_retrieval_builder.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0

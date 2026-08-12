@@ -5,7 +5,7 @@ from pydantic import ValidationError
 
 from models.chat import ChatRequest, ChatResponse, Citation, FinOpsMetadata
 from models.chunk import ChunkDocument, ChunkMetadata
-from models.retrieval import DebugRetrievalResponse, RetrievalResult
+from models.retrieval import DebugRetrievalHit, DebugRetrievalResponse, RetrievalResult
 
 
 def test_chunk_metadata_and_document_creation() -> None:
@@ -43,17 +43,24 @@ def test_retrieval_result_and_debug_response() -> None:
         relevance_score=0.88,
         retrieval_method="dense",
     )
+    dense_hit = DebugRetrievalHit(
+        chunk_id="chunk-001", score=0.88, rank=1, method="dense"
+    )
+    rrf_hit = DebugRetrievalHit(
+        chunk_id="chunk-001", score=0.0327, rank=1, method="rrf"
+    )
     debug = DebugRetrievalResponse(
         query="what is rag?",
-        dense_hits=[res],
+        dense_hits=[dense_hit],
         sparse_hits=[],
-        rrf_fused=[res],
+        rrf_fused=[rrf_hit],
         final_reranked=[res],
     )
 
     assert debug.query == "what is rag?"
     assert len(debug.dense_hits) == 1
-    assert debug.dense_hits[0].relevance_score == 0.88
+    assert debug.dense_hits[0].score == 0.88
+    assert debug.rrf_fused[0].method == "rrf"
     assert DebugRetrievalResponse.from_dict(debug.to_dict()) == debug
 
 
