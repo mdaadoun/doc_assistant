@@ -677,3 +677,40 @@ Implements `DenseSearchService`, the query-time dense retrieval stage of the hyb
   - `test_search_returns_custom_collection_hits`: Verifies custom collection name is honored.
 - **Runner Registration:** Auto-registered via `tests/runner.py` (pytest on `tests/`).
 
+---
+
+## 21. Sparse BM25 Search Service (`src/retrieval/sparse_search.py`)
+
+### Overview
+Implements `SparseSearchService`, the query-time sparse retrieval stage of the hybrid engine (Phase 5.2). It validates the user query, resolves the top-k limit, verifies the BM25 index is built, and delegates scoring to `BM25IndexManager.search()`. The default candidate pool is 50 (`SPARSE_TOP_K_DEFAULT`), satisfying the roadmap requirement for sparse retrieval before RRF fusion.
+
+### Module Constant
+
+#### `SPARSE_TOP_K_DEFAULT = 50`
+- **Purpose:** Default number of sparse candidate hits fetched from the BM25 index for downstream RRF fusion.
+
+### Service Class
+
+#### `SparseSearchService` (`src/retrieval/sparse_search.py`)
+- **Purpose:** Encapsulates sparse retrieval: BM25 scoring over the tokenized corpus with fail-fast validation.
+- **Parameters:**
+  - `bm25_index: BM25IndexManager`: Sparse index manager owning the tokenized corpus and BM25Okapi scoring.
+  - `top_k: int = SPARSE_TOP_K_DEFAULT`: Default candidate limit (clamped to a minimum of 1).
+- **Methods:**
+  - `search(query: str, top_k: int | None = None) -> list[RetrievalResult]`: Validates the query is non-empty (`EMPTY_QUERY`), resolves `target_top_k = max(1, top_k or self.top_k)`, verifies the index is built (`BM25_EMPTY_INDEX`), delegates to `bm25_index.search(query, top_k=target_top_k)`, logs `sparse_search_completed`, and returns ranked `RetrievalResult` hits with `retrieval_method="sparse"`.
+
+### Package Exports (`src/retrieval/__init__.py`)
+- **Purpose:** Exposes `SparseSearchService` and `SPARSE_TOP_K_DEFAULT` alongside `BM25IndexManager`, `DenseSearchService`, `DENSE_TOP_K_DEFAULT`, `IndexingOrchestrator`, `IndexingResult`, `VectorStoreAdapter`, `tokenize`, and `tokenize_corpus`.
+
+### Unit Test Verification Suite (`tests/unit/test_sparse_search.py`)
+- **Test Modules:**
+  - `test_default_top_k_constant`: Verifies `SPARSE_TOP_K_DEFAULT == 50`.
+  - `test_init_defaults_and_clamping`: Verifies default top_k and clamping of non-positive values to 1.
+  - `test_search_returns_sparse_hits_top_k`: Verifies sparse hits with `retrieval_method="sparse"`.
+  - `test_search_returns_up_to_top_50`: Verifies search caps at 50 hits.
+  - `test_search_empty_query_raises`: Verifies `EMPTY_QUERY` error.
+  - `test_search_unbuilt_index_raises`: Verifies `BM25_EMPTY_INDEX` error.
+  - `test_search_custom_top_k_overrides_default`: Verifies per-call `top_k` overrides configured default.
+  - `test_search_returns_custom_top_k_hits`: Verifies custom `top_k` returns exactly that many hits when available.
+- **Runner Registration:** `test_run_project_tests_sparse_search_suite` in `tests/unit/test_runner.py`.
+

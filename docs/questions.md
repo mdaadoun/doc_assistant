@@ -412,3 +412,23 @@ The roadmap specifies top 50 for dense retrieval to provide sufficient recall be
 **Answer:**
 It rejects empty/whitespace queries, verifies the query embedding dimension matches the vector store dimension, and checks the target collection exists. These fail-fast guards produce clear `RetrievalError` codes (`EMPTY_QUERY`, `QUERY_DIM_MISMATCH`, `COLLECTION_NOT_FOUND`) instead of opaque Qdrant failures.
 
+---
+
+## 18. Sparse BM25 Search & Hybrid Retrieval
+
+### Q1: Why introduce a SparseSearchService wrapper instead of calling BM25IndexManager.search directly?
+**Answer:**
+It mirrors DenseSearchService (feature 5.1), providing a symmetric interface for the upcoming RRF fusion service (5.3). It centralizes query validation (`EMPTY_QUERY`), top_k clamping, and logging, keeping BM25IndexManager focused on index lifecycle and scoring.
+
+---
+
+### Q2: Why default top_k to 50 for sparse search?
+**Answer:**
+The roadmap specifies top-50 for both dense and sparse retrieval. Equal candidate counts from both branches ensure balanced Reciprocal Rank Fusion (RRF) in phase 5.3, preventing one branch from dominating the fused ranking.
+
+---
+
+### Q3: Why clamp top_k to >=1 instead of raising on invalid values?
+**Answer:**
+Consistency with DenseSearchService and ergonomic callers. A non-positive top_k is a caller bug, but silently clamping to 1 yields a valid, predictable result. BM25IndexManager still raises on top_k<=0 as a defensive lower-layer guard.
+

@@ -287,3 +287,16 @@ Error raised when the query embedding vector length differs from the vector stor
 ### Dense Retrieval
 Semantic vector similarity search using dense embeddings and cosine distance, capturing meaning beyond exact keyword matches.
 
+---
+
+## 🔍 13. Sparse BM25 Search Service
+
+### SparseSearchService
+Query-time service that runs a lexical BM25 query over the in-memory tokenized corpus and retrieves top-k ranked hits, producing `RetrievalResult` candidates for downstream RRF fusion.
+
+### SPARSE_TOP_K_DEFAULT
+Constant default of 50 candidate hits fetched from sparse BM25 search for downstream Reciprocal Rank Fusion (RRF), matching the dense retrieval default for balanced fusion.
+
+### Sparse BM25 Search
+Lexical retrieval stage that scores query tokens against the tokenized corpus using the Okapi BM25 ranking function, capturing exact keyword precision to complement dense semantic search.
+

@@ -125,3 +125,10 @@ def test_run_project_tests_bm25_index_suite() -> None:
     result = run_project_tests(test_path="tests/unit/test_bm25_index.py")
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
+
+
+def test_run_project_tests_sparse_search_suite() -> None:
+    """Verify test runner successfully executes the sparse search test suite."""
+    result = run_project_tests(test_path="tests/unit/test_sparse_search.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
