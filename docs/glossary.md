@@ -249,5 +249,25 @@ Serialization of the tokenized corpus and chunk metadata to JSON so the BM25 ind
 ### k1 / b / epsilon
 BM25 hyperparameters: `k1` controls term frequency saturation, `b` controls document length normalization (0-1), and `epsilon` prevents zero IDF for terms appearing in all documents.
 
+---
 
+## 🔀 11. Indexing Orchestration & Dual Indexing
+
+### IndexingOrchestrator
+Coordination service that embeds document chunks, upserts dense vectors into a vector store, and builds a sparse BM25 index in a single typed, fail-fast operation.
+
+### IndexingResult
+Immutable dataclass summarizing an indexing run: chunk count, vector count, BM25 count, target collection name, and optional persisted BM25 path.
+
+### Dual Indexing
+The workflow of populating both a dense vector index (Qdrant) and a sparse lexical index (BM25) for the same chunk corpus, enabling hybrid retrieval in later phases.
+
+### Embedding Dimension Mismatch
+Boundary validation error raised when an embedding vector length differs from the vector store's configured dimension, preventing corrupt Qdrant writes.
+
+### Embedding Count Mismatch
+Boundary validation error raised when the number of returned embeddings differs from the number of input chunks, indicating a provider failure.
+
+### Fail-Fast Boundary Validation
+Validating embedding count and dimension before any I/O so provider misconfiguration surfaces as a typed `RetrievalError` instead of partial or corrupt index writes.
 

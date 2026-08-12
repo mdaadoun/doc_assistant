@@ -593,5 +593,47 @@ Implements `BM25IndexManager` providing a full sparse retrieval lifecycle (`buil
   - `test_clear_resets_state`: Verifies clear resets index state.
 - **Runner Registration:** `test_run_project_tests_bm25_index_suite` in `tests/unit/test_runner.py`.
 
+---
 
+## 19. Indexing Orchestrator (`src/retrieval/indexing_orchestrator.py`)
+
+### Overview
+Implements `IndexingOrchestrator`, the coordination layer for the dual-indexing workflow (Phase 4.4). It composes the existing single-responsibility components — `BaseEmbeddingAdapter` (batch embedding), `VectorStoreAdapter` (Qdrant upsert), and `BM25IndexManager` (sparse index) — into one typed, fail-fast operation. It returns an immutable `IndexingResult` summary and enforces boundary validation (embedding count and dimension) before any I/O.
+
+### Result Model
+
+#### `IndexingResult` (frozen dataclass)
+- **Purpose:** Immutable summary of a completed indexing operation.
+- **Fields:**
+  - `chunk_count: int`: Number of input chunks processed.
+  - `vector_count: int`: Number of vectors upserted into Qdrant.
+  - `bm25_count: int`: Number of chunks indexed in the BM25 index.
+  - `collection_name: str`: Target Qdrant collection name.
+  - `bm25_path: Path | None = None`: Optional persisted BM25 index path.
+
+### Orchestrator Class
+
+#### `IndexingOrchestrator` (`src/retrieval/indexing_orchestrator.py`)
+- **Purpose:** Coordinates embedding, vector upsert, and BM25 index build for a chunk corpus.
+- **Parameters:**
+  - `embedding_adapter: BaseEmbeddingAdapter`: Embedding provider adapter.
+  - `vector_store: VectorStoreAdapter`: Qdrant vector store adapter.
+  - `bm25_index: BM25IndexManager | None = None`: Sparse index manager (defaults to a new `BM25IndexManager()`).
+  - `batch_size: int = 100`: Embedding sub-batch size (clamped to a minimum of 1).
+- **Methods:**
+  - `index_chunks(chunks: Sequence[ChunkDocument], collection_name: str | None = None, bm25_path: str | Path | None = None) -> IndexingResult`: Coerces chunks to a list, resolves the target collection, returns a zeroed `IndexingResult` for empty input, batch-embeds chunk texts, validates embedding count (`EMBEDDING_COUNT_MISMATCH`) and dimension (`EMBEDDING_DIM_MISMATCH`), ensures the collection, upserts vectors, builds the BM25 index, optionally persists it, and returns the summary.
+  - `_validate_dimension(embeddings: Sequence[Sequence[float]]) -> None`: Iterates embeddings and raises `RetrievalError` on the first dimension mismatch with index/expected/actual details.
+
+### Package Exports (`src/retrieval/__init__.py`)
+- **Purpose:** Exposes `IndexingOrchestrator` and `IndexingResult` alongside `BM25IndexManager`, `VectorStoreAdapter`, `tokenize`, and `tokenize_corpus`.
+
+### Unit Test Verification Suite (`tests/unit/test_indexing_orchestrator.py`)
+- **Test Modules:**
+  - `test_index_empty_chunks_returns_empty_result`: Verifies empty input is a no-op returning zeroed counts.
+  - `test_index_chunks_embeds_upserts_and_builds_bm25`: Verifies full flow populates vectors and BM25 index.
+  - `test_index_chunks_saves_bm25_path`: Verifies BM25 persistence roundtrip and search parity.
+  - `test_index_chunks_collection_override`: Verifies custom collection name is honored.
+  - `test_index_chunks_embedding_count_mismatch_raises`: Verifies `EMBEDDING_COUNT_MISMATCH` error.
+  - `test_index_chunks_dimension_mismatch_raises`: Verifies `EMBEDDING_DIM_MISMATCH` error.
+- **Runner Registration:** Auto-registered via `tests/runner.py` (pytest on `tests/`).
 

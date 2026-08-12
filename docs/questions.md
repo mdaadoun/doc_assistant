@@ -372,5 +372,23 @@ Phase 5 requires Reciprocal Rank Fusion (RRF) to merge dense and sparse hits. Us
 **Answer:**
 Empty queries (after tokenization) return an empty list immediately — no BM25 scoring is attempted. Searching before build raises `RetrievalError` with code `BM25_EMPTY_INDEX`, forcing callers to build or load first. This fail-fast behavior prevents silent empty results that would mask orchestration bugs.
 
+---
 
+## 16. Indexing Orchestrator & Dual Indexing
+
+### Q1: Why does the orchestrator validate embedding dimension before upserting into Qdrant?
+**Answer:**
+Qdrant collections are created with a fixed vector dimension (e.g. 1536). Upserting vectors of a different length would either fail or corrupt the collection. Validating all embeddings against the vector store dimension up front (fail-fast) prevents partial writes and surfaces provider misconfiguration as a typed `RetrievalError` with the offending index and expected/actual dimensions.
+
+---
+
+### Q2: How does the orchestrator maintain separation of concerns while composing embedding, vector store, and BM25?
+**Answer:**
+It depends on the abstract `BaseEmbeddingAdapter` interface and the concrete `VectorStoreAdapter`/`BM25IndexManager`, each owning a single responsibility. The orchestrator only sequences calls (embed → validate → ensure collection → upsert → build BM25 → optional save) and aggregates results into an `IndexingResult`. It never touches Qdrant internals or tokenization directly, so each component remains independently testable and replaceable.
+
+---
+
+### Q3: Why is empty chunk input treated as a no-op returning a zeroed IndexingResult?
+**Answer:**
+Indexing an empty corpus should not trigger embedding API calls, collection creation, or BM25 construction. Returning a zeroed `IndexingResult` gives callers a consistent, typed contract (no exceptions, no side effects) and lets higher-level pipelines (e.g. the ingestion facade) handle empty batches gracefully without special-casing.
 
