@@ -33,9 +33,9 @@ class DebugRetrievalBuilder:
 
     def __init__(
         self,
-        dense_search: DenseSearchService,
-        sparse_search: SparseSearchService,
-        rrf_fusion: RRFusionService,
+        dense_search: DenseSearchService | None = None,
+        sparse_search: SparseSearchService | None = None,
+        rrf_fusion: RRFusionService | None = None,
         reranker: RerankerService | None = None,
     ) -> None:
         """Configure debug builder with dense, sparse, RRF, and optional reranker services."""
@@ -53,10 +53,22 @@ class DebugRetrievalBuilder:
         rerank_top_k: int | None = None,
     ) -> DebugRetrievalResponse:
         """Execute dense+sparse search, fuse via RRF, rerank, and return debug payload."""
-        dense_hits = self.dense_search.search(query, top_k=dense_top_k)
-        sparse_hits = self.sparse_search.search(query, top_k=sparse_top_k)
-        fused_hits = self.rrf_fusion.fuse(
-            dense_hits=dense_hits, sparse_hits=sparse_hits, top_k=rrf_top_k
+        dense_hits = (
+            self.dense_search.search(query, top_k=dense_top_k)
+            if self.dense_search is not None
+            else []
+        )
+        sparse_hits = (
+            self.sparse_search.search(query, top_k=sparse_top_k)
+            if self.sparse_search is not None
+            else []
+        )
+        fused_hits = (
+            self.rrf_fusion.fuse(
+                dense_hits=dense_hits, sparse_hits=sparse_hits, top_k=rrf_top_k
+            )
+            if self.rrf_fusion is not None
+            else []
         )
 
         final_reranked = (

@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 
 from api.routes.chat import router as chat_router
+from api.routes.debug import router as debug_router
 
 
 def create_app() -> FastAPI:
@@ -13,6 +14,7 @@ def create_app() -> FastAPI:
         description="RAG platform API with SSE streaming chat and diagnostic endpoints",
     )
     app.include_router(chat_router)
+    app.include_router(debug_router)
     return app
 
 

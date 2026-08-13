@@ -672,6 +672,27 @@ The ChatService evaluates candidate search hits against ConfidenceGuard. If top 
 **Answer:**
 FastAPI's Depends pattern with a configurable provider function (get_chat_service) allows production code to lazy-instantiate default services while enabling unit tests to inject custom/mock ChatService instances via app.dependency_overrides.
 
+---
+
+## Phase 8.2: GET /api/v1/debug/retrieval Diagnostic Endpoint
+
+### Q1: Why use GET instead of POST for the retrieval diagnostic endpoint?
+**Answer:**
+`GET` is safe and idempotent for read-only diagnostic inspection, allowing standard HTTP caching, URL sharing, and query parameter parameterization without triggering side effects.
+
+---
+
+### Q2: How does dependency injection simplify testing the debug retrieval endpoint?
+**Answer:**
+FastAPI's `app.dependency_overrides` allows swapping `DebugRetrievalBuilder` with lightweight mocks during unit testing without instantiating real vector search or embedding connections.
+
+---
+
+### Q3: What is the structure of the diagnostic payload returned by GET /api/v1/debug/retrieval?
+**Answer:**
+The payload contains stage-wise lists: `dense_hits`, `sparse_hits`, and `rrf_fused` hits with raw scores and 1-indexed ranks, alongside `final_reranked` candidate results.
+
+
 
 
 

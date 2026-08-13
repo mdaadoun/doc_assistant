@@ -87,9 +87,12 @@ def test_build_forwards_top_k_parameters() -> None:
         rrf_top_k=5,
     )
 
-    builder.dense_search.search.assert_called_once_with("query", top_k=10)
-    builder.sparse_search.search.assert_called_once_with("query", top_k=20)
-    builder.rrf_fusion.fuse.assert_called_once_with(
+    assert builder.dense_search is not None
+    assert builder.sparse_search is not None
+    assert builder.rrf_fusion is not None
+    builder.dense_search.search.assert_called_once_with("query", top_k=10)  # type: ignore[attr-defined]
+    builder.sparse_search.search.assert_called_once_with("query", top_k=20)  # type: ignore[attr-defined]
+    builder.rrf_fusion.fuse.assert_called_once_with(  # type: ignore[attr-defined]
         dense_hits=[], sparse_hits=[], top_k=5
     )
 

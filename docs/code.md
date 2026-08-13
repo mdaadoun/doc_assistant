@@ -1261,9 +1261,56 @@ POST /api/v1/chat (ChatRequest)
 
 ### Package Exports & Registration
 - **`src/api/__init__.py`:** Exports `app` and `create_app`.
-- **`src/api/routes/__init__.py`:** Exports `chat_router`.
+- **`src/api/routes/__init__.py`:** Exports `chat_router` and `debug_router`.
 - **`src/api/services/__init__.py`:** Exports `ChatService`.
 - **Runner Registration:** `test_run_project_tests_chat_endpoint_suite` in `tests/unit/test_runner.py`.
+
+---
+
+## 32. FastAPI Retrieval Diagnostic Endpoint & Debug Dependency Injection (`src/api/routes/debug.py`, `src/api/dependencies.py`)
+
+### Overview
+Implements Phase 8.2 GET `/api/v1/debug/retrieval` diagnostic endpoint. Exposes stage-wise search scores and ranks (dense vector search, sparse BM25 search, RRF fusion, and final cross-encoder reranking) via `DebugRetrievalBuilder` (`src/retrieval/debug_retrieval.py`), configures dependency injection in `src/api/dependencies.py`, and registers the router in `src/api/app.py`.
+
+### Route Handler (`src/api/routes/debug.py`)
+
+#### `debug_retrieval_endpoint`
+- **Signature:** `async def debug_retrieval_endpoint(debug_builder: DebugRetrievalBuilderDep, query: str = Query(...), dense_top_k: int | None = Query(default=None, ge=1), sparse_top_k: int | None = Query(default=None, ge=1), rrf_top_k: int | None = Query(default=None, ge=1), rerank_top_k: int | None = Query(default=None, ge=1)) -> DebugRetrievalResponse`
+- **Purpose:** Diagnostic endpoint returning intermediate scores and ranks across retrieval stages for a given search query.
+- **Parameters:**
+  - `query: str`: Search query string (min_length=1).
+  - `dense_top_k`, `sparse_top_k`, `rrf_top_k`, `rerank_top_k`: Optional per-stage top-k candidate limits.
+  - `debug_builder: DebugRetrievalBuilderDep`: Injected builder instance.
+
+### Dependency Injection Providers (`src/api/dependencies.py`)
+
+#### `get_debug_retrieval_builder() -> DebugRetrievalBuilder`
+- **Purpose:** Singleton dependency provider returning standard or configured `DebugRetrievalBuilder` instance.
+
+#### `set_debug_retrieval_builder(builder: DebugRetrievalBuilder | None) -> None`
+- **Purpose:** Helper function for configuring or resetting `DebugRetrievalBuilder` dependency instance in test suites.
+
+#### `DebugRetrievalBuilderDep`
+- **Purpose:** Type annotation alias for `Annotated[DebugRetrievalBuilder, Depends(get_debug_retrieval_builder)]`.
+
+### Diagnostic Execution Flow
+```text
+GET /api/v1/debug/retrieval (query="...", dense_top_k=...)
+  ├── 1. FastAPI validates Query parameters
+  ├── 2. Injects DebugRetrievalBuilder instance via DebugRetrievalBuilderDep
+  ├── 3. DebugRetrievalBuilder.build(query, dense_top_k, sparse_top_k, rrf_top_k, rerank_top_k)
+  │      ├── Run DenseSearchService.search -> dense_hits (scores & ranks)
+  │      ├── Run SparseSearchService.search -> sparse_hits (BM25 scores & ranks)
+  │      ├── Run RRFusionService.fuse -> rrf_fused (fused scores & ranks)
+  │      └── Run RerankerService.rerank -> final_reranked candidates
+  └── 4. Returns DebugRetrievalResponse Pydantic payload
+```
+
+### Package Exports & Registration
+- **`src/api/routes/__init__.py`:** Exports `chat_router` and `debug_router`.
+- **`src/api/dependencies.py`:** Exports `get_debug_retrieval_builder`, `set_debug_retrieval_builder`, `DebugRetrievalBuilderDep`.
+- **Runner Registration:** `test_run_project_tests_debug_retrieval_endpoint_suite` in `tests/unit/test_runner.py`.
+
 
 
 

@@ -475,6 +475,17 @@ Orchestration service connecting hybrid retrieval, confidence gating, grounded L
 ### Metadata Frame
 Initial SSE event frame transmitting conversation ID, confidence score, grounding status, and retrieved citations before answer token deltas.
 
+---
+
+## 🔍 24. Retrieval Diagnostic Endpoint & Observability
+
+### RetrievalDiagnosticEndpoint
+REST API diagnostic endpoint (`GET /api/v1/debug/retrieval`) exposing internal multi-stage retrieval hits (dense vector, sparse BM25, RRF fused, and reranked) for observability and system auditability.
+
+### DebugRetrievalResponse
+Pydantic DTO encapsulating intermediate and final retrieval scores, ranks, and metadata per retrieval stage.
+
+
 
 
 

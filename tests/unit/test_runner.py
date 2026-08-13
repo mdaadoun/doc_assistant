@@ -211,6 +211,16 @@ def test_run_project_tests_chat_endpoint_suite() -> None:
     assert result["exit_code"] == 0
 
 
+def test_run_project_tests_debug_retrieval_endpoint_suite() -> None:
+    """Verify test runner successfully executes the debug retrieval endpoint test suite."""
+    result = run_project_tests(
+        test_path="tests/unit/test_debug_retrieval_endpoint.py"
+    )
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+
+
 
 
 
