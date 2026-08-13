@@ -412,6 +412,20 @@ A sampling setting (`temperature=0.0`) that minimizes generation variance and en
 ### Context Refusal
 A fallback response string (`"I cannot answer this question based on the available documentation."`) emitted when no relevant context chunks are provided or retrieved.
 
+---
+
+## 📡 21. Server-Sent Events (SSE) & Response Streaming
+
+### Server-Sent Events (SSE)
+A W3C standard protocol enabling servers to push real-time text event streams to clients over a persistent HTTP connection using `text/event-stream`.
+
+### Async Generator Stream Handler
+An asynchronous generator construct (`SSEResponseHandler`) that consumes raw token streams from LLM generation and yields formatted SSE protocol frames.
+
+### SSE Event Frame
+A text block structured with `event`, `id`, `retry`, and `data` fields separated by single newlines and terminated by a double newline sequence (`\n\n`).
+
+
 
 
 

@@ -572,6 +572,27 @@ If an empty context list is passed to `generate_stream`, the generator immediate
 **Answer:**
 `GroundedGenerator` accepts an optional `client` parameter of type `AsyncOpenAI`. In unit tests, a mock client is injected directly, avoiding live network calls and API key configuration requirements.
 
+---
+
+## Phase 7.2: SSE Streaming Response Handler & Event Protocol
+
+### Q1: Why use Server-Sent Events (SSE) instead of WebSockets for LLM response streaming in RAG applications?
+**Answer:**
+SSE operates over standard HTTP/1.1 or HTTP/2 connections, supports automatic client reconnection, integrates seamlessly with existing HTTP infrastructure, proxies, and API gateways, and is unidirectional. Since LLM response streaming flows from server to client, SSE avoids the bi-directional overhead and stateful connection complexity of WebSockets.
+
+---
+
+### Q2: How does SSEResponseHandler handle mid-stream LLM generation errors without corrupting the client connection?
+**Answer:**
+The async generator in `SSEResponseHandler.stream_generator` wraps token stream iteration in a try-except block. If an exception occurs, it catches the error, logs it via `structlog`, yields a formatted `event: error` frame containing diagnostic error message and code details, and subsequently yields an `event: done` frame so the client UI can gracefully handle stream termination instead of hanging on an unclosed socket.
+
+---
+
+### Q3: How does format_sse_event maintain protocol compliance for multi-line string payloads?
+**Answer:**
+According to the W3C SSE specification, data payloads containing internal line breaks must be formatted across multiple `data:` lines. `format_sse_event` splits string payloads across newline boundaries (`splitlines()`) and prefixes every line with `data: `, ensuring that multi-line responses adhere strictly to standard client event stream parsing rules.
+
+
 
 
 

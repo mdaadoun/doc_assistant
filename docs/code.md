@@ -1051,6 +1051,64 @@ GroundedGenerator.generate_stream(query, contexts)
 - **`src/generation/__init__.py`:** Exports `GroundedGenerator`, `SYSTEM_PROMPT`, and `NO_CONTEXT_REFUSAL`.
 - **Runner Registration:** `test_run_project_tests_grounded_generator_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 28. Server-Sent Events (SSE) Streaming Response Handler (`src/generation/sse.py`, `src/models/chat.py`)
+
+### Overview
+Implements Phase 7.2 SSE response streaming infrastructure. Formats raw tokens, JSON payloads, and Pydantic domain models into W3C-compliant Server-Sent Events stream frames (`text/event-stream`). Provides `SSEResponseHandler` to wrap `AsyncGenerator` token streams from `GroundedGenerator` into a structured event lifecycle sequence (`metadata` -> `token` deltas -> `done` completion) with mid-stream exception catching and error framing.
+
+### Domain Schemas (`src/models/chat.py`)
+
+#### `SSEMetaDataPayload`
+- **Purpose:** Initial metadata event payload emitted over SSE prior to token delta generation.
+- **Fields:** `conversation_id` (str), `confidence_score` (float, 0.0..1.0), `grounded` (bool), `citations` (list[`Citation`]).
+
+#### `SSETokenPayload`
+- **Purpose:** Streaming token delta payload emitted for each generated text token.
+- **Fields:** `delta` (str).
+
+#### `SSEDonePayload`
+- **Purpose:** Completion payload emitted upon successful stream termination.
+- **Fields:** `status` (str, default `"completed"`), `finish_reason` (str, default `"stop"`).
+
+#### `SSEErrorPayload`
+- **Purpose:** Diagnostic payload emitted when an exception occurs during streaming token generation.
+- **Fields:** `error` (str), `code` (str, default `"GENERATION_ERROR"`).
+
+### Helper Function & Handler Class (`src/generation/sse.py`)
+
+#### `format_sse_event(event: str | None = None, data: str | BaseModel | dict[str, Any] | list[Any] | None = None, event_id: str | None = None, retry: int | None = None) -> str`
+- **Purpose:** Formats data primitives, dictionaries, or Pydantic models into a W3C-compliant SSE frame string.
+- **Parameters:** `event` frame name, `data` frame payload, `event_id` frame sequence ID, `retry` reconnection delay ms.
+- **Return Value:** SSE frame string terminated by `\n\n`.
+
+#### `SSEResponseHandler`
+- **Purpose:** Handler converting raw token stream generators into formatted SSE event streams.
+- **Methods:**
+  - `__init__(media_type: str = "text/event-stream")`: Initializes handler with media type header.
+  - `format_frame(...) -> str`: Static delegate to `format_sse_event`.
+  - `stream_generator(token_stream: AsyncGenerator[str, None], conversation_id: str, confidence_score: float = 1.0, grounded: bool = True, citations: Sequence[Citation | dict[str, Any]] | None = None) -> AsyncGenerator[str, None]`: Asynchronous generator yielding `metadata`, `token` deltas, `error` (if raised), and `done` SSE frames.
+  - `stream_raw_tokens(token_stream: AsyncGenerator[str, None]) -> AsyncGenerator[str, None]`: Asynchronous generator streaming raw data-only token deltas.
+
+### Streaming Flow
+```text
+SSEResponseHandler.stream_generator(token_stream, conversation_id, confidence_score, grounded, citations)
+  ├── 1. Format citations -> Construct SSEMetaDataPayload
+  ├── 2. Yield format_frame(event="metadata", data=meta_payload)
+  ├── 3. Iterate async for token in token_stream:
+  │        ├── Construct SSETokenPayload(delta=token)
+  │        └── Yield format_frame(event="token", data=token_payload)
+  ├── 4. On Exception -> Catch error -> Construct SSEErrorPayload -> Yield format_frame(event="error", data=err_payload)
+  └── 5. Construct SSEDonePayload(status="completed", finish_reason="stop") -> Yield format_frame(event="done", data=done_payload)
+```
+
+### Package Exports & Registration
+- **`src/generation/__init__.py`:** Exports `SSEResponseHandler` and `format_sse_event`.
+- **`src/models/__init__.py`:** Exports `SSEMetaDataPayload`, `SSETokenPayload`, `SSEDonePayload`, and `SSEErrorPayload`.
+- **Runner Registration:** `test_run_project_tests_sse_handler_suite` in `tests/unit/test_runner.py`.
+
+
 
 
 

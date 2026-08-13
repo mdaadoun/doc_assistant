@@ -183,6 +183,14 @@ def test_run_project_tests_grounded_generator_suite() -> None:
     assert result["exit_code"] == 0
 
 
+def test_run_project_tests_sse_handler_suite() -> None:
+    """Verify test runner successfully executes the SSEResponseHandler test suite."""
+    result = run_project_tests(test_path="tests/unit/test_sse_handler.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+
+
 
 
 

@@ -47,3 +47,35 @@ class ChatResponse(BaseDomainModel):
     grounded: bool = Field(..., description="Context grounding indicator")
     latency_ms: int = Field(..., ge=0, description="Total latency in milliseconds")
     finops: FinOpsMetadata = Field(..., description="Token and cost telemetry")
+
+
+class SSEMetaDataPayload(BaseDomainModel):
+    """Initial metadata payload sent over SSE before token generation."""
+
+    conversation_id: str = Field(..., description="Unique conversation session ID")
+    confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
+    grounded: bool = Field(..., description="Grounding status indicator")
+    citations: list[Citation] = Field(
+        default_factory=list, description="Retrieved source citations"
+    )
+
+
+class SSETokenPayload(BaseDomainModel):
+    """Streaming answer token delta payload sent over SSE."""
+
+    delta: str = Field(..., description="Generated token fragment")
+
+
+class SSEDonePayload(BaseDomainModel):
+    """Stream completion payload sent over SSE."""
+
+    status: str = Field(default="completed", description="Stream execution status")
+    finish_reason: str = Field(default="stop", description="Stream termination reason")
+
+
+class SSEErrorPayload(BaseDomainModel):
+    """Stream error payload sent over SSE."""
+
+    error: str = Field(..., description="Error message description")
+    code: str = Field(default="GENERATION_ERROR", description="Error category code")
+
