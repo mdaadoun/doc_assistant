@@ -472,3 +472,24 @@ The builder lives in the Core Domain Layer and composes existing infrastructure 
 **Answer:**
 final_reranked remains an empty list (default_factory=list) until the cross-encoder re-ranking stage (Phase 6) is implemented. The field is already part of the schema to maintain forward compatibility with the spec's debug payload, which includes final_reranked with cross_encoder_score and selected flags. The builder currently populates dense_hits, sparse_hits, and rrf_fused only.
 
+---
+
+## 21. Cross-Encoder Re-Ranking & FlashRank Adapter
+
+### Q1: Why use a two-stage retrieval pipeline (Dense + BM25 + RRF -> Cross-Encoder Reranking) instead of passing all chunks directly to a cross-encoder?
+**Answer:**
+Cross-encoders perform joint query-passage self-attention, which is computationally expensive $O(N)$ per query. First-stage hybrid retrieval narrows thousands of document chunks down to top 30 candidates at low latency ($<20\text{ms}$), allowing the cross-encoder to compute high-precision scores on only the top 30 candidates.
+
+---
+
+### Q2: How does the FlashRank adapter handle missing network connectivity or unmapped model names in production environments?
+**Answer:**
+The adapter features local model caching, explicit error wrapping into domain-specific `RetrievalError` and `ConfigurationError` exceptions, and fallback model resolution (`ms-marco-MiniLM-L-12-v2`). Additionally, a `MockRerankerAdapter` is provided for deterministic offline testing.
+
+---
+
+### Q3: How does candidate slicing (top 30 to top 5) impact precision and recall in RAG context injection?
+**Answer:**
+Slicing to 30 candidates preserves high recall from hybrid vector/lexical search while top-5 filtering concentrates only high-confidence chunks for prompt context, mitigating LLM "lost in the middle" attention degradation and reducing prompt token cost.
+
+

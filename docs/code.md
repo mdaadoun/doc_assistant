@@ -838,3 +838,57 @@ DebugRetrievalBuilder.build(query, dense_top_k=None, sparse_top_k=None, rrf_top_
 - **`tests/unit/test_domain_schemas.py`:** Updated to use `DebugRetrievalHit` for dense/rrf fields in `DebugRetrievalResponse`.
 - **Runner Registration:** `test_run_project_tests_debug_retrieval_builder_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 24. FlashRank Cross-Encoder Reranker Adapters (`src/clients/base_reranker.py`, `src/clients/flashrank_reranker.py`, `src/clients/mock_reranker.py`, `src/clients/reranker.py`)
+
+### Overview
+Implements Phase 6.1 cross-encoder reranking adapters. An abstract base interface (`BaseRerankerAdapter`) defines the reranking contract. `FlashRankRerankerAdapter` provides CPU-optimized local ONNX cross-encoder scoring, reducing the top 30 hybrid RRF fused candidates down to top 5 high-relevance chunks for context injection. `MockRerankerAdapter` enables deterministic offline testing. `create_reranker_adapter` provides factory instantiation based on configuration settings.
+
+### Base Interface (`src/clients/base_reranker.py`)
+
+#### `BaseRerankerAdapter(ABC)`
+- **Purpose:** Abstract interface for cross-encoder reranking providers.
+- **Abstract Methods & Properties:**
+  - `rerank(query: str, hits: Sequence[RetrievalResult], candidate_k: int | None = None, top_k: int | None = None) -> list[RetrievalResult]`: Reranks candidate hits using cross-encoder scoring.
+  - `model_name -> str`: Returns cross-encoder model identifier.
+  - `provider_name -> str`: Returns provider identifier.
+
+### Concrete Adapters (`src/clients/flashrank_reranker.py`, `src/clients/mock_reranker.py`)
+
+#### `FlashRankRerankerAdapter(BaseRerankerAdapter)`
+- **Purpose:** Local ONNX cross-encoder adapter for re-ranking hybrid search candidates.
+- **Parameters:**
+  - `model_name: str = "ms-marco-MiniLM-L-6-v2"`: Requested cross-encoder model name.
+  - `candidate_k: int = 30`: Default candidate truncation window size.
+  - `top_k: int = 5`: Default output count returned by adapter.
+  - `cache_dir: str | None = None`: Optional model cache directory.
+  - `ranker_instance: Any | None = None`: Optional pre-instantiated FlashRank `Ranker` object.
+- **Methods:**
+  - `rerank(query: str, hits: Sequence[RetrievalResult], candidate_k: int | None = None, top_k: int | None = None) -> list[RetrievalResult]`: Truncates hits to candidate_k (30), formats passage payloads, executes FlashRank pairwise ONNX cross-encoder scoring, and returns top_k (5) reranked `RetrievalResult` objects sorted in descending score order.
+
+#### `MockRerankerAdapter(BaseRerankerAdapter)`
+- **Purpose:** Mock reranker adapter returning deterministic relevance scores for fast offline unit testing.
+- **Methods:**
+  - `rerank(query: str, hits: Sequence[RetrievalResult], candidate_k: int | None = None, top_k: int | None = None) -> list[RetrievalResult]`: Computes deterministic word-overlap scores over candidates and returns top_k results.
+
+### Adapter Factory (`src/clients/reranker.py`)
+
+#### `create_reranker_adapter(provider: str = "flashrank", model_name: str | None = None, candidate_k: int = 30, top_k: int = 5) -> BaseRerankerAdapter`
+- **Purpose:** Factory function instantiating the requested reranker adapter ("flashrank" or "mock").
+
+### Reranking Flow
+```text
+FlashRankRerankerAdapter.rerank(query, hits, candidate_k=30, top_k=5)
+  -> candidate_hits = hits[:candidate_k] (top 30)
+  -> passages = [{"id": hit.chunk_id, "text": hit.text, "meta": {...}} for hit in candidate_hits]
+  -> raw_results = self._ranker.rerank(RerankRequest(query=clean_query, passages=passages))
+  -> reranked_results = [RetrievalResult(chunk_id=item["id"], score=item["score"], retrieval_method="flashrank") for item in raw_results[:top_k]]
+  -> return sorted reranked_results[:top_k]
+```
+
+### Package Exports & Registration
+- **`src/clients/__init__.py` & `src/retrieval/__init__.py`:** Exports `BaseRerankerAdapter`, `FlashRankRerankerAdapter`, `MockRerankerAdapter`, and `create_reranker_adapter`.
+- **Runner Registration:** `test_run_project_tests_flashrank_reranker_suite` in `tests/unit/test_runner.py`.
+
+

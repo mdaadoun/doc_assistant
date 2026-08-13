@@ -71,7 +71,7 @@
 - [x] 5.1: Implement dense vector search (Qdrant, top 50)
 - [x] 5.2: Implement sparse BM25 search (top 50)
 - [x] 5.3: Build Reciprocal Rank Fusion (RRF, k=60) merging dense + sparse hits
-- [ ] 5.4: Expose retrieval debug data structure (dense scores, sparse scores, fused ranks)
+- [x] 5.4: Expose retrieval debug data structure (dense scores, sparse scores, fused ranks)
 **Deliverables:** Working hybrid retrieval returning fused ranked candidates.
 **Verification:** Unit tests asserting RRF produces correct rankings, debug payload populated.
 
@@ -79,7 +79,7 @@
 **Entry Criteria:** Hybrid retrieval outputs ranked candidates.
 **Dependencies:** Phase 5.
 **Tasks:**
-- [ ] 6.1: Implement FlashRank cross-encoder adapter (ms-marco-MiniLM-L-6-v2, top 30 → top 5)
+- [x] 6.1: Implement FlashRank cross-encoder adapter (ms-marco-MiniLM-L-6-v2, top 30 → top 5)
 - [ ] 6.2: Implement Cohere Rerank API fallback adapter
 - [ ] 6.3: Build re-ranker service with primary/fallback strategy pattern
 - [ ] 6.4: Implement confidence guard (S_min ≥ 0.35 threshold, refusal response bypass)

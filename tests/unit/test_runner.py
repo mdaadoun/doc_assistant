@@ -146,3 +146,11 @@ def test_run_project_tests_debug_retrieval_builder_suite() -> None:
     result = run_project_tests(test_path="tests/unit/test_debug_retrieval_builder.py")
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
+
+
+def test_run_project_tests_flashrank_reranker_suite() -> None:
+    """Verify test runner successfully executes the FlashRank reranker test suite."""
+    result = run_project_tests(test_path="tests/unit/test_flashrank_reranker.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+

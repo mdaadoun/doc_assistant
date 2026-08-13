@@ -38,6 +38,20 @@ class Settings(BaseSettings):
         default=0.10, description="Overlap ratio between adjacent chunks"
     )
 
+    # Reranker parameters
+    reranker_provider: str = Field(
+        default="flashrank", description="Default reranker engine provider"
+    )
+    reranker_model: str = Field(
+        default="ms-marco-MiniLM-L-6-v2", description="Cross-encoder model"
+    )
+    reranker_candidate_k: int = Field(
+        default=30, description="Top candidate count passed to reranker"
+    )
+    reranker_top_k: int = Field(
+        default=5, description="Top reranked count returned by adapter"
+    )
+
     # LLM & Embedding models
     default_model: str = Field(
         default="gpt-4o-mini", description="Default generation LLM model"

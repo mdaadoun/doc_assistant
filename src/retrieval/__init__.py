@@ -1,5 +1,9 @@
 """Retrieval engine domain: hybrid vector/BM25 search, RRF fusion, re-ranker."""
 
+from clients.base_reranker import BaseRerankerAdapter
+from clients.flashrank_reranker import FlashRankRerankerAdapter
+from clients.mock_reranker import MockRerankerAdapter
+from clients.reranker import create_reranker_adapter
 from retrieval.bm25_index import BM25IndexManager
 from retrieval.bm25_tokenizer import tokenize, tokenize_corpus
 from retrieval.debug_retrieval import DebugRetrievalBuilder
@@ -16,11 +20,14 @@ from retrieval.vector_store import VectorStoreAdapter
 
 __all__: list[str] = [
     "BM25IndexManager",
-    "DebugRetrievalBuilder",
+    "BaseRerankerAdapter",
     "DENSE_TOP_K_DEFAULT",
+    "DebugRetrievalBuilder",
     "DenseSearchService",
+    "FlashRankRerankerAdapter",
     "IndexingOrchestrator",
     "IndexingResult",
+    "MockRerankerAdapter",
     "RRF_K_DEFAULT",
     "RRF_METHOD",
     "RRF_TOP_K_DEFAULT",
@@ -28,6 +35,7 @@ __all__: list[str] = [
     "SPARSE_TOP_K_DEFAULT",
     "SparseSearchService",
     "VectorStoreAdapter",
+    "create_reranker_adapter",
     "tokenize",
     "tokenize_corpus",
 ]

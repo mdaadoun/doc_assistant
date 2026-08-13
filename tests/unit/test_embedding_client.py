@@ -8,7 +8,6 @@ from clients.embedding import EmbeddingClientAdapter
 from clients.gemini_embedding import GeminiEmbeddingAdapter
 from clients.mock_embedding import MockEmbeddingAdapter
 from clients.openai_embedding import OpenAIEmbeddingAdapter
-from core.config import Settings
 from core.exceptions import ConfigurationError, RetrievalError
 
 

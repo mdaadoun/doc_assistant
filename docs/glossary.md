@@ -341,3 +341,17 @@ Per-pipeline-stage candidate limits (`dense_top_k`, `sparse_top_k`, `rrf_top_k`)
 ### DebugRetrievalResponse
 Structured diagnostic schema capturing candidate search hits at each pipeline stage: dense, sparse, RRF fusion, and final re-ranking. `dense_hits`, `sparse_hits`, and `rrf_fused` use `DebugRetrievalHit`; `final_reranked` uses `RetrievalResult`.
 
+---
+
+## 🎯 16. Cross-Encoder Re-Ranking & FlashRank Engine
+
+### Cross-Encoder Re-Ranking
+A two-stage retrieval technique where a joint-attention neural model evaluates query-passage pairs directly, providing high-precision relevance scores to refine candidate rankings from bi-encoder/lexical first-stage search.
+
+### FlashRank Adapter
+A lightweight CPU-optimized local cross-encoder inference adapter utilizing quantized ONNX runtime models for fast reranking without external API latency or costs.
+
+### Candidate Truncation Window
+The technique of slicing candidate search hits (e.g. top 30) from initial hybrid retrieval stages before cross-encoder inference to balance retrieval precision with inference latency.
+
+

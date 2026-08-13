@@ -5,7 +5,6 @@ from qdrant_client import QdrantClient
 
 from clients.mock_embedding import MockEmbeddingAdapter
 from models.chunk import ChunkDocument, ChunkMetadata
-from retrieval.bm25_index import BM25IndexManager
 from retrieval.bm25_tokenizer import tokenize
 from retrieval.indexing_orchestrator import IndexingOrchestrator
 from retrieval.vector_store import VectorStoreAdapter
