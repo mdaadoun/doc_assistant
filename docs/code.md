@@ -1139,24 +1139,29 @@ Implements Phase 7.3 inline citation extraction and grounding validation engine.
   - `extract_citations(text: str, contexts: Sequence[Any]) -> list[Citation]`: Parses raw tags and matches them against context blocks to construct fully populated `Citation` instances.
 
 #### `CitationValidator`
-- **Purpose:** Audits extracted inline citations against retrieved context blocks to detect ungrounded or hallucinated document tags.
+- **Purpose:** Audits extracted inline citations against retrieved context blocks to detect ungrounded or hallucinated document tags. Enforces strict-mode validation policies, document presence checks, and non-destructive tag filtering.
 - **Methods:**
-  - `validate(text_or_citations: str | Sequence[Citation], contexts: Sequence[Any]) -> CitationValidationResult`: Validates completion text or citation objects against context metadata, returning a complete `CitationValidationResult`.
+  - `verify_document_presence(file_name: str, page_number: int, contexts: Sequence[Any]) -> bool`: Direct case-insensitive context lookup checking if a target document filename and 1-indexed page number exist in retrieved context.
+  - `verify_grounding(text: str, contexts: Sequence[Any]) -> bool`: Boolean convenience helper evaluating whether all inline citations extracted from completion text match retrieved context blocks.
+  - `filter_invalid_citations(text: str, contexts: Sequence[Any]) -> tuple[str, list[Citation]]`: Non-destructive sanitizer that strips ungrounded `[Doc: ... | Page: ...]` tags from completion text while returning valid matched `Citation` models.
+  - `validate(text_or_citations: str | Sequence[Citation], contexts: Sequence[Any], strict: bool = False) -> CitationValidationResult`: Core validation method auditing tags against context metadata. Calculates `citation_accuracy`, constructs `CitationValidationResult`, and raises `GenerationError` (`code="CITATION_VALIDATION_ERROR"`) when `strict=True` and `is_valid=False`.
 
 ### Extraction & Validation Flow
 ```text
-CitationValidator.validate(text_or_citations, contexts)
+CitationValidator.validate(text_or_citations, contexts, strict=False)
   ├── 1. Parse raw citations via CitationExtractor.extract_raw(text) OR map Citation list to RawCitation instances
   ├── 2. Extract normalized context metadata via CitationExtractor._extract_context_meta(ctx)
   ├── 3. Match each raw citation against context metadata (case-insensitive filename, exact page number)
   │        ├── If matched -> Construct valid Citation -> Append to valid_citations
   │        └── If unmatched -> Append to invalid_citations
-  └── 4. Calculate accuracy = len(valid) / total -> Set is_valid = (len(invalid) == 0) -> Return CitationValidationResult
+  ├── 4. Calculate accuracy = len(valid) / total -> Set is_valid = (len(invalid) == 0)
+  └── 5. If strict and not is_valid -> Log structlog warning -> Raise GenerationError(code="CITATION_VALIDATION_ERROR")
 ```
 
 ### Package Exports & Registration
 - **`src/generation/__init__.py`:** Exports `CITATION_REGEX`, `RawCitation`, `CitationValidationResult`, `CitationExtractor`, and `CitationValidator`.
 - **Runner Registration:** `test_run_project_tests_citations_suite` in `tests/unit/test_runner.py`.
+
 
 
 

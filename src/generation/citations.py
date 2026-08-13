@@ -7,6 +7,7 @@ from typing import Any
 import structlog
 from pydantic import Field
 
+from core.exceptions import GenerationError
 from models.base import BaseDomainModel
 from models.chat import Citation
 
@@ -151,10 +152,59 @@ class CitationValidator:
     """Validator verifying whether extracted inline citations exist in context."""
 
     @classmethod
+    def verify_document_presence(
+        cls, file_name: str, page_number: int, contexts: Sequence[Any]
+    ) -> bool:
+        """Check if target document and page exist within retrieved context blocks."""
+        target_doc = file_name.strip().lower()
+        for ctx in contexts:
+            f_name, p_num, _, _, _ = CitationExtractor._extract_context_meta(ctx)
+            if f_name.lower() == target_doc and p_num == page_number:
+                return True
+        return False
+
+    @classmethod
+    def verify_grounding(cls, text: str, contexts: Sequence[Any]) -> bool:
+        """Check whether all inline citations in completion text exist in context."""
+        res = cls.validate(text, contexts)
+        return res.is_valid
+
+    @classmethod
+    def filter_invalid_citations(
+        cls, text: str, contexts: Sequence[Any]
+    ) -> tuple[str, list[Citation]]:
+        """Filter out ungrounded citation tags from text and return valid citations."""
+        res = cls.validate(text, contexts)
+        if res.is_valid:
+            return text, res.valid_citations
+
+        invalid_map = {
+            (inv.file_name.lower(), inv.page_number)
+            for inv in res.invalid_citations
+        }
+
+        def _replacer(match: re.Match[str]) -> str:
+            doc_name = match.group(1).strip()
+            try:
+                p_num = int(match.group(2).strip())
+            except ValueError:
+                return match.group(0)
+            if (doc_name.lower(), p_num) in invalid_map:
+                return ""
+            return match.group(0)
+
+        cleaned_text = CITATION_REGEX.sub(_replacer, text)
+        cleaned_text = re.sub(r"\s{2,}", " ", cleaned_text).strip()
+        return cleaned_text, res.valid_citations
+
+    @classmethod
     def validate(
-        cls, text_or_citations: str | Sequence[Citation], contexts: Sequence[Any]
+        cls,
+        text_or_citations: str | Sequence[Citation],
+        contexts: Sequence[Any],
+        strict: bool = False,
     ) -> CitationValidationResult:
-        """Validate inline citations against provided context list."""
+        """Validate inline citations against context list, optionally raising on failure."""
         if isinstance(text_or_citations, str):
             raw_citations = CitationExtractor.extract_raw(text_or_citations)
         else:
@@ -200,9 +250,26 @@ class CitationValidator:
         accuracy = len(valid) / total if total > 0 else 1.0
         is_valid = len(invalid) == 0
 
-        return CitationValidationResult(
+        result = CitationValidationResult(
             is_valid=is_valid,
             citation_accuracy=round(accuracy, 4),
             valid_citations=valid,
             invalid_citations=invalid,
         )
+
+        if strict and not is_valid:
+            logger.warning(
+                "Citation validation failed in strict mode",
+                invalid_count=len(invalid),
+                accuracy=accuracy,
+            )
+            raise GenerationError(
+                f"Citation validation failed: {len(invalid)} ungrounded citation(s) detected",
+                code="CITATION_VALIDATION_ERROR",
+                details={
+                    "invalid_citations": [inv.model_dump() for inv in invalid],
+                    "citation_accuracy": result.citation_accuracy,
+                },
+            )
+
+        return result

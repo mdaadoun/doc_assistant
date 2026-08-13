@@ -1,5 +1,8 @@
 """Unit tests for citation extraction and validation logic."""
 
+import pytest
+
+from core.exceptions import GenerationError
 from generation.citations import (
     CITATION_REGEX,
     CitationExtractor,
@@ -109,3 +112,52 @@ def test_validator_citation_object_input() -> None:
     assert res.is_valid is True
     assert res.citation_accuracy == 1.0
     assert len(res.valid_citations) == 1
+
+
+def test_verify_document_presence() -> None:
+    """Verify verify_document_presence accurately checks context document matches."""
+    contexts = [
+        {"file_name": "report_2025.pdf", "page_number": 4, "chunk_id": "c4"}
+    ]
+    assert CitationValidator.verify_document_presence("report_2025.pdf", 4, contexts) is True
+    assert CitationValidator.verify_document_presence("REPORT_2025.PDF", 4, contexts) is True
+    assert CitationValidator.verify_document_presence("report_2025.pdf", 99, contexts) is False
+    assert CitationValidator.verify_document_presence("missing.pdf", 4, contexts) is False
+
+
+def test_verify_grounding() -> None:
+    """Verify verify_grounding returns boolean grounding status."""
+    contexts = [
+        {"file_name": "doc1.pdf", "page_number": 1, "chunk_id": "c1"}
+    ]
+    valid_text = "Good text [Doc: doc1.pdf | Page: 1]."
+    invalid_text = "Bad text [Doc: doc2.pdf | Page: 2]."
+    assert CitationValidator.verify_grounding(valid_text, contexts) is True
+    assert CitationValidator.verify_grounding(invalid_text, contexts) is False
+
+
+def test_filter_invalid_citations() -> None:
+    """Verify filter_invalid_citations removes hallucinated tags from text."""
+    contexts = [
+        {"file_name": "real.pdf", "page_number": 1, "chunk_id": "c1"}
+    ]
+    text = "Fact A [Doc: real.pdf | Page: 1] and Fact B [Doc: fake.pdf | Page: 2]."
+    cleaned_text, valid_cites = CitationValidator.filter_invalid_citations(text, contexts)
+    assert "[Doc: fake.pdf | Page: 2]" not in cleaned_text
+    assert "[Doc: real.pdf | Page: 1]" in cleaned_text
+    assert len(valid_cites) == 1
+    assert valid_cites[0].file_name == "real.pdf"
+
+
+def test_validate_strict_mode_raises() -> None:
+    """Verify validate with strict=True raises GenerationError on invalid citations."""
+    contexts = [
+        {"file_name": "real.pdf", "page_number": 1, "chunk_id": "c1"}
+    ]
+    invalid_text = "Invalid claim [Doc: fake.pdf | Page: 99]."
+    with pytest.raises(GenerationError) as exc_info:
+        CitationValidator.validate(invalid_text, contexts, strict=True)
+
+    assert "Citation validation failed" in exc_info.value.message
+    assert exc_info.value.code == "CITATION_VALIDATION_ERROR"
+    assert "invalid_citations" in exc_info.value.details

@@ -441,6 +441,19 @@ Domain component responsible for parsing inline citation syntax from answer text
 ### CitationValidator
 Auditing engine verifying whether extracted completion citations correspond to verified retrieved context blocks.
 
+### verify_document_presence
+Method checking whether a specific document file name and 1-indexed page number exist within retrieved context blocks.
+
+### verify_grounding
+High-level boolean verification method auditing whether all inline completion citations exist in retrieved context.
+
+### filter_invalid_citations
+Utility method sanitizing completion text by removing ungrounded inline citation tags and returning valid Citation objects.
+
+### Strict Validation Mode
+Enforcement setting (`strict=True`) in `CitationValidator.validate` that raises `GenerationError` when citation validation accuracy falls below 1.0.
+
+
 
 
 

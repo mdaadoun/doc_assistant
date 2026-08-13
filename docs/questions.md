@@ -612,6 +612,27 @@ Extracting inline tags via regular expressions (`CITATION_REGEX`) enables low-la
 **Answer:**
 `CitationExtractor` strips whitespace from extracted tag strings and performs case-insensitive comparisons against context `file_name` fields, preventing false validation failures due to minor formatting discrepancies.
 
+---
+
+## Phase 7.4: Citation Validator & Grounding Verification
+
+### Q1: How does strict mode in CitationValidator enforce zero-tolerance citation accuracy?
+**Answer:**
+When `strict=True` is passed to `CitationValidator.validate`, any unmatched inline citation triggers a `GenerationError` exception with code `"CITATION_VALIDATION_ERROR"` detailing invalid tags and accuracy metrics.
+
+---
+
+### Q2: What is the purpose of filter_invalid_citations in post-processing LLM output?
+**Answer:**
+`filter_invalid_citations` strips hallucinated or ungrounded citation tags from the answer text string while preserving valid citations, preventing unverified document references from reaching end users.
+
+---
+
+### Q3: How does verify_document_presence support fast context validation?
+**Answer:**
+`verify_document_presence` performs direct case-insensitive filename and 1-indexed page number matching against context items without running full regular expression extraction on completion text.
+
+
 
 
 
