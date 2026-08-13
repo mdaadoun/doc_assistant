@@ -498,6 +498,28 @@ A lightweight security protocol passing secret tokens in custom request HTTP hea
 ### Dependency Security Scheme
 FastAPI authorization dependency pattern that validates caller credentials before invoking endpoint route handlers.
 
+---
+
+## 🌐 26. CORS, Request Validation & Error Handling Middleware
+
+### CORS (Cross-Origin Resource Sharing)
+HTTP mechanism allowing restricted resources to be requested from different domains. Configured via `CORSMiddleware` with origin allowlists, credentials, methods, and headers.
+
+### Preflight Request
+OPTIONS request sent by browser before actual cross-origin request to check server permissions. Cached via `max_age=600` to reduce overhead.
+
+### Security Headers
+HTTP response headers that instruct browsers to enforce security policies: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `X-XSS-Protection: 1; mode=block`.
+
+### Error Envelope
+Standardized JSON structure wrapping error responses with `code`, `message`, and `details` fields, ensuring consistent client-side error handling.
+
+### X-Request-ID
+Tracing header used to correlate requests across distributed systems. Injected or preserved by `RequestValidationMiddleware` on all responses.
+
+### Production CORS Guard
+Validation rule rejecting wildcard origin `*` combined with `allow_credentials=True` in production environments to prevent credential leakage.
+
 
 
 

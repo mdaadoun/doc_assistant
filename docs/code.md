@@ -1363,6 +1363,86 @@ Client Request (e.g. POST /api/v1/chat or GET /api/v1/debug/retrieval)
 - **`src/api/routes/chat.py` & `src/api/routes/debug.py`:** Configured with `dependencies=[Depends(verify_api_key)]`.
 - **Runner Registration:** `test_run_project_tests_api_key_auth_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 34. CORS, Request Validation & Error Handling Middleware (`src/api/middleware/`)
+
+### Overview
+Implements Phase 8.4 middleware layer providing production-safe CORS configuration, request boundary validation with security headers, and standardized error response envelopes across all exception handlers.
+
+### CORS Middleware (`src/api/middleware/cors.py`)
+
+#### `_validate_cors_config(settings: Settings) -> None`
+- **Purpose:** Rejects insecure wildcard origin `*` combined with `allow_credentials=True` in production environments.
+- **Behavior:** Raises `ValueError` if `settings.is_production()` and `"*" in settings.cors_origins` and `settings.cors_allow_credentials`.
+
+#### `setup_cors(app: FastAPI, settings: Settings | None = None) -> None`
+- **Purpose:** Attaches `CORSMiddleware` with validated origin, method, and header policies.
+- **Parameters:** `app` FastAPI instance, `settings` optional `Settings` override.
+- **Behavior:** Validates config via `_validate_cors_config`, then adds middleware with `allow_origins`, `allow_credentials`, `allow_methods`, `allow_headers`, and `max_age=600`.
+
+### Request Validation Middleware (`src/api/middleware/validation.py`)
+
+#### `_SECURITY_HEADERS: dict[str, str]`
+- **Purpose:** Standard security headers injected on all responses for defense-in-depth.
+- **Headers:** `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `X-XSS-Protection: 1; mode=block`.
+
+#### `RequestValidationMiddleware(BaseHTTPMiddleware)`
+- **Purpose:** Enforces request boundary validation, tracing, and security headers.
+- **Parameters:** `app` FastAPI instance, `max_body_bytes` (default 10,485,760).
+- **Methods:**
+  - `dispatch(request, call_next) -> Response`: Injects/preserves `X-Request-ID`, validates `Content-Length` against `max_body_bytes` (returns 413 `PAYLOAD_TOO_LARGE` on exceed), calls next handler, then adds security headers to response.
+
+#### `setup_validation_middleware(app: FastAPI, max_body_bytes: int = 10_485_760) -> None`
+- **Purpose:** Registers `RequestValidationMiddleware` on FastAPI application.
+
+### Error Handling Middleware (`src/api/middleware/error_handler.py`)
+
+#### `_build_error_payload(code: str, message: str, details: dict[str, Any] | list[Any] | None = None) -> dict[str, Any]`
+- **Purpose:** Constructs standardized error response envelope `{error: {code, message, details}, detail}`.
+
+#### `_map_app_error_status(exc: AppBaseError) -> int`
+- **Purpose:** Maps domain exception types to HTTP status codes.
+- **Mapping:** `IngestionError` -> 400, `ConfigurationError`/`RetrievalError`/`GenerationError` -> 500.
+
+#### `app_base_error_handler(request, exc) -> JSONResponse`
+- **Purpose:** Handles `AppBaseError` domain hierarchy, returns structured JSON with domain error code.
+
+#### `validation_error_handler(request, exc) -> JSONResponse`
+- **Purpose:** Handles Pydantic `RequestValidationError`, returns 422 with validation details list.
+
+#### `http_exception_handler(request, exc) -> JSONResponse`
+- **Purpose:** Handles Starlette `HTTPException`, preserves status code and headers.
+
+#### `unhandled_exception_handler(request, exc) -> JSONResponse`
+- **Purpose:** Catch-all for unexpected exceptions, returns sanitized 500 response.
+
+#### `register_exception_handlers(app: FastAPI) -> None`
+- **Purpose:** Registers all four exception handlers on FastAPI application.
+
+### Middleware Request Flow
+```text
+Client HTTP Request
+  ├── 1. RequestValidationMiddleware:
+  │      ├── Inject/preserve X-Request-ID trace header
+  │      ├── Validate Content-Length against max_body_bytes (413 on exceed)
+  │      └── Add security headers to response
+  ├── 2. CORSMiddleware:
+  │      ├── Validate origin against allowlist
+  │      └── Handle preflight OPTIONS requests
+  ├── 3. Route handler executes
+  └── 4. Exception handlers (if error):
+         ├── AppBaseError -> domain error envelope
+         ├── RequestValidationError -> 422 envelope
+         ├── HTTPException -> HTTP error envelope
+         └── Exception -> sanitized 500 envelope
+```
+
+### Package Exports & Registration
+- **`src/api/middleware/__init__.py`:** Exports `setup_cors`, `setup_validation_middleware`, `register_exception_handlers`.
+- **`src/api/app.py`:** Wires all three middleware components in `create_app()`.
+- **Runner Registration:** `test_run_project_tests_cors_and_middleware_suite` in `tests/unit/test_runner.py`.
+
 
 
 

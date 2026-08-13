@@ -712,6 +712,26 @@ When `app_api_key` is unconfigured or set to an empty string in application `Set
 **Answer:**
 By passing `dependencies=[Depends(verify_api_key)]` during `APIRouter` initialization, all child endpoints under the router automatically inherit API key security enforcement without duplicating dependency annotations.
 
+---
+
+## Phase 8.4: CORS, Request Validation & Error Handling Middleware
+
+### Q1: Why is combining wildcard origin '*' with allow_credentials=True dangerous in production?
+**Answer:**
+When `allow_credentials=True`, the browser sends cookies and authentication headers with cross-origin requests. If the server allows any origin (`'*'`), any malicious website can make authenticated requests on behalf of the user, enabling CSRF-like attacks. Browsers also refuse to send credentials when the server responds with `'*'` as the allowed origin, causing silent failures. Production must use explicit origin allowlists.
+
+---
+
+### Q2: What is the purpose of the shared _build_error_payload helper in the error handler middleware?
+**Answer:**
+It centralizes the error response envelope construction, ensuring every exception handler (domain errors, validation errors, HTTP exceptions, unhandled exceptions) returns the exact same JSON structure: `{error: {code, message, details}, detail}`. This makes client-side error handling predictable and testable, and prevents drift between handlers as the API evolves.
+
+---
+
+### Q3: Why does the validation middleware inject security headers on responses rather than relying on a reverse proxy?
+**Answer:**
+Defense-in-depth principle: while a reverse proxy (nginx, cloud load balancer) can add security headers, the application-level middleware ensures headers are present even in development, testing, or direct-deployment scenarios. It also guarantees consistent behavior across all deployment targets and makes the security posture testable in unit tests.
+
 
 
 

@@ -10,11 +10,23 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Application settings loaded from environment variables and .env file."""
 
-    # Server settings
+    # Server & Security settings
     environment: str = Field(default="development", description="Execution mode")
     host: str = Field(default="0.0.0.0", description="Server host address")
     port: int = Field(default=8000, description="Server port")
     log_level: str = Field(default="INFO", description="Logger verbosity level")
+    cors_origins: list[str] = Field(
+        default=["*"], description="Allowed CORS origin domains"
+    )
+    cors_allow_credentials: bool = Field(
+        default=True, description="Allow CORS cookies and credentials"
+    )
+    cors_allow_methods: list[str] = Field(
+        default=["*"], description="Allowed CORS HTTP methods"
+    )
+    cors_allow_headers: list[str] = Field(
+        default=["*"], description="Allowed CORS HTTP headers"
+    )
 
     # API keys
     openai_api_key: str = Field(default="", description="OpenAI API key")
