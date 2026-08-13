@@ -190,6 +190,14 @@ def test_run_project_tests_sse_handler_suite() -> None:
     assert result["exit_code"] == 0
 
 
+def test_run_project_tests_citations_suite() -> None:
+    """Verify test runner successfully executes the citations test suite."""
+    result = run_project_tests(test_path="tests/unit/test_citations.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+
+
 
 
 

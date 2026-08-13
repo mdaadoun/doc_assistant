@@ -425,6 +425,23 @@ An asynchronous generator construct (`SSEResponseHandler`) that consumes raw tok
 ### SSE Event Frame
 A text block structured with `event`, `id`, `retry`, and `data` fields separated by single newlines and terminated by a double newline sequence (`\n\n`).
 
+---
+
+## 🔖 22. Citation Extraction & Grounding Validation
+
+### RawCitation
+Parsed intermediate domain model representing raw file name and 1-indexed page number extracted from inline completion text.
+
+### CitationValidationResult
+Report schema detailing citation grounding status, accuracy score ratio, matched valid citations, and unmatched invalid citations.
+
+### CitationExtractor
+Domain component responsible for parsing inline citation syntax from answer text and mapping matches to context chunk metadata.
+
+### CitationValidator
+Auditing engine verifying whether extracted completion citations correspond to verified retrieved context blocks.
+
+
 
 
 

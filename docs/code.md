@@ -1108,6 +1108,57 @@ SSEResponseHandler.stream_generator(token_stream, conversation_id, confidence_sc
 - **`src/models/__init__.py`:** Exports `SSEMetaDataPayload`, `SSETokenPayload`, `SSEDonePayload`, and `SSEErrorPayload`.
 - **Runner Registration:** `test_run_project_tests_sse_handler_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 29. Citation Extraction & Validation Engine (`src/generation/citations.py`)
+
+### Overview
+Implements Phase 7.3 inline citation extraction and grounding validation engine. Parses inline document references formatted as `[Doc: <file_name> | Page: <page_number>]` from generative completion strings via regular expressions (`CITATION_REGEX`). Resolves raw tags against retrieved context blocks (`ChunkDocument`, `RetrievalResult`, dynamic dicts) to produce fully populated `Citation` domain objects. Validates citation integrity and computes zero-tolerance citation accuracy metrics (`citation_accuracy`).
+
+### Domain Schemas & Constants (`src/generation/citations.py`)
+
+#### `CITATION_REGEX`
+- **Purpose:** Compiled regular expression pattern matching inline document and page tags.
+- **Pattern:** `r"\[Doc:\s*([^|\]]+?)\s*\|\s*Page:\s*(\d+)\s*\]"` (case-insensitive).
+
+#### `RawCitation(BaseDomainModel)`
+- **Purpose:** Parsed intermediate domain schema representing an extracted document citation reference prior to context matching.
+- **Fields:** `file_name` (str), `page_number` (int, ge=1).
+
+#### `CitationValidationResult(BaseDomainModel)`
+- **Purpose:** Validation report payload summarizing grounding status and citation metrics.
+- **Fields:** `is_valid` (bool), `citation_accuracy` (float, 0.0..1.0), `valid_citations` (list[`Citation`]), `invalid_citations` (list[`RawCitation`]).
+
+### Engine Classes (`src/generation/citations.py`)
+
+#### `CitationExtractor`
+- **Purpose:** Extracts raw inline citation tags from completion text and resolves metadata against retrieved context objects.
+- **Methods:**
+  - `extract_raw(text: str) -> list[RawCitation]`: Extracts, cleans, and deduplicates raw document citation targets from text.
+  - `_extract_context_meta(ctx: Any) -> tuple[str, int, str, str, float]`: Helper extracting normalized `file_name`, `page_number`, `chunk_id`, `excerpt`, and `relevance_score` from dynamic context objects or dicts.
+  - `extract_citations(text: str, contexts: Sequence[Any]) -> list[Citation]`: Parses raw tags and matches them against context blocks to construct fully populated `Citation` instances.
+
+#### `CitationValidator`
+- **Purpose:** Audits extracted inline citations against retrieved context blocks to detect ungrounded or hallucinated document tags.
+- **Methods:**
+  - `validate(text_or_citations: str | Sequence[Citation], contexts: Sequence[Any]) -> CitationValidationResult`: Validates completion text or citation objects against context metadata, returning a complete `CitationValidationResult`.
+
+### Extraction & Validation Flow
+```text
+CitationValidator.validate(text_or_citations, contexts)
+  ├── 1. Parse raw citations via CitationExtractor.extract_raw(text) OR map Citation list to RawCitation instances
+  ├── 2. Extract normalized context metadata via CitationExtractor._extract_context_meta(ctx)
+  ├── 3. Match each raw citation against context metadata (case-insensitive filename, exact page number)
+  │        ├── If matched -> Construct valid Citation -> Append to valid_citations
+  │        └── If unmatched -> Append to invalid_citations
+  └── 4. Calculate accuracy = len(valid) / total -> Set is_valid = (len(invalid) == 0) -> Return CitationValidationResult
+```
+
+### Package Exports & Registration
+- **`src/generation/__init__.py`:** Exports `CITATION_REGEX`, `RawCitation`, `CitationValidationResult`, `CitationExtractor`, and `CitationValidator`.
+- **Runner Registration:** `test_run_project_tests_citations_suite` in `tests/unit/test_runner.py`.
+
+
 
 
 
