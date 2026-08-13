@@ -1,5 +1,6 @@
 """Grounded LLM generation service enforcing context-only grounding and zero temperature."""
 
+import time
 from collections.abc import AsyncGenerator, Sequence
 from typing import Any
 
@@ -8,6 +9,8 @@ from openai import AsyncOpenAI
 
 from core.config import get_settings
 from core.exceptions import ConfigurationError, GenerationError
+from generation.finops import FinOpsCollector
+from models.chat import FinOpsMetadata
 
 logger = structlog.get_logger(__name__)
 
@@ -32,6 +35,7 @@ class GroundedGenerator:
         model: str | None = None,
         temperature: float | None = None,
         client: AsyncOpenAI | None = None,
+        finops_collector: FinOpsCollector | None = None,
     ) -> None:
         """Initialize GroundedGenerator with credentials or custom AsyncOpenAI client."""
         settings = get_settings()
@@ -50,6 +54,7 @@ class GroundedGenerator:
 
         self.model = model or settings.default_model
         self.temperature = temperature if temperature is not None else settings.temperature
+        self.finops_collector = finops_collector or FinOpsCollector(default_model=self.model)
 
     def _format_context(self, contexts: Sequence[dict[str, Any] | Any]) -> str:
         """Format context objects or dictionaries into structured prompt blocks."""
@@ -115,3 +120,36 @@ class GroundedGenerator:
         async for token in self.generate_stream(query, contexts):
             tokens.append(token)
         return "".join(tokens)
+
+    async def generate_with_finops(
+        self, query: str, contexts: Sequence[dict[str, Any] | Any]
+    ) -> tuple[str, FinOpsMetadata]:
+        """Generate grounded response non-streamingly and collect FinOps telemetry."""
+        start_time = time.perf_counter()
+        if not contexts:
+            elapsed = time.perf_counter() - start_time
+            finops = self.finops_collector.collect(
+                prompt_text="",
+                completion_text="",
+                execution_time_seconds=elapsed,
+                model=self.model,
+                prompt_tokens=0,
+                completion_tokens=0,
+            )
+            return NO_CONTEXT_REFUSAL, finops
+
+        context_str = self._format_context(contexts)
+        prompt = f"CONTEXT INFORMATION:\n{context_str}\n\nUSER QUESTION: {query}"
+        full_prompt = f"{SYSTEM_PROMPT}\n{prompt}"
+
+        answer = await self.generate(query, contexts)
+        elapsed = time.perf_counter() - start_time
+
+        finops = self.finops_collector.collect(
+            prompt_text=full_prompt,
+            completion_text=answer,
+            execution_time_seconds=elapsed,
+            model=self.model,
+        )
+        return answer, finops
+

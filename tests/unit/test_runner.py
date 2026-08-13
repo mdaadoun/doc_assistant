@@ -197,6 +197,14 @@ def test_run_project_tests_citations_suite() -> None:
     assert result["exit_code"] == 0
 
 
+def test_run_project_tests_finops_collector_suite() -> None:
+    """Verify test runner successfully executes the FinOps collector test suite."""
+    result = run_project_tests(test_path="tests/unit/test_finops_collector.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+
+
 
 
 

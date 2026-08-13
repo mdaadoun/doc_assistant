@@ -632,6 +632,27 @@ When `strict=True` is passed to `CitationValidator.validate`, any unmatched inli
 **Answer:**
 `verify_document_presence` performs direct case-insensitive filename and 1-indexed page number matching against context items without running full regular expression extraction on completion text.
 
+---
+
+## Phase 7.5: FinOps Metadata Collection Integration
+
+### Q1: Why decouple FinOps telemetry collection into a standalone FinOpsCollector class rather than embedding pricing math in GroundedGenerator?
+**Answer:**
+Decoupling FinOps collection follows single-responsibility and open-closed principles. It allows token counting, pricing calculation, and latency tracking to be reused across different pipeline components (e.g., embeddings, re-ranking, API middleware) without polluting LLM generation logic.
+
+---
+
+### Q2: How does the FinOps collector handle token estimation in isolated or offline environments where model tokenizers cannot reach external endpoints?
+**Answer:**
+The count_tokens function implements a multi-tier fallback: it attempts model-specific tiktoken resolution first, falls back to local cl100k_base encoding if offline or unknown model, and uses a word-ratio heuristic (1.3 tokens per word) if encoding fails completely.
+
+---
+
+### Q3: How are semantic cache hits handled in FinOps cost telemetry?
+**Answer:**
+When a request is marked as cached (is_cached=True), calculate_cost immediately returns 0.0 USD, correctly reflecting zero marginal inference cost for cache hits while still recording token counts for analytics.
+
+
 
 
 

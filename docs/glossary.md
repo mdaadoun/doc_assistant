@@ -453,6 +453,16 @@ Utility method sanitizing completion text by removing ungrounded inline citation
 ### Strict Validation Mode
 Enforcement setting (`strict=True`) in `CitationValidator.validate` that raises `GenerationError` when citation validation accuracy falls below 1.0.
 
+### FinOpsCollector
+A dedicated service in generation domain responsible for calculating prompt and completion token counts, estimating USD cost per interaction, and tracking execution latency.
+
+### Token Cost Model Table
+A dictionary mapping LLM model identifiers (e.g. gpt-4o-mini, gpt-4o) to input prompt and output completion USD pricing per thousand tokens.
+
+### generate_with_finops
+A GroundedGenerator method that executes grounded generation while measuring execution time and constructing a complete FinOpsMetadata telemetry payload alongside the response string.
+
+
 
 
 

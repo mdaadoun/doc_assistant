@@ -1162,6 +1162,67 @@ CitationValidator.validate(text_or_citations, contexts, strict=False)
 - **`src/generation/__init__.py`:** Exports `CITATION_REGEX`, `RawCitation`, `CitationValidationResult`, `CitationExtractor`, and `CitationValidator`.
 - **Runner Registration:** `test_run_project_tests_citations_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 30. FinOps Telemetry & Metadata Collection Engine (`src/generation/finops.py`, `src/generation/engine.py`)
+
+### Overview
+Implements Phase 7.5 FinOps metadata collection and telemetry engine. Provides `FinOpsCollector` service (`src/generation/finops.py`) to count prompt/completion tokens using `tiktoken` with offline fallback heuristics, calculate estimated USD costs via a per-model pricing table (`MODEL_PRICING`), measure execution latency via `track_latency` context manager, and build structured `FinOpsMetadata` domain objects (`src/models/chat.py`). Integrates telemetry generation directly into `GroundedGenerator` via `generate_with_finops(query, contexts)`.
+
+### Configuration & Utilities (`src/generation/finops.py`)
+
+#### `MODEL_PRICING`
+- **Purpose:** Dictionary mapping model identifier strings to USD cost rates per 1,000 tokens: `(prompt_rate_per_1k, completion_rate_per_1k)`.
+- **Supported Models:** `gpt-4o-mini` ($0.00015 / $0.0006), `gpt-4o` ($0.0025 / $0.01), `gpt-4-turbo` ($0.01 / $0.03), `gpt-3.5-turbo` ($0.0005 / $0.0015), `text-embedding-3-small` ($0.00002 / $0.0).
+- **Default Fallback:** `DEFAULT_MODEL_PRICING = (0.00015, 0.0006)`.
+
+#### `count_tokens(text: str, model: str = "gpt-4o-mini") -> int`
+- **Purpose:** Counts tokens for a text string using `tiktoken` with multi-tier offline fallback.
+- **Resolution Strategy:** Tries `tiktoken.encoding_for_model(model)`, falls back to `tiktoken.get_encoding("cl100k_base")`, and falls back to word-ratio heuristic (`len(words) * 1.3`) if tokenizer loading fails.
+
+#### `calculate_cost(prompt_tokens: int, completion_tokens: int, model: str = "gpt-4o-mini", is_cached: bool = False) -> float`
+- **Purpose:** Calculates estimated USD cost based on token counts and model pricing matrix.
+- **Caching Handling:** Instantly returns `0.0` USD when `is_cached=True`.
+
+### Telemetry Collector Service (`src/generation/finops.py`)
+
+#### `FinOpsCollector`
+- **Purpose:** Centralized collector for token counts, USD cost calculation, and latency tracking.
+- **Methods:**
+  - `__init__(default_model: str = "gpt-4o-mini")`: Initializes collector with default model name.
+  - `count_tokens(text: str, model: str | None = None) -> int`: Delegate counting tokens for input text.
+  - `calculate_cost(prompt_tokens: int, completion_tokens: int, model: str | None = None, is_cached: bool = False) -> float`: Delegate calculating cost in USD.
+  - `collect(prompt_text: str = "", completion_text: str = "", execution_time_seconds: float = 0.0, model: str | None = None, is_cached: bool = False, prompt_tokens: int | None = None, completion_tokens: int | None = None) -> FinOpsMetadata`: Constructs fully populated `FinOpsMetadata` schema model.
+  - `track_latency() -> Generator[dict[str, Any], None, None]`: Context manager measuring execution block duration in seconds (`elapsed_seconds`).
+
+### Grounded Generator Integration (`src/generation/engine.py`)
+
+#### `GroundedGenerator.generate_with_finops(query: str, contexts: Sequence[dict[str, Any] | Any]) -> tuple[str, FinOpsMetadata]`
+- **Purpose:** Executes grounded completion generation, measures total wall-clock execution time, and returns the generated answer string paired with populated `FinOpsMetadata`.
+
+### Telemetry Collection Flow
+```text
+FinOpsCollector.collect(prompt_text, completion_text, execution_time_seconds, model, is_cached)
+  ├── 1. Resolve target model (model or default_model)
+  ├── 2. Calculate prompt_tokens via count_tokens(prompt_text, target_model) [or use explicit override]
+  ├── 3. Calculate completion_tokens via count_tokens(completion_text, target_model) [or use explicit override]
+  ├── 4. Total tokens = prompt_tokens + completion_tokens
+  ├── 5. Calculate cost via calculate_cost(prompt_tokens, completion_tokens, target_model, is_cached)
+  └── 6. Construct & return FinOpsMetadata(
+           prompt_tokens=p_tokens,
+           completion_tokens=c_tokens,
+           total_tokens=total,
+           estimated_cost_usd=cost,
+           execution_time_seconds=round(exec_time, 4),
+           is_cached=is_cached
+         )
+```
+
+### Package Exports & Registration
+- **`src/generation/__init__.py`:** Exports `FinOpsCollector`, `count_tokens`, `calculate_cost`, and `MODEL_PRICING`.
+- **Runner Registration:** `test_run_project_tests_finops_collector_suite` in `tests/unit/test_runner.py`.
+
+
 
 
 

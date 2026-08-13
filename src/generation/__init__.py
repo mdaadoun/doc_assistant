@@ -8,6 +8,12 @@ from generation.citations import (
     RawCitation,
 )
 from generation.engine import NO_CONTEXT_REFUSAL, SYSTEM_PROMPT, GroundedGenerator
+from generation.finops import (
+    MODEL_PRICING,
+    FinOpsCollector,
+    calculate_cost,
+    count_tokens,
+)
 from generation.sse import SSEResponseHandler, format_sse_event
 
 __all__: list[str] = [
@@ -21,4 +27,9 @@ __all__: list[str] = [
     "CitationValidationResult",
     "CitationExtractor",
     "CitationValidator",
+    "FinOpsCollector",
+    "count_tokens",
+    "calculate_cost",
+    "MODEL_PRICING",
 ]
+

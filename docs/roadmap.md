@@ -90,11 +90,11 @@
 **Entry Criteria:** High-confidence context available from retrieval pipeline.
 **Dependencies:** Phase 6.
 **Tasks:**
-- [ ] 7.1: Implement grounded LLM generation service (temperature=0.0, context-only system prompt)
-- [ ] 7.2: Build SSE streaming response handler (async generator)
-- [ ] 7.3: Implement citation extraction and validation logic (inline [Doc: <name> | Page: <num>] format)
-- [ ] 7.4: Build citation validator (verify cited docs exist in retrieved context)
-- [ ] 7.5: Integrate FinOps metadata collection (token counts, cost, latency)
+- [x] 7.1: Implement grounded LLM generation service (temperature=0.0, context-only system prompt)
+- [x] 7.2: Build SSE streaming response handler (async generator)
+- [x] 7.3: Implement citation extraction and validation logic (inline [Doc: <name> | Page: <num>] format)
+- [x] 7.4: Build citation validator (verify cited docs exist in retrieved context)
+- [x] 7.5: Integrate FinOps metadata collection (token counts, cost, latency)
 **Deliverables:** End-to-end query pipeline with cited, grounded answers.
 **Verification:** Citation accuracy = 1.00 on test queries, FinOps metadata populated.
 
