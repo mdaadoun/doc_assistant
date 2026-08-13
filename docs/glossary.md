@@ -354,4 +354,18 @@ A lightweight CPU-optimized local cross-encoder inference adapter utilizing quan
 ### Candidate Truncation Window
 The technique of slicing candidate search hits (e.g. top 30) from initial hybrid retrieval stages before cross-encoder inference to balance retrieval precision with inference latency.
 
+---
+
+## 🎯 17. Cohere Rerank API & Managed Reranking
+
+### Cohere Rerank API
+Managed cloud cross-encoder reranking service providing high-precision relevance scores for query-passage pairs via external API endpoints.
+
+### Remote Cross-Encoder Adapter
+Adapter translating domain `RetrievalResult` models into external API payloads and returning ranked domain models with updated relevance scores.
+
+### Candidate Top-N Slicing
+Truncating retrieved candidate hits (`candidate_k=30`) before API invocation to optimize network payload size and API execution cost.
+
+
 

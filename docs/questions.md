@@ -492,4 +492,25 @@ The adapter features local model caching, explicit error wrapping into domain-sp
 **Answer:**
 Slicing to 30 candidates preserves high recall from hybrid vector/lexical search while top-5 filtering concentrates only high-confidence chunks for prompt context, mitigating LLM "lost in the middle" attention degradation and reducing prompt token cost.
 
+---
+
+## 22. Cohere Rerank API Fallback Adapter
+
+### Q1: Why implement both SDK and HTTP fallbacks in CohereRerankerAdapter?
+**Answer:**
+It provides maximum flexibility—allowing developers to pass native Cohere SDK clients, mock clients, or rely on lightweight `httpx` HTTP requests without requiring the external `cohere` SDK library in all runtime environments.
+
+---
+
+### Q2: How are missing API key and runtime API failure errors handled?
+**Answer:**
+Initialization raises `ConfigurationError` (`code="MISSING_API_KEY"`) if no key is configured, while API network/HTTP runtime failures during reranking are caught and wrapped in `RetrievalError` (`code="RERANKER_INFERENCE_ERROR"`).
+
+---
+
+### Q3: How does the adapter maintain chunk metadata integrity through external API calls?
+**Answer:**
+Candidates are sliced and passed as a text list to the API. When Cohere returns ranked indices and relevance scores, the adapter maps the returned indices back to original `RetrievalResult` objects, preserving `chunk_id`, `file_name`, `page_number`, and `text`.
+
+
 

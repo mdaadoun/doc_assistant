@@ -154,3 +154,11 @@ def test_run_project_tests_flashrank_reranker_suite() -> None:
     assert result["status"] == "PASSED"
     assert result["exit_code"] == 0
 
+
+def test_run_project_tests_cohere_reranker_suite() -> None:
+    """Verify test runner successfully executes the Cohere reranker test suite."""
+    result = run_project_tests(test_path="tests/unit/test_cohere_reranker.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+

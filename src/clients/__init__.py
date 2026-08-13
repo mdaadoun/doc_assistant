@@ -2,6 +2,7 @@
 
 from clients.base_embedding import BaseEmbeddingAdapter
 from clients.base_reranker import BaseRerankerAdapter
+from clients.cohere_reranker import CohereRerankerAdapter
 from clients.embedding import EmbeddingClientAdapter
 from clients.flashrank_reranker import FlashRankRerankerAdapter
 from clients.gemini_embedding import GeminiEmbeddingAdapter
@@ -13,6 +14,7 @@ from clients.reranker import create_reranker_adapter
 __all__ = [
     "BaseEmbeddingAdapter",
     "BaseRerankerAdapter",
+    "CohereRerankerAdapter",
     "EmbeddingClientAdapter",
     "FlashRankRerankerAdapter",
     "GeminiEmbeddingAdapter",
@@ -21,3 +23,4 @@ __all__ = [
     "OpenAIEmbeddingAdapter",
     "create_reranker_adapter",
 ]
+

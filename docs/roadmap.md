@@ -80,7 +80,7 @@
 **Dependencies:** Phase 5.
 **Tasks:**
 - [x] 6.1: Implement FlashRank cross-encoder adapter (ms-marco-MiniLM-L-6-v2, top 30 → top 5)
-- [ ] 6.2: Implement Cohere Rerank API fallback adapter
+- [x] 6.2: Implement Cohere Rerank API fallback adapter
 - [ ] 6.3: Build re-ranker service with primary/fallback strategy pattern
 - [ ] 6.4: Implement confidence guard (S_min ≥ 0.35 threshold, refusal response bypass)
 **Deliverables:** Complete retrieval pipeline: Hybrid → RRF → Re-rank → Confidence Filter.

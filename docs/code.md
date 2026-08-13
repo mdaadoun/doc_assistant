@@ -872,10 +872,22 @@ Implements Phase 6.1 cross-encoder reranking adapters. An abstract base interfac
 - **Methods:**
   - `rerank(query: str, hits: Sequence[RetrievalResult], candidate_k: int | None = None, top_k: int | None = None) -> list[RetrievalResult]`: Computes deterministic word-overlap scores over candidates and returns top_k results.
 
+#### `CohereRerankerAdapter(BaseRerankerAdapter)`
+- **Purpose:** Cohere Rerank API adapter supporting cloud-based cross-encoder candidate reranking (`src/clients/cohere_reranker.py`).
+- **Parameters:**
+  - `model_name: str = "rerank-v3.5"`: Cohere rerank model identifier.
+  - `api_key: str | None = None`: Optional Cohere API key (falls back to `Settings.cohere_api_key`).
+  - `candidate_k: int = 30`: Default candidate truncation window size.
+  - `top_k: int = 5`: Default output reranked hit count.
+  - `client: Any | None = None`: Optional pre-instantiated SDK client or mock client.
+  - `httpx_client: httpx.Client | None = None`: Optional pre-configured HTTP client for direct API requests.
+- **Methods:**
+  - `rerank(query: str, hits: Sequence[RetrievalResult], candidate_k: int | None = None, top_k: int | None = None) -> list[RetrievalResult]`: Truncates hits to top candidate_k (30), passes document text payload to Cohere Rerank API (`v2/rerank`), maps returned relevance scores back to `RetrievalResult` objects with `retrieval_method="cohere"`, and returns top_k (5) results sorted descending.
+
 ### Adapter Factory (`src/clients/reranker.py`)
 
-#### `create_reranker_adapter(provider: str = "flashrank", model_name: str | None = None, candidate_k: int = 30, top_k: int = 5) -> BaseRerankerAdapter`
-- **Purpose:** Factory function instantiating the requested reranker adapter ("flashrank" or "mock").
+#### `create_reranker_adapter(provider: str = "flashrank", model_name: str | None = None, candidate_k: int = 30, top_k: int = 5, **kwargs: Any) -> BaseRerankerAdapter`
+- **Purpose:** Factory function instantiating the requested reranker adapter ("flashrank", "cohere", or "mock").
 
 ### Reranking Flow
 ```text
@@ -885,10 +897,18 @@ FlashRankRerankerAdapter.rerank(query, hits, candidate_k=30, top_k=5)
   -> raw_results = self._ranker.rerank(RerankRequest(query=clean_query, passages=passages))
   -> reranked_results = [RetrievalResult(chunk_id=item["id"], score=item["score"], retrieval_method="flashrank") for item in raw_results[:top_k]]
   -> return sorted reranked_results[:top_k]
+
+CohereRerankerAdapter.rerank(query, hits, candidate_k=30, top_k=5)
+  -> candidate_hits = hits[:candidate_k] (top 30)
+  -> documents = [hit.text for hit in candidate_hits]
+  -> raw_results = self._call_cohere_api(clean_query, documents, top_n=top_k)
+  -> reranked_results = [RetrievalResult(chunk_id=candidate_hits[idx].chunk_id, score=item["relevance_score"], retrieval_method="cohere") for item in raw_results[:top_k]]
+  -> return sorted reranked_results[:top_k]
 ```
 
 ### Package Exports & Registration
-- **`src/clients/__init__.py` & `src/retrieval/__init__.py`:** Exports `BaseRerankerAdapter`, `FlashRankRerankerAdapter`, `MockRerankerAdapter`, and `create_reranker_adapter`.
-- **Runner Registration:** `test_run_project_tests_flashrank_reranker_suite` in `tests/unit/test_runner.py`.
+- **`src/clients/__init__.py`:** Exports `BaseRerankerAdapter`, `FlashRankRerankerAdapter`, `CohereRerankerAdapter`, `MockRerankerAdapter`, and `create_reranker_adapter`.
+- **Runner Registration:** `test_run_project_tests_flashrank_reranker_suite` and `test_run_project_tests_cohere_reranker_suite` in `tests/unit/test_runner.py`.
+
 
 
