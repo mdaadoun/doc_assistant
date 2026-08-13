@@ -532,6 +532,27 @@ External dependencies (e.g., `flashrank` ONNX libraries or Cohere API keys) may 
 **Answer:**
 `DebugRetrievalBuilder` accepts `RerankerService` as an optional dependency. During `build()`, it executes dense vector search, sparse BM25 search, and RRF fusion, then passes the fused hits into `reranker.rerank()`. The resulting top re-ranked candidates are populated into the `final_reranked` field of `DebugRetrievalResponse`, providing stage-wise diagnostic visibility across all four search pipeline stages.
 
+---
+
+## 24. Confidence Guard & Anti-Hallucination Gating
+
+### Q1: Why execute confidence gating prior to calling the LLM instead of relying on prompt instructions for refusal?
+**Answer:**
+Gating prior to LLM generation guarantees deterministic refusal without LLM instruction drift, eliminates generation latency, and avoids unnecessary API token costs for ungrounded or out-of-corpus queries.
+
+---
+
+### Q2: How does ConfidenceGuard interact with cross-encoder relevance scores and threshold calibration?
+**Answer:**
+The guard inspects candidate relevance scores produced by cross-encoders (e.g., FlashRank or Cohere). If the highest score among candidates is below S_min (0.35), the pipeline marks the evaluation as failed and filters candidate context.
+
+---
+
+### Q3: What telemetry and domain response fields are returned when a refusal bypass occurs?
+**Answer:**
+The guard constructs a `ChatResponse` with `grounded=False`, `answer` set to the standard refusal message, `citations=[]`, `confidence_score` equal to the clamped top retrieval score, and `FinOpsMetadata` reflecting zero prompt/completion tokens.
+
+
 
 
 

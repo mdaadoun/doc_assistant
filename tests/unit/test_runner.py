@@ -169,4 +169,12 @@ def test_run_project_tests_reranker_service_suite() -> None:
     assert result["exit_code"] == 0
 
 
+def test_run_project_tests_confidence_guard_suite() -> None:
+    """Verify test runner successfully executes the ConfidenceGuard test suite."""
+    result = run_project_tests(test_path="tests/unit/test_confidence_guard.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+
+
 

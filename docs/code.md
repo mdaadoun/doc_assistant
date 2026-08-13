@@ -949,6 +949,68 @@ RerankerService.rerank(query, hits)
 - **`src/retrieval/__init__.py`:** Exports `RerankerService`.
 - **Runner Registration:** `test_run_project_tests_reranker_service_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 26. Confidence Guard Service & Domain Schemas (`src/retrieval/confidence_guard.py`)
+
+### Overview
+Implements Phase 6.4 confidence guard gating layer. Intercepts cross-encoder reranked search hits prior to generative LLM execution, evaluating top candidate relevance against a calibrated minimum score cutoff ($S_{\text{min}} \ge 0.35$). Short-circuits low-confidence or out-of-corpus queries with an ungrounded refusal response payload (`"I cannot answer this question based on the available documentation."`), bypassing generative LLM token consumption and eliminating hallucination risk.
+
+### Domain Schema (`src/models/retrieval.py`)
+
+#### `ConfidenceDecision`
+- **Purpose:** Pydantic schema representing the outcome of confidence threshold evaluation.
+- **Fields:**
+  - `passed: bool`: `True` if highest candidate hit score meets or exceeds $S_{\text{min}}$ cutoff threshold.
+  - `top_score: float`: Highest relevance score among retrieved search hit candidates.
+  - `threshold: float`: Calibrated confidence cutoff threshold applied during evaluation.
+  - `filtered_hits: list[RetrievalResult]`: List of candidate search hits meeting or exceeding threshold.
+  - `refusal_message: str`: Standardized corporate refusal disclaimer string.
+
+### Confidence Guard Service (`src/retrieval/confidence_guard.py`)
+
+#### `ConfidenceGuard`
+- **Purpose:** Service orchestrating confidence gating, hit filtering, and refusal response payload construction.
+- **Constants:**
+  - `DEFAULT_REFUSAL_RESPONSE: str = "I cannot answer this question based on the available documentation."`
+  - `DEFAULT_CONFIDENCE_THRESHOLD: float = 0.35`
+- **Methods:**
+  - `__init__(threshold: float | None = None, refusal_message: str | None = None)`: Initializes guard with configured threshold (clamped to $[0.0, 1.0]$) and refusal message disclaimer.
+  - `is_confident(hits: Sequence[RetrievalResult]) -> bool`: Evaluates whether candidate hits list is non-empty and contains at least one hit with `relevance_score >= threshold`.
+  - `filter_hits(hits: Sequence[RetrievalResult]) -> list[RetrievalResult]`: Filters candidate hits to return only those with `relevance_score >= threshold`.
+  - `evaluate(hits: Sequence[RetrievalResult]) -> ConfidenceDecision`: Computes top relevance score, evaluates gating condition, filters valid candidate hits, logs telemetry, and returns structured `ConfidenceDecision`.
+  - `create_refusal_response(top_score: float = 0.0, latency_ms: int = 0) -> ChatResponse`: Constructs standard refusal `ChatResponse` payload (`grounded=False`, `citations=[]`, clamped `confidence_score`, zero-token `FinOpsMetadata`).
+
+### Execution & Gating Flow
+```text
+ConfidenceGuard.evaluate(hits)
+  ├── 1. Extract top_score = max(hit.relevance_score) or 0.0
+  ├── 2. Check passed = is_confident(hits) -> (top_score >= threshold)
+  ├── 3. If passed:
+  │     └── filtered_hits = filter_hits(hits)  (relevance_score >= S_min)
+  ├── 4. If failed:
+  │     └── filtered_hits = []
+  ├── 5. Log structlog event "confidence_guard_evaluated"
+  └── 6. Return ConfidenceDecision(passed, top_score, threshold, filtered_hits, refusal_message)
+
+ConfidenceGuard.create_refusal_response(top_score, latency_ms)
+  ├── 1. Clamp score to [0.0, 1.0]
+  ├── 2. Convert latency_ms to execution_time_seconds
+  └── 3. Return ChatResponse(
+           answer=refusal_message,
+           citations=[],
+           confidence_score=clamped_score,
+           grounded=False,
+           latency_ms=latency_ms,
+           finops=FinOpsMetadata(tokens=0, cost=0.0, is_cached=False)
+         )
+```
+
+### Package Exports & Registration
+- **`src/retrieval/__init__.py`:** Exports `ConfidenceGuard`, `DEFAULT_CONFIDENCE_THRESHOLD`, and `DEFAULT_REFUSAL_RESPONSE`.
+- **Runner Registration:** `test_run_project_tests_confidence_guard_suite` in `tests/unit/test_runner.py`.
+
+
 
 
 

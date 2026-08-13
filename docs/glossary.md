@@ -380,6 +380,23 @@ Domain service orchestrating candidate passage scoring and ordering across prima
 ### Auto Fallback Flag
 A configurable boolean switch (`auto_fallback`) determining whether execution errors in the primary reranking adapter should trigger fallback execution or immediately raise a domain exception.
 
+---
+
+## 🛡️ 19. Confidence Guard & Anti-Hallucination Gating
+
+### Confidence Guard
+A domain gating component in the retrieval pipeline that evaluates candidate cross-encoder relevance scores against a minimum confidence threshold before LLM generation.
+
+### Minimum Confidence Threshold (S_min)
+Calibrated score cutoff (default 0.35) below which context is deemed insufficient for grounded response generation.
+
+### Refusal Response Bypass
+Execution path that short-circuits LLM text generation when retrieval confidence is insufficient, returning a standardized refusal message instantly (`"I cannot answer this question based on the available documentation."`).
+
+### ConfidenceDecision
+Pydantic domain schema encapsulating confidence evaluation status (`passed`), top score, threshold, filtered hits, and refusal text.
+
+
 
 
 
