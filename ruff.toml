@@ -18,6 +18,9 @@ ignore = [
     "UP017",
 ]
 
+[lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Security"]
+
 [lint.isort]
 known-first-party = ["api", "retrieval", "generation", "ingestion", "clients", "models", "core", "cache"]
 

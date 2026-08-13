@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
+from starlette.requests import Request
 
 from api.app import create_app
 from api.dependencies import get_debug_retrieval_builder
@@ -42,7 +43,10 @@ def test_debug_retrieval_endpoint_success() -> None:
     mock_builder = MagicMock(spec=DebugRetrievalBuilder)
     mock_builder.build.return_value = _sample_debug_response()
 
-    app.dependency_overrides[get_debug_retrieval_builder] = lambda: mock_builder
+    def _override_debug_builder(request: Request) -> DebugRetrievalBuilder:
+        return mock_builder
+
+    app.dependency_overrides[get_debug_retrieval_builder] = _override_debug_builder
 
     client = TestClient(app)
     response = client.get("/api/v1/debug/retrieval", params={"query": "security policy"})
@@ -63,7 +67,10 @@ def test_debug_retrieval_endpoint_with_top_k_params() -> None:
     mock_builder = MagicMock(spec=DebugRetrievalBuilder)
     mock_builder.build.return_value = _sample_debug_response()
 
-    app.dependency_overrides[get_debug_retrieval_builder] = lambda: mock_builder
+    def _override_debug_builder(request: Request) -> DebugRetrievalBuilder:
+        return mock_builder
+
+    app.dependency_overrides[get_debug_retrieval_builder] = _override_debug_builder
 
     client = TestClient(app)
     params: dict[str, str | int] = {

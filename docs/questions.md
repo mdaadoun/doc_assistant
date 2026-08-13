@@ -732,6 +732,26 @@ It centralizes the error response envelope construction, ensuring every exceptio
 **Answer:**
 Defense-in-depth principle: while a reverse proxy (nginx, cloud load balancer) can add security headers, the application-level middleware ensures headers are present even in development, testing, or direct-deployment scenarios. It also guarantees consistent behavior across all deployment targets and makes the security posture testable in unit tests.
 
+---
+
+## Phase 8.5: Service Dependency Injection (Lifespan Context)
+
+### Q1: Why use a lifespan-scoped container instead of module-level global singletons?
+**Answer:**
+Globals leak state across requests and tests, are hard to reset, and prevent deterministic teardown. A lifespan container scopes service lifetime to the app lifecycle, enabling clean startup bootstrap and shutdown disposal, plus per-app isolation in tests.
+
+---
+
+### Q2: How do dependency providers resolve services from the container?
+**Answer:**
+Providers accept the FastAPI `Request`, read `request.app.state.container`, and return the requested service. If the container is absent (lifespan not run), a lazy fallback creates and caches a default container on `app.state`.
+
+---
+
+### Q3: How does this design support testability?
+**Answer:**
+Tests can either run the lifespan via `TestClient` context manager to exercise real wiring, or override providers with `app.dependency_overrides[get_chat_service] = lambda request: mock_service` for isolated endpoint tests.
+
 
 
 

@@ -105,8 +105,8 @@
 - [x] 8.1: Implement POST /api/v1/chat with SSE streaming
 - [x] 8.2: Implement GET /api/v1/debug/retrieval diagnostic endpoint
 - [x] 8.3: Set up API key authentication middleware (dependencies.py)
-- [ ] 8.4: Configure CORS, request validation, error handling middleware
-- [ ] 8.5: Implement service dependency injection (lifespan context)
+- [x] 8.4: Configure CORS, request validation, error handling middleware
+- [x] 8.5: Implement service dependency injection (lifespan context)
 **Deliverables:** Fully functional API with streaming chat and debug endpoints.
 **Verification:** curl/httpie tests against running API, correct SSE event format.
 

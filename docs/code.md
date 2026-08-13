@@ -1443,6 +1443,64 @@ Client HTTP Request
 - **`src/api/app.py`:** Wires all three middleware components in `create_app()`.
 - **Runner Registration:** `test_run_project_tests_cors_and_middleware_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 35. Service Dependency Injection & Lifespan Context (`src/api/services/container.py`, `src/api/dependencies.py`, `src/api/app.py`)
+
+### Overview
+Implements Phase 8.5 lifespan-scoped service dependency injection. A `ServiceContainer` composition root holds application service singletons (`ChatService`, `DebugRetrievalBuilder`) for the duration of the FastAPI app lifecycle. The FastAPI lifespan context bootstraps the container on startup (`app.state.container`) and disposes it on shutdown, guaranteeing deterministic resource lifecycle. Dependency providers resolve services from the container via `request.app.state`, replacing module-level global singletons and eliminating cross-request state leakage.
+
+### Service Container (`src/api/services/container.py`)
+
+#### `ServiceContainer`
+- **Purpose:** Lifespan-scoped composition root holding application service singletons for the current app lifecycle.
+- **Parameters:**
+  - `chat_service: ChatService | None = None`: Optional injected `ChatService` (defaults to a new instance).
+  - `debug_builder: DebugRetrievalBuilder | None = None`: Optional injected `DebugRetrievalBuilder` (defaults to a new instance).
+- **Methods:**
+  - `create_default() -> ServiceContainer`: Class factory building a container with default service implementations.
+  - `dispose() -> None`: Releases external resources held by container services (extension point for closing HTTP clients, Qdrant connections, async generators).
+
+### Dependency Injection Providers (`src/api/dependencies.py`)
+
+#### `_get_container(request: Request) -> ServiceContainer`
+- **Purpose:** Returns the lifespan-scoped container from `request.app.state.container`, lazily creating and caching a default container when the lifespan has not run (e.g. direct `TestClient` usage).
+
+#### `get_chat_service(request: Request) -> ChatService`
+- **Purpose:** Dependency provider resolving `ChatService` from the lifespan-scoped container.
+
+#### `get_debug_retrieval_builder(request: Request) -> DebugRetrievalBuilder`
+- **Purpose:** Dependency provider resolving `DebugRetrievalBuilder` from the lifespan-scoped container.
+
+### Application Factory & Lifespan (`src/api/app.py`)
+
+#### `_build_lifespan() -> Callable[[FastAPI], AbstractAsyncContextManager[None]]`
+- **Purpose:** Creates the FastAPI lifespan asynccontextmanager bootstrapping and disposing the service container.
+- **Behavior:**
+  - On startup: creates `ServiceContainer.create_default()`, attaches to `app.state.container`, logs service types.
+  - On shutdown: calls `container.dispose()` and clears `app.state.container`.
+
+#### `create_app(settings: Settings | None = None) -> FastAPI`
+- **Purpose:** FastAPI application factory registering the lifespan context, middleware, and routers.
+
+### Dependency Resolution Flow
+```text
+create_app() -> FastAPI(lifespan=_build_lifespan())
+  ├── Startup: lifespan creates ServiceContainer.create_default()
+  │            -> app.state.container = container
+  ├── Request: route dependency get_chat_service(request) / get_debug_retrieval_builder(request)
+  │            -> _get_container(request) reads app.state.container
+  │            -> returns container.chat_service / container.debug_builder
+  ├── If lifespan not run (tests): _get_container lazily creates and caches default container
+  └── Shutdown: lifespan calls container.dispose(); app.state.container = None
+```
+
+### Package Exports & Registration
+- **`src/api/services/__init__.py`:** Exports `ChatService` and `ServiceContainer`.
+- **`src/api/dependencies.py`:** Exports `get_chat_service`, `get_debug_retrieval_builder`, `ChatServiceDep`, `DebugRetrievalBuilderDep`.
+- **`src/api/app.py`:** Wires lifespan context in `create_app()`.
+- **Runner Registration:** `test_run_project_tests_service_container_suite` and `test_run_project_tests_lifespan_di_suite` in `tests/unit/test_runner.py`.
+
 
 
 

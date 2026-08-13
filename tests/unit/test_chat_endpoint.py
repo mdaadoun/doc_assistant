@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette.requests import Request
 
 from api.app import create_app
 from api.dependencies import get_chat_service
@@ -94,7 +95,10 @@ def test_chat_endpoint_http_streaming_success(
             yield "event: token\ndata: {\"delta\": \"Answer\"}\n\n"
             yield "event: done\ndata: {\"status\": \"completed\"}\n\n"
 
-    app.dependency_overrides[get_chat_service] = lambda: CustomChatService()
+    def _override_chat_service(request: Request) -> CustomChatService:
+        return CustomChatService()
+
+    app.dependency_overrides[get_chat_service] = _override_chat_service
 
     client = TestClient(app)
     response = client.post(
@@ -119,7 +123,10 @@ def test_chat_endpoint_unconfident_refusal_stream() -> None:
     guard = ConfidenceGuard(threshold=0.90)
     service = ChatService(confidence_guard=guard)
 
-    app.dependency_overrides[get_chat_service] = lambda: service
+    def _override_chat_service(request: Request) -> ChatService:
+        return service
+
+    app.dependency_overrides[get_chat_service] = _override_chat_service
 
     client = TestClient(app)
     response = client.post(

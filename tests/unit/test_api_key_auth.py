@@ -3,6 +3,7 @@
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from starlette.requests import Request
 
 from api.app import create_app
 from api.dependencies import get_chat_service, verify_api_key
@@ -59,31 +60,35 @@ def test_api_endpoint_auth_enforcement_client(monkeypatch: pytest.MonkeyPatch) -
         async def stream_chat(self, request):  # type: ignore[no-untyped-def]
             yield "event: done\ndata: {}\n\n"
 
-    app.dependency_overrides[get_chat_service] = lambda: DummyChatService()
+    def _override_chat_service(request: Request) -> DummyChatService:
+        return DummyChatService()
+
+    app.dependency_overrides[get_chat_service] = _override_chat_service
     client = TestClient(app)
 
-    # 1. Unauthenticated request -> 401
-    resp_unauth = client.post(
-        "/api/v1/chat",
-        json={"query": "Test question?", "conversation_id": "c1"},
-    )
-    assert resp_unauth.status_code == 401
-    assert "Invalid or missing API key" in resp_unauth.json()["detail"]
+    try:
+        # 1. Unauthenticated request -> 401
+        resp_unauth = client.post(
+            "/api/v1/chat",
+            json={"query": "Test question?", "conversation_id": "c1"},
+        )
+        assert resp_unauth.status_code == 401
+        assert "Invalid or missing API key" in resp_unauth.json()["detail"]
 
-    # 2. Wrong API key -> 401
-    resp_wrong = client.post(
-        "/api/v1/chat",
-        json={"query": "Test question?", "conversation_id": "c1"},
-        headers={"X-API-Key": "wrong-secret"},
-    )
-    assert resp_wrong.status_code == 401
+        # 2. Wrong API key -> 401
+        resp_wrong = client.post(
+            "/api/v1/chat",
+            json={"query": "Test question?", "conversation_id": "c1"},
+            headers={"X-API-Key": "wrong-secret"},
+        )
+        assert resp_wrong.status_code == 401
 
-    # 3. Valid API key -> 200
-    resp_valid = client.post(
-        "/api/v1/chat",
-        json={"query": "Test question?", "conversation_id": "c1"},
-        headers={"X-API-Key": "prod-secret-999"},
-    )
-    assert resp_valid.status_code == 200
-
-    clear_settings_cache()
+        # 3. Valid API key -> 200
+        resp_valid = client.post(
+            "/api/v1/chat",
+            json={"query": "Test question?", "conversation_id": "c1"},
+            headers={"X-API-Key": "prod-secret-999"},
+        )
+        assert resp_valid.status_code == 200
+    finally:
+        clear_settings_cache()

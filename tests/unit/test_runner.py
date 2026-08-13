@@ -234,6 +234,20 @@ def test_run_project_tests_cors_and_middleware_suite() -> None:
     assert result["exit_code"] == 0
 
 
+def test_run_project_tests_service_container_suite() -> None:
+    """Verify test runner successfully executes the service container test suite."""
+    result = run_project_tests(test_path="tests/unit/test_service_container.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+
+def test_run_project_tests_lifespan_di_suite() -> None:
+    """Verify test runner successfully executes the lifespan DI test suite."""
+    result = run_project_tests(test_path="tests/unit/test_lifespan_di.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+
 
 
 

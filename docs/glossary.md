@@ -520,6 +520,25 @@ Tracing header used to correlate requests across distributed systems. Injected o
 ### Production CORS Guard
 Validation rule rejecting wildcard origin `*` combined with `allow_credentials=True` in production environments to prevent credential leakage.
 
+---
+
+## 🧩 27. Service Dependency Injection & Lifespan Context
+
+### ServiceContainer
+Lifespan-scoped composition root holding application service singletons (`ChatService`, `DebugRetrievalBuilder`) for the duration of the FastAPI app lifecycle.
+
+### Lifespan Context
+FastAPI `asynccontextmanager` executed on application startup/shutdown, used here to bootstrap and dispose the service container.
+
+### Composition Root
+Central wiring point where service dependencies are instantiated and injected, avoiding scattered global singletons.
+
+### Lazy Fallback Container
+Behavior in `_get_container` that creates and caches a default `ServiceContainer` on `app.state` when the lifespan has not run (e.g. direct `TestClient` usage), preserving backward compatibility with existing tests.
+
+### app.state.container
+FastAPI application state attribute holding the lifespan-scoped `ServiceContainer` instance, enabling dependency providers to resolve services per app lifecycle.
+
 
 
 
