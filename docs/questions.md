@@ -552,6 +552,27 @@ The guard inspects candidate relevance scores produced by cross-encoders (e.g., 
 **Answer:**
 The guard constructs a `ChatResponse` with `grounded=False`, `answer` set to the standard refusal message, `citations=[]`, `confidence_score` equal to the clamped top retrieval score, and `FinOpsMetadata` reflecting zero prompt/completion tokens.
 
+---
+
+## 25. Grounded LLM Generation & Contextual Answering
+
+### Q1: Why is temperature explicitly set to 0.0 in the Grounded LLM Generation service?
+**Answer:**
+Setting `temperature=0.0` turns off stochastic sampling, producing deterministic tokens that strictly adhere to factual context blocks and minimize hallucinatory variance.
+
+---
+
+### Q2: How does GroundedGenerator handle empty context lists?
+**Answer:**
+If an empty context list is passed to `generate_stream`, the generator immediately yields the standard `NO_CONTEXT_REFUSAL` string (`"I cannot answer this question based on the available documentation."`) without invoking the OpenAI API, saving latency and token costs.
+
+---
+
+### Q3: How is client dependency injected in GroundedGenerator for offline testing?
+**Answer:**
+`GroundedGenerator` accepts an optional `client` parameter of type `AsyncOpenAI`. In unit tests, a mock client is injected directly, avoiding live network calls and API key configuration requirements.
+
+
 
 
 

@@ -396,6 +396,23 @@ Execution path that short-circuits LLM text generation when retrieval confidence
 ### ConfidenceDecision
 Pydantic domain schema encapsulating confidence evaluation status (`passed`), top score, threshold, filtered hits, and refusal text.
 
+---
+
+## 🤖 20. Grounded LLM Generation & Contextual Answering
+
+### Grounded LLM Generation
+A generation pattern where the language model is constrained strictly to retrieved context blocks, preventing hallucination or usage of prior training knowledge.
+
+### Context Block
+A formatted text snippet containing source document metadata (file name, page number) and chunk text passed into the LLM system/user prompt context.
+
+### Zero Temperature (T=0.0)
+A sampling setting (`temperature=0.0`) that minimizes generation variance and ensures deterministic output based strictly on prompt context.
+
+### Context Refusal
+A fallback response string (`"I cannot answer this question based on the available documentation."`) emitted when no relevant context chunks are provided or retrieved.
+
+
 
 
 

@@ -1010,6 +1010,48 @@ ConfidenceGuard.create_refusal_response(top_score, latency_ms)
 - **`src/retrieval/__init__.py`:** Exports `ConfidenceGuard`, `DEFAULT_CONFIDENCE_THRESHOLD`, and `DEFAULT_REFUSAL_RESPONSE`.
 - **Runner Registration:** `test_run_project_tests_confidence_guard_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 27. Grounded LLM Generation Service (`src/generation/engine.py`)
+
+### Overview
+Implements Phase 7.1 grounded LLM generation service. Enforces context-only grounding via a strict corporate assistant system prompt, zero sampling temperature ($T=0.0$), and `AsyncGenerator` streaming token completion. Short-circuits empty context inputs with an immediate refusal response string (`"I cannot answer this question based on the available documentation."`), preventing unnecessary LLM API calls and eliminating hallucination leakage.
+
+### Constants & Configuration
+- `SYSTEM_PROMPT: str`: System prompt instructing the model to answer strictly from provided context blocks, state refusal if facts are missing, and append inline citations `[Doc: <file_name> | Page: <page_number>]`.
+- `NO_CONTEXT_REFUSAL: str = "I cannot answer this question based on the available documentation."`: Standard refusal disclaimer string.
+
+### Grounded Generation Service (`src/generation/engine.py`)
+
+#### `GroundedGenerator`
+- **Purpose:** Core generative LLM service for contextual question answering.
+- **Methods:**
+  - `__init__(api_key: str | None = None, model: str | None = None, temperature: float | None = None, client: AsyncOpenAI | None = None)`: Initializes generator with API key validation or custom `AsyncOpenAI` client injection, model defaults (`gpt-4o-mini`), and zero temperature ($0.0$).
+  - `_format_context(contexts: Sequence[dict[str, Any] | Any]) -> str`: Internal helper formatting context dictionaries or domain objects into structured text blocks (`Source File`, `Page Number`, `Content`).
+  - `generate_stream(query: str, contexts: Sequence[dict[str, Any] | Any]) -> AsyncGenerator[str, None]`: Streams completion token deltas asynchronously using OpenAI chat completions, yielding refusal if contexts list is empty and raising `GenerationError` on API failure.
+  - `generate(query: str, contexts: Sequence[dict[str, Any] | Any]) -> str`: Non-streaming convenience method aggregating streaming tokens into a complete answer string.
+
+### Execution & Streaming Flow
+```text
+GroundedGenerator.generate_stream(query, contexts)
+  ├── 1. Check if not contexts -> Yield NO_CONTEXT_REFUSAL -> Return
+  ├── 2. Format context list into text blocks via _format_context()
+  ├── 3. Construct prompt: "CONTEXT INFORMATION:\n{context_str}\n\nUSER QUESTION: {query}"
+  ├── 4. Invoke client.chat.completions.create(
+  │        model=self.model,
+  │        messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}],
+  │        temperature=0.0,
+  │        stream=True
+  │      )
+  ├── 5. Iterate stream -> Extract chunk.choices[0].delta.content -> Yield delta
+  └── 6. Catch Exception -> Log structlog error -> Raise GenerationError
+```
+
+### Package Exports & Registration
+- **`src/generation/__init__.py`:** Exports `GroundedGenerator`, `SYSTEM_PROMPT`, and `NO_CONTEXT_REFUSAL`.
+- **Runner Registration:** `test_run_project_tests_grounded_generator_suite` in `tests/unit/test_runner.py`.
+
+
 
 
 
