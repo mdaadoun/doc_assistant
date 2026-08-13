@@ -1,11 +1,15 @@
 """GET /api/v1/debug/retrieval diagnostic endpoint."""
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
-from api.dependencies import DebugRetrievalBuilderDep
+from api.dependencies import DebugRetrievalBuilderDep, verify_api_key
 from models.retrieval import DebugRetrievalResponse
 
-router = APIRouter(prefix="/api/v1/debug", tags=["Debug"])
+router = APIRouter(
+    prefix="/api/v1/debug",
+    tags=["Debug"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @router.get(

@@ -692,6 +692,27 @@ FastAPI's `app.dependency_overrides` allows swapping `DebugRetrievalBuilder` wit
 **Answer:**
 The payload contains stage-wise lists: `dense_hits`, `sparse_hits`, and `rrf_fused` hits with raw scores and 1-indexed ranks, alongside `final_reranked` candidate results.
 
+---
+
+## Phase 8.3: Set Up API Key Authentication Middleware (`dependencies.py`)
+
+### Q1: Why use APIKeyHeader with auto_error=False instead of auto_error=True in verify_api_key?
+**Answer:**
+Setting `auto_error=False` allows custom exception handling in `verify_api_key`, returning a standardized HTTP 401 Unauthorized status code with `WWW-Authenticate` header and clear JSON error detail instead of FastAPI's default 403 Forbidden message.
+
+---
+
+### Q2: How does verify_api_key accommodate local development environments?
+**Answer:**
+When `app_api_key` is unconfigured or set to an empty string in application `Settings`, `verify_api_key` safely bypasses authentication checks, allowing developer tools and automated tests to function without header boilerplate.
+
+---
+
+### Q3: How are route authorization dependencies declared across the API application?
+**Answer:**
+By passing `dependencies=[Depends(verify_api_key)]` during `APIRouter` initialization, all child endpoints under the router automatically inherit API key security enforcement without duplicating dependency annotations.
+
+
 
 
 

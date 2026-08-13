@@ -485,6 +485,20 @@ REST API diagnostic endpoint (`GET /api/v1/debug/retrieval`) exposing internal m
 ### DebugRetrievalResponse
 Pydantic DTO encapsulating intermediate and final retrieval scores, ranks, and metadata per retrieval stage.
 
+---
+
+## 🔒 25. API Key Authentication Middleware & Security
+
+### APIKeyHeader
+FastAPI security utility that extracts API keys from request HTTP headers (e.g. `X-API-Key`) without throwing unhandled exceptions when `auto_error` is disabled.
+
+### Header Authentication
+A lightweight security protocol passing secret tokens in custom request HTTP headers for client authorization.
+
+### Dependency Security Scheme
+FastAPI authorization dependency pattern that validates caller credentials before invoking endpoint route handlers.
+
+
 
 
 

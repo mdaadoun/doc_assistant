@@ -220,6 +220,13 @@ def test_run_project_tests_debug_retrieval_endpoint_suite() -> None:
     assert result["exit_code"] == 0
 
 
+def test_run_project_tests_api_key_auth_suite() -> None:
+    """Verify test runner successfully executes the API key authentication test suite."""
+    result = run_project_tests(test_path="tests/unit/test_api_key_auth.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+
 
 
 

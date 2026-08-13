@@ -37,30 +37,39 @@ def test_production_environment_check() -> None:
 def test_api_key_configuration_helpers() -> None:
     """Verify key configuration checks and status dict generation."""
     empty_keys = Settings(
-        openai_api_key="", cohere_api_key="   ", gemini_api_key="", _env_file=None
+        openai_api_key="",
+        cohere_api_key="   ",
+        gemini_api_key="",
+        app_api_key="",
+        _env_file=None,
     )
     assert empty_keys.is_openai_configured() is False
     assert empty_keys.is_cohere_configured() is False
     assert empty_keys.is_gemini_configured() is False
+    assert empty_keys.is_app_api_key_configured() is False
     assert empty_keys.get_api_key_status() == {
         "openai": False,
         "cohere": False,
         "gemini": False,
+        "app": False,
     }
 
     valid_keys = Settings(
         openai_api_key="sk-test-openai-key",
         cohere_api_key="coh-test-cohere-key",
         gemini_api_key="gem-test-gemini-key",
+        app_api_key="app-test-api-key",
         _env_file=None,
     )
     assert valid_keys.is_openai_configured() is True
     assert valid_keys.is_cohere_configured() is True
     assert valid_keys.is_gemini_configured() is True
+    assert valid_keys.is_app_api_key_configured() is True
     assert valid_keys.get_api_key_status() == {
         "openai": True,
         "cohere": True,
         "gemini": True,
+        "app": True,
     }
 
 

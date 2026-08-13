@@ -3,11 +3,15 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
-from api.dependencies import get_chat_service
+from api.dependencies import get_chat_service, verify_api_key
 from api.services.chat_service import ChatService
 from models.chat import ChatRequest
 
-router = APIRouter(prefix="/api/v1", tags=["Chat"])
+router = APIRouter(
+    prefix="/api/v1",
+    tags=["Chat"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 
 @router.post(

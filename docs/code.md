@@ -1311,6 +1311,59 @@ GET /api/v1/debug/retrieval (query="...", dense_top_k=...)
 - **`src/api/dependencies.py`:** Exports `get_debug_retrieval_builder`, `set_debug_retrieval_builder`, `DebugRetrievalBuilderDep`.
 - **Runner Registration:** `test_run_project_tests_debug_retrieval_endpoint_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 33. API Key Authentication Middleware & Security Dependency Injection (`src/api/dependencies.py`, `src/core/config.py`)
+
+### Overview
+Implements Phase 8.3 API key authentication middleware. Provides modular client authentication via FastAPI `Security` dependency providers in `src/api/dependencies.py`, backed by Pydantic application settings (`src/core/config.py`). Validates incoming `X-API-Key` headers against `Settings.app_api_key` while automatically bypassing verification in unconfigured local development setups.
+
+### Settings Configuration (`src/core/config.py`)
+
+#### `Settings.app_api_key`
+- **Type:** `str` (default: `""`)
+- **Purpose:** Application API key credential used for authenticating incoming client HTTP requests.
+
+#### `Settings.is_app_api_key_configured() -> bool`
+- **Purpose:** Returns `True` if `app_api_key` is set to a non-empty, non-whitespace string.
+
+#### `Settings.get_api_key_status() -> dict[str, bool]`
+- **Purpose:** Returns validation map of external and application API key credentials including `"app": self.is_app_api_key_configured()`.
+
+### Security Dependency Providers (`src/api/dependencies.py`)
+
+#### `api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)`
+- **Purpose:** FastAPI security scheme extracting the `X-API-Key` header without raising automatic default HTTP 403 errors.
+
+#### `verify_api_key(api_key: str | None = Security(api_key_header), settings: Settings = Depends(get_settings)) -> str`
+- **Signature:** `def verify_api_key(...) -> str`
+- **Purpose:** Dependency provider validating request `X-API-Key` against `settings.app_api_key`.
+- **Behavior:**
+  - If `settings.app_api_key` is empty: Bypasses check and returns key or `""`.
+  - If `settings.app_api_key` is configured and `api_key` is missing or mismatched: Raises `HTTPException(status_code=401, detail="Invalid or missing API key", headers={"WWW-Authenticate": "ApiKey"})`.
+  - If `api_key` matches: Returns validated API key string.
+
+#### `ApiKeyDep`
+- **Purpose:** Type annotation alias for `Annotated[str, Depends(verify_api_key)]`.
+
+### Security Verification Flow
+```text
+Client Request (e.g. POST /api/v1/chat or GET /api/v1/debug/retrieval)
+  ├── 1. FastAPI extracts X-API-Key header via APIKeyHeader scheme
+  ├── 2. Depends(verify_api_key) invokes verify_api_key(api_key, settings)
+  ├── 3. Evaluate settings.app_api_key:
+  │      ├── Unconfigured ("") -> Access granted (dev mode bypass)
+  │      ├── Configured & Header missing/invalid -> HTTP 401 Unauthorized
+  │      └── Configured & Header matching -> Validation succeeds
+  └── 4. Forward execution to route handler
+```
+
+### Package Exports & Registration
+- **`src/api/dependencies.py`:** Exports `api_key_header`, `verify_api_key`, `ApiKeyDep`.
+- **`src/api/routes/chat.py` & `src/api/routes/debug.py`:** Configured with `dependencies=[Depends(verify_api_key)]`.
+- **Runner Registration:** `test_run_project_tests_api_key_auth_suite` in `tests/unit/test_runner.py`.
+
+
 
 
 
