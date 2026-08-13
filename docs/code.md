@@ -1222,6 +1222,50 @@ FinOpsCollector.collect(prompt_text, completion_text, execution_time_seconds, mo
 - **`src/generation/__init__.py`:** Exports `FinOpsCollector`, `count_tokens`, `calculate_cost`, and `MODEL_PRICING`.
 - **Runner Registration:** `test_run_project_tests_finops_collector_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 31. FastAPI SSE Streaming Chat Endpoint & Service Layer (`src/api/routes/chat.py`, `src/api/services/chat_service.py`)
+
+### Overview
+Implements Phase 8.1 POST `/api/v1/chat` endpoint with Server-Sent Events (SSE) streaming. Enforces strict layer isolation by delegating pipeline execution to `ChatService` (`src/api/services/chat_service.py`), injects service dependencies via `get_chat_service` (`src/api/dependencies.py`), exposes the route in `src/api/routes/chat.py`, and initializes the FastAPI app via factory `create_app` (`src/api/app.py`).
+
+### Service Layer (`src/api/services/chat_service.py`)
+
+#### `ChatService`
+- **Purpose:** Orchestrates candidate retrieval, confidence guard evaluation, grounded LLM streaming generation, and SSE frame formatting.
+- **Methods:**
+  - `__init__(dense_search, sparse_search, rrf_fusion, reranker, confidence_guard, grounded_generator, sse_handler)`: Initializes pipeline components with sensible defaults or injected mocks.
+  - `stream_chat(request: ChatRequest) -> AsyncGenerator[str, None]`: Executes hybrid search, evaluates candidates against `ConfidenceGuard`, streams grounded tokens or refusal text, and formats SSE event frames (`metadata`, `token`, `error`, `done`).
+
+### Presentation Layer & Routing (`src/api/routes/chat.py`, `src/api/app.py`)
+
+#### `chat_endpoint(request: ChatRequest, chat_service: ChatService = Depends(get_chat_service)) -> StreamingResponse`
+- **Purpose:** Receives user query and conversation parameters, invokes `ChatService.stream_chat`, and returns a FastAPI `StreamingResponse` with `media_type="text/event-stream"`.
+- **Headers:** `Cache-Control: no-cache`, `Connection: keep-alive`, `X-Accel-Buffering: no`.
+
+#### `create_app() -> FastAPI`
+- **Purpose:** FastAPI application factory instantiating the application and including `chat_router` under `/api/v1`.
+
+### Execution Flow
+```text
+POST /api/v1/chat (ChatRequest)
+  ├── 1. FastAPI validates ChatRequest schema
+  ├── 2. Depends(get_chat_service) injects ChatService instance
+  ├── 3. ChatService.stream_chat(request)
+  │      ├── Run hybrid vector/sparse retrieval & reranking (if enabled)
+  │      ├── ConfidenceGuard.evaluate(candidates)
+  │      ├── If unconfident: yield metadata frame + refusal stream + done frame
+  │      └── If confident: yield metadata frame + GroundedGenerator token deltas + done frame
+  └── 4. StreamingResponse returns text/event-stream
+```
+
+### Package Exports & Registration
+- **`src/api/__init__.py`:** Exports `app` and `create_app`.
+- **`src/api/routes/__init__.py`:** Exports `chat_router`.
+- **`src/api/services/__init__.py`:** Exports `ChatService`.
+- **Runner Registration:** `test_run_project_tests_chat_endpoint_suite` in `tests/unit/test_runner.py`.
+
+
 
 
 

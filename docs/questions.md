@@ -652,6 +652,27 @@ The count_tokens function implements a multi-tier fallback: it attempts model-sp
 **Answer:**
 When a request is marked as cached (is_cached=True), calculate_cost immediately returns 0.0 USD, correctly reflecting zero marginal inference cost for cache hits while still recording token counts for analytics.
 
+---
+
+## Phase 8.1: POST /api/v1/chat with SSE Streaming
+
+### Q1: Why use Server-Sent Events (SSE) over WebSockets for the POST /api/v1/chat endpoint?
+**Answer:**
+SSE is lightweight, operates over standard HTTP/1.1 or HTTP/2, works seamlessly with existing HTTP middleware/proxies, and fits the unidirectional pattern of LLM response streaming better than bidirectional WebSockets.
+
+---
+
+### Q2: How does the chat endpoint handle low-confidence queries before calling the LLM?
+**Answer:**
+The ChatService evaluates candidate search hits against ConfidenceGuard. If top candidate relevance score falls below threshold S_min, an ungrounded refusal stream is yielded immediately without invoking the LLM, reducing latency and API costs.
+
+---
+
+### Q3: How is dependency injection implemented for the ChatService in FastAPI?
+**Answer:**
+FastAPI's Depends pattern with a configurable provider function (get_chat_service) allows production code to lazy-instantiate default services while enabling unit tests to inject custom/mock ChatService instances via app.dependency_overrides.
+
+
 
 
 

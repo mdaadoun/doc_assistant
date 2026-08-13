@@ -204,6 +204,14 @@ def test_run_project_tests_finops_collector_suite() -> None:
     assert result["exit_code"] == 0
 
 
+def test_run_project_tests_chat_endpoint_suite() -> None:
+    """Verify test runner successfully executes the chat endpoint test suite."""
+    result = run_project_tests(test_path="tests/unit/test_chat_endpoint.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+
+
 
 
 

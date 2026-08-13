@@ -462,6 +462,20 @@ A dictionary mapping LLM model identifiers (e.g. gpt-4o-mini, gpt-4o) to input p
 ### generate_with_finops
 A GroundedGenerator method that executes grounded generation while measuring execution time and constructing a complete FinOpsMetadata telemetry payload alongside the response string.
 
+---
+
+## 🌐 23. API Layer & SSE Streaming Endpoints
+
+### Server-Sent Events (SSE)
+A unidirectional lightweight web streaming protocol using `text/event-stream` over HTTP to push real-time event frames from server to client.
+
+### ChatService
+Orchestration service connecting hybrid retrieval, confidence gating, grounded LLM token streaming, and SSE event formatting.
+
+### Metadata Frame
+Initial SSE event frame transmitting conversation ID, confidence score, grounding status, and retrieved citations before answer token deltas.
+
+
 
 
 

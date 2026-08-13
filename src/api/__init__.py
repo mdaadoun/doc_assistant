@@ -1,3 +1,5 @@
 """Presentation layer: FastAPI routes, SSE streaming, authentication middleware."""
 
-__all__: list[str] = []
+from api.app import app, create_app
+
+__all__: list[str] = ["app", "create_app"]
