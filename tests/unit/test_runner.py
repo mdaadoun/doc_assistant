@@ -162,3 +162,11 @@ def test_run_project_tests_cohere_reranker_suite() -> None:
     assert result["exit_code"] == 0
 
 
+def test_run_project_tests_reranker_service_suite() -> None:
+    """Verify test runner successfully executes the RerankerService test suite."""
+    result = run_project_tests(test_path="tests/unit/test_reranker_service.py")
+    assert result["status"] == "PASSED"
+    assert result["exit_code"] == 0
+
+
+

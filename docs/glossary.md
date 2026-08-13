@@ -367,5 +367,19 @@ Adapter translating domain `RetrievalResult` models into external API payloads a
 ### Candidate Top-N Slicing
 Truncating retrieved candidate hits (`candidate_k=30`) before API invocation to optimize network payload size and API execution cost.
 
+---
+
+## 🎯 18. Reranker Service & Primary/Fallback Strategy
+
+### Primary/Fallback Reranking Strategy
+A resilient behavioral design pattern where a local high-performance cross-encoder engine (primary) is attempted first, and an external cloud API or alternative model (fallback) is invoked automatically if the primary engine fails.
+
+### RerankerService
+Domain service orchestrating candidate passage scoring and ordering across primary and fallback cross-encoder adapters.
+
+### Auto Fallback Flag
+A configurable boolean switch (`auto_fallback`) determining whether execution errors in the primary reranking adapter should trigger fallback execution or immediately raise a domain exception.
+
+
 
 

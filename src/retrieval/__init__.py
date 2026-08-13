@@ -9,6 +9,7 @@ from retrieval.bm25_tokenizer import tokenize, tokenize_corpus
 from retrieval.debug_retrieval import DebugRetrievalBuilder
 from retrieval.dense_search import DENSE_TOP_K_DEFAULT, DenseSearchService
 from retrieval.indexing_orchestrator import IndexingOrchestrator, IndexingResult
+from retrieval.reranker_service import RerankerService
 from retrieval.rrf_fusion import (
     RRF_K_DEFAULT,
     RRF_METHOD,
@@ -32,6 +33,7 @@ __all__: list[str] = [
     "RRF_METHOD",
     "RRF_TOP_K_DEFAULT",
     "RRFusionService",
+    "RerankerService",
     "SPARSE_TOP_K_DEFAULT",
     "SparseSearchService",
     "VectorStoreAdapter",

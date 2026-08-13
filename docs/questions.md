@@ -512,5 +512,26 @@ Initialization raises `ConfigurationError` (`code="MISSING_API_KEY"`) if no key 
 **Answer:**
 Candidates are sliced and passed as a text list to the API. When Cohere returns ranked indices and relevance scores, the adapter maps the returned indices back to original `RetrievalResult` objects, preserving `chunk_id`, `file_name`, `page_number`, and `text`.
 
+---
+
+## 23. Reranker Service & Primary/Fallback Strategy Pattern
+
+### Q1: How does RerankerService implement the primary/fallback strategy pattern when the primary reranker fails?
+**Answer:**
+`RerankerService` encapsulates both primary and fallback `BaseRerankerAdapter` instances. When `rerank()` is called, it attempts to execute `primary_adapter.rerank()`. If the primary adapter raises any exception (such as an ONNX runtime failure or missing local model), `RerankerService` logs a warning and checks if `auto_fallback` is enabled. If true, it redirects the query and candidate hits to `fallback_adapter.rerank()`. If the fallback adapter succeeds, its reranked results are returned; if both adapters fail, a domain `RetrievalError` with code `RERANK_ALL_FAILED` is raised.
+
+---
+
+### Q2: Why is safe adapter instantiation used during RerankerService initialization?
+**Answer:**
+External dependencies (e.g., `flashrank` ONNX libraries or Cohere API keys) may not be installed or configured in every environment. By wrapping adapter creation in `_safe_create_adapter`, `RerankerService` catches `ConfigurationError` or import exceptions during initialization and logs a warning while setting the unavailable adapter to `None`. This allows the service to fall back gracefully (e.g., to `MockRerankerAdapter`) without throwing unhandled startup crashes.
+
+---
+
+### Q3: How does RerankerService integrate with DebugRetrievalBuilder for end-to-end retrieval observability?
+**Answer:**
+`DebugRetrievalBuilder` accepts `RerankerService` as an optional dependency. During `build()`, it executes dense vector search, sparse BM25 search, and RRF fusion, then passes the fused hits into `reranker.rerank()`. The resulting top re-ranked candidates are populated into the `final_reranked` field of `DebugRetrievalResponse`, providing stage-wise diagnostic visibility across all four search pipeline stages.
+
+
 
 

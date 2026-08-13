@@ -910,5 +910,45 @@ CohereRerankerAdapter.rerank(query, hits, candidate_k=30, top_k=5)
 - **`src/clients/__init__.py`:** Exports `BaseRerankerAdapter`, `FlashRankRerankerAdapter`, `CohereRerankerAdapter`, `MockRerankerAdapter`, and `create_reranker_adapter`.
 - **Runner Registration:** `test_run_project_tests_flashrank_reranker_suite` and `test_run_project_tests_cohere_reranker_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## 25. Reranker Domain Service (`src/retrieval/reranker_service.py`)
+
+### Overview
+Implements Phase 6.3 cross-encoder re-ranking service utilizing a primary/fallback strategy pattern. Encapsulates primary (local CPU FlashRank ONNX) and secondary (cloud Cohere Rerank API or offline Mock) adapters. Seamlessly degrades on inference failures or missing credentials while shielding upstream caller code from provider-specific exceptions. Integrated with `DebugRetrievalBuilder` to populate the `final_reranked` search stage.
+
+### `RerankerService`
+
+#### `RerankerService(primary_adapter: BaseRerankerAdapter | None = None, fallback_adapter: BaseRerankerAdapter | None = None, candidate_k: int | None = None, top_k: int | None = None, auto_fallback: bool = True)`
+- **Purpose:** Service orchestrating candidate passage re-ranking across primary and fallback strategy adapters.
+- **Parameters:**
+  - `primary_adapter`: Primary cross-encoder adapter instance (defaults to Settings reranker provider).
+  - `fallback_adapter`: Fallback cross-encoder adapter instance (defaults to Cohere or Mock).
+  - `candidate_k`: Candidate truncation window limit (defaults to `settings.reranker_candidate_k`).
+  - `top_k`: Top re-ranked candidate output limit (defaults to `settings.reranker_top_k`).
+  - `auto_fallback`: Boolean flag enabling automatic fallback strategy invocation when primary fails.
+- **Methods:**
+  - `_safe_create_adapter(provider: str, **kwargs: Any) -> BaseRerankerAdapter | None`: Safely instantiates reranker adapter, returning `None` on configuration or dependency error.
+  - `rerank(query: str, hits: Sequence[RetrievalResult], candidate_k: int | None = None, top_k: int | None = None) -> list[RetrievalResult]`: Executes re-ranking attempt on primary adapter. If primary raises an exception and `auto_fallback` is enabled, catches error and dispatches to fallback adapter. Raises `RetrievalError` if all adapters fail.
+
+### Execution Flow
+```text
+RerankerService.rerank(query, hits)
+  ├── 1. Validate inputs (empty/blank query or empty hits -> return [])
+  ├── 2. Attempt primary_adapter.rerank()
+  │     ├── Success -> return primary reranked results
+  │     └── Exception -> log warning ("rerank_primary_failed_attempting_fallback")
+  ├── 3. If auto_fallback is True and fallback_adapter is available:
+  │     ├── Attempt fallback_adapter.rerank()
+  │     ├── Success -> return fallback reranked results
+  │     └── Exception -> raise RetrievalError(code="RERANK_ALL_FAILED")
+  └── 4. If fallback disabled or unavailable -> raise RetrievalError
+```
+
+### Package Exports & Registration
+- **`src/retrieval/__init__.py`:** Exports `RerankerService`.
+- **Runner Registration:** `test_run_project_tests_reranker_service_suite` in `tests/unit/test_runner.py`.
+
+
 
 
