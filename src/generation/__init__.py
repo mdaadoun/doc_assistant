@@ -32,4 +32,3 @@ __all__: list[str] = [
     "calculate_cost",
     "MODEL_PRICING",
 ]
-

@@ -1,7 +1,5 @@
 """Unit tests for retrieval confidence guard and refusal response bypass."""
 
-import pytest
-
 from models.retrieval import RetrievalResult
 from retrieval.confidence_guard import (
     DEFAULT_CONFIDENCE_THRESHOLD,

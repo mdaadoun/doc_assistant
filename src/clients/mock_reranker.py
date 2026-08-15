@@ -42,7 +42,9 @@ class MockRerankerAdapter(BaseRerankerAdapter):
         for idx, hit in enumerate(candidates):
             hit_words = set(hit.text.lower().split())
             overlap = len(query_words & hit_words)
-            mock_score = 0.5 + (0.4 * (overlap / max(1, len(query_words)))) - (idx * 0.01)
+            mock_score = (
+                0.5 + (0.4 * (overlap / max(1, len(query_words)))) - (idx * 0.01)
+            )
             mock_score = max(0.0, min(1.0, mock_score))
 
             scored_results.append(

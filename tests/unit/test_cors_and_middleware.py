@@ -29,7 +29,9 @@ def test_cors_preflight_and_headers_default() -> None:
     )
     assert response.status_code == 200
     # With allow_credentials=True, Starlette echoes the specific origin
-    assert response.headers.get("access-control-allow-origin") == "http://localhost:3000"
+    assert (
+        response.headers.get("access-control-allow-origin") == "http://localhost:3000"
+    )
 
 
 def test_cors_custom_origin_configuration() -> None:
@@ -128,9 +130,7 @@ def test_error_handler_app_base_error_mapping() -> None:
 
     @app.get("/trigger-ingestion-error")
     def trigger_ingestion() -> None:
-        raise IngestionError(
-            message="Corrupt PDF payload", code="PDF_PARSE_FAILED"
-        )
+        raise IngestionError(message="Corrupt PDF payload", code="PDF_PARSE_FAILED")
 
     client = TestClient(app)
 

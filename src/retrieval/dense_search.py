@@ -68,7 +68,8 @@ class DenseSearchService:
                 message="Vector collection does not exist; index data first",
                 code="COLLECTION_NOT_FOUND",
                 details={
-                    "collection_name": collection_name or self.vector_store.collection_name
+                    "collection_name": collection_name
+                    or self.vector_store.collection_name
                 },
             )
 

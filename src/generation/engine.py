@@ -23,7 +23,9 @@ STRICT RULES:
 3. For EVERY factual claim in your response, append an inline citation referencing the source file and page using this exact format: [Doc: <file_name> | Page: <page_number>].
 """
 
-NO_CONTEXT_REFUSAL = "I cannot answer this question based on the available documentation."
+NO_CONTEXT_REFUSAL = (
+    "I cannot answer this question based on the available documentation."
+)
 
 
 class GroundedGenerator:
@@ -53,21 +55,41 @@ class GroundedGenerator:
             )
 
         self.model = model or settings.default_model
-        self.temperature = temperature if temperature is not None else settings.temperature
-        self.finops_collector = finops_collector or FinOpsCollector(default_model=self.model)
+        self.temperature = (
+            temperature if temperature is not None else settings.temperature
+        )
+        self.finops_collector = finops_collector or FinOpsCollector(
+            default_model=self.model
+        )
 
     def _format_context(self, contexts: Sequence[dict[str, Any] | Any]) -> str:
         """Format context objects or dictionaries into structured prompt blocks."""
         blocks: list[str] = []
         for ctx in contexts:
             if isinstance(ctx, dict):
-                file_name = str(ctx.get("file_name") or ctx.get("source_file") or "Unknown")
-                page_number = ctx.get("page_number") if ctx.get("page_number") is not None else ctx.get("page", 1)
-                text = str(ctx.get("text") or ctx.get("content") or ctx.get("excerpt") or "")
+                file_name = str(
+                    ctx.get("file_name") or ctx.get("source_file") or "Unknown"
+                )
+                page_number = (
+                    ctx.get("page_number")
+                    if ctx.get("page_number") is not None
+                    else ctx.get("page", 1)
+                )
+                text = str(
+                    ctx.get("text") or ctx.get("content") or ctx.get("excerpt") or ""
+                )
             else:
-                file_name = str(getattr(ctx, "file_name", getattr(ctx, "source_file", "Unknown")))
+                file_name = str(
+                    getattr(ctx, "file_name", getattr(ctx, "source_file", "Unknown"))
+                )
                 page_number = getattr(ctx, "page_number", getattr(ctx, "page", 1))
-                text = str(getattr(ctx, "text", getattr(ctx, "content", getattr(ctx, "excerpt", ""))))
+                text = str(
+                    getattr(
+                        ctx,
+                        "text",
+                        getattr(ctx, "content", getattr(ctx, "excerpt", "")),
+                    )
+                )
 
             block = (
                 f"Source File: {file_name}\n"
@@ -152,4 +174,3 @@ class GroundedGenerator:
             model=self.model,
         )
         return answer, finops
-

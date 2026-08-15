@@ -43,9 +43,7 @@ class ChatService:
         """Yield refusal message as single token delta stream."""
         yield message
 
-    async def stream_chat(
-        self, request: ChatRequest
-    ) -> AsyncGenerator[str, None]:
+    async def stream_chat(self, request: ChatRequest) -> AsyncGenerator[str, None]:
         """Execute hybrid search, confidence check, generation, and yield SSE formatted events."""
         logger.info(
             "chat_stream_requested",

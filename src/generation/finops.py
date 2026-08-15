@@ -39,7 +39,6 @@ def count_tokens(text: str, model: str = "gpt-4o-mini") -> int:
         return max(1, int(len(words) * 1.3))
 
 
-
 def calculate_cost(
     prompt_tokens: int,
     completion_tokens: int,
@@ -79,9 +78,7 @@ class FinOpsCollector:
     ) -> float:
         """Calculate estimated cost in USD for given token usage."""
         target_model = model or self.default_model
-        return calculate_cost(
-            prompt_tokens, completion_tokens, target_model, is_cached
-        )
+        return calculate_cost(prompt_tokens, completion_tokens, target_model, is_cached)
 
     def collect(
         self,

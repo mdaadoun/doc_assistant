@@ -49,7 +49,9 @@ def test_debug_retrieval_endpoint_success() -> None:
     app.dependency_overrides[get_debug_retrieval_builder] = _override_debug_builder
 
     client = TestClient(app)
-    response = client.get("/api/v1/debug/retrieval", params={"query": "security policy"})
+    response = client.get(
+        "/api/v1/debug/retrieval", params={"query": "security policy"}
+    )
 
     assert response.status_code == 200
     data = response.json()

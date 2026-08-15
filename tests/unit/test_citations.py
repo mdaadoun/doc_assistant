@@ -116,20 +116,27 @@ def test_validator_citation_object_input() -> None:
 
 def test_verify_document_presence() -> None:
     """Verify verify_document_presence accurately checks context document matches."""
-    contexts = [
-        {"file_name": "report_2025.pdf", "page_number": 4, "chunk_id": "c4"}
-    ]
-    assert CitationValidator.verify_document_presence("report_2025.pdf", 4, contexts) is True
-    assert CitationValidator.verify_document_presence("REPORT_2025.PDF", 4, contexts) is True
-    assert CitationValidator.verify_document_presence("report_2025.pdf", 99, contexts) is False
-    assert CitationValidator.verify_document_presence("missing.pdf", 4, contexts) is False
+    contexts = [{"file_name": "report_2025.pdf", "page_number": 4, "chunk_id": "c4"}]
+    assert (
+        CitationValidator.verify_document_presence("report_2025.pdf", 4, contexts)
+        is True
+    )
+    assert (
+        CitationValidator.verify_document_presence("REPORT_2025.PDF", 4, contexts)
+        is True
+    )
+    assert (
+        CitationValidator.verify_document_presence("report_2025.pdf", 99, contexts)
+        is False
+    )
+    assert (
+        CitationValidator.verify_document_presence("missing.pdf", 4, contexts) is False
+    )
 
 
 def test_verify_grounding() -> None:
     """Verify verify_grounding returns boolean grounding status."""
-    contexts = [
-        {"file_name": "doc1.pdf", "page_number": 1, "chunk_id": "c1"}
-    ]
+    contexts = [{"file_name": "doc1.pdf", "page_number": 1, "chunk_id": "c1"}]
     valid_text = "Good text [Doc: doc1.pdf | Page: 1]."
     invalid_text = "Bad text [Doc: doc2.pdf | Page: 2]."
     assert CitationValidator.verify_grounding(valid_text, contexts) is True
@@ -138,11 +145,11 @@ def test_verify_grounding() -> None:
 
 def test_filter_invalid_citations() -> None:
     """Verify filter_invalid_citations removes hallucinated tags from text."""
-    contexts = [
-        {"file_name": "real.pdf", "page_number": 1, "chunk_id": "c1"}
-    ]
+    contexts = [{"file_name": "real.pdf", "page_number": 1, "chunk_id": "c1"}]
     text = "Fact A [Doc: real.pdf | Page: 1] and Fact B [Doc: fake.pdf | Page: 2]."
-    cleaned_text, valid_cites = CitationValidator.filter_invalid_citations(text, contexts)
+    cleaned_text, valid_cites = CitationValidator.filter_invalid_citations(
+        text, contexts
+    )
     assert "[Doc: fake.pdf | Page: 2]" not in cleaned_text
     assert "[Doc: real.pdf | Page: 1]" in cleaned_text
     assert len(valid_cites) == 1
@@ -151,9 +158,7 @@ def test_filter_invalid_citations() -> None:
 
 def test_validate_strict_mode_raises() -> None:
     """Verify validate with strict=True raises GenerationError on invalid citations."""
-    contexts = [
-        {"file_name": "real.pdf", "page_number": 1, "chunk_id": "c1"}
-    ]
+    contexts = [{"file_name": "real.pdf", "page_number": 1, "chunk_id": "c1"}]
     invalid_text = "Invalid claim [Doc: fake.pdf | Page: 99]."
     with pytest.raises(GenerationError) as exc_info:
         CitationValidator.validate(invalid_text, contexts, strict=True)

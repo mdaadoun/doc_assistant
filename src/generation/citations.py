@@ -60,9 +60,7 @@ class CitationExtractor:
             key = (file_name.lower(), page_num)
             if key not in seen and page_num >= 1:
                 seen.add(key)
-                citations.append(
-                    RawCitation(file_name=file_name, page_number=page_num)
-                )
+                citations.append(RawCitation(file_name=file_name, page_number=page_num))
 
         return citations
 
@@ -91,9 +89,7 @@ class CitationExtractor:
             except (ValueError, TypeError):
                 score = 1.0
         else:
-            file_name = str(
-                getattr(ctx, "file_name", getattr(ctx, "source_file", ""))
-            )
+            file_name = str(getattr(ctx, "file_name", getattr(ctx, "source_file", "")))
             raw_page = getattr(ctx, "page_number", getattr(ctx, "page", 1))
             try:
                 page_num = int(raw_page) if raw_page is not None else 1
@@ -123,9 +119,7 @@ class CitationExtractor:
         return file_name.strip(), page_num, chunk_id, excerpt, score
 
     @classmethod
-    def extract_citations(
-        cls, text: str, contexts: Sequence[Any]
-    ) -> list[Citation]:
+    def extract_citations(cls, text: str, contexts: Sequence[Any]) -> list[Citation]:
         """Extract inline citations from text and resolve against context blocks."""
         raw_list = cls.extract_raw(text)
         resolved: list[Citation] = []
@@ -179,8 +173,7 @@ class CitationValidator:
             return text, res.valid_citations
 
         invalid_map = {
-            (inv.file_name.lower(), inv.page_number)
-            for inv in res.invalid_citations
+            (inv.file_name.lower(), inv.page_number) for inv in res.invalid_citations
         }
 
         def _replacer(match: re.Match[str]) -> str:

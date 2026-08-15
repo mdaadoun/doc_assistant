@@ -48,7 +48,9 @@ def sample_chunks() -> list[ChunkDocument]:
     return [
         _make_chunk("chunk_0", "Helvetia insurance policy covers fire damage."),
         _make_chunk("chunk_1", "Employee health benefits include dental coverage."),
-        _make_chunk("chunk_2", "The claims department processes refunds within thirty days."),
+        _make_chunk(
+            "chunk_2", "The claims department processes refunds within thirty days."
+        ),
     ]
 
 

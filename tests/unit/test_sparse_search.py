@@ -96,9 +96,7 @@ def test_search_returns_sparse_hits_top_k(sample_chunks: list[ChunkDocument]) ->
 
 def test_search_returns_up_to_top_50() -> None:
     """Verify search returns at most 50 hits from BM25 index."""
-    chunks = [
-        _make_chunk(f"c_{i}", f"document chunk number {i}") for i in range(60)
-    ]
+    chunks = [_make_chunk(f"c_{i}", f"document chunk number {i}") for i in range(60)]
     service = _build_service(chunks=chunks)
 
     hits = service.search("document chunk")

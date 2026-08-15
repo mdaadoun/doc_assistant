@@ -23,6 +23,16 @@ from core.exceptions import (
     IngestionError,
     RetrievalError,
 )
+from core.frontend import (
+    REQUIRED_DEPENDENCIES,
+    REQUIRED_DEV_DEPENDENCIES,
+    REQUIRED_FRONTEND_FILES,
+    REQUIRED_PACKAGE_SCRIPTS,
+    REQUIRED_TS_INTERFACES,
+    parse_frontend_package_json,
+    parse_frontend_tsconfig,
+    validate_frontend_setup,
+)
 from core.layout import (
     REQUIRED_DIRECTORIES,
     REQUIRED_PACKAGES,
@@ -38,12 +48,17 @@ from core.quality import validate_quality_configs
 
 __all__ = [
     "MIN_PYTHON_VERSION",
+    "REQUIRED_DEPENDENCIES",
+    "REQUIRED_DEV_DEPENDENCIES",
     "REQUIRED_DIRECTORIES",
     "REQUIRED_DOCKER_FILES",
     "REQUIRED_DOCKER_SERVICES",
+    "REQUIRED_FRONTEND_FILES",
     "REQUIRED_MAKEFILE_TARGETS",
     "REQUIRED_PACKAGES",
+    "REQUIRED_PACKAGE_SCRIPTS",
     "REQUIRED_PORT_MAPPINGS",
+    "REQUIRED_TS_INTERFACES",
     "REQUIRED_VOLUMES",
     "AppBaseError",
     "ConfigurationError",
@@ -58,8 +73,11 @@ __all__ = [
     "get_python_version_tuple",
     "get_settings",
     "parse_docker_compose",
+    "parse_frontend_package_json",
+    "parse_frontend_tsconfig",
     "parse_makefile_targets",
     "validate_docker_setup",
+    "validate_frontend_setup",
     "validate_makefile",
     "validate_package_layout",
     "validate_poetry_config",

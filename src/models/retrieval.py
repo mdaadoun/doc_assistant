@@ -48,11 +48,19 @@ class DebugRetrievalResponse(BaseDomainModel):
 class ConfidenceDecision(BaseDomainModel):
     """Evaluation result from confidence guard threshold check."""
 
-    passed: bool = Field(..., description="True if top candidate score meets cutoff threshold")
-    top_score: float = Field(..., description="Highest relevance score among candidate hits")
-    threshold: float = Field(..., ge=0.0, le=1.0, description="Calibrated confidence cutoff score")
-    filtered_hits: list[RetrievalResult] = Field(
-        default_factory=list, description="Candidate search hits meeting or exceeding threshold"
+    passed: bool = Field(
+        ..., description="True if top candidate score meets cutoff threshold"
     )
-    refusal_message: str = Field(..., description="Standardized refusal message if guard fails")
-
+    top_score: float = Field(
+        ..., description="Highest relevance score among candidate hits"
+    )
+    threshold: float = Field(
+        ..., ge=0.0, le=1.0, description="Calibrated confidence cutoff score"
+    )
+    filtered_hits: list[RetrievalResult] = Field(
+        default_factory=list,
+        description="Candidate search hits meeting or exceeding threshold",
+    )
+    refusal_message: str = Field(
+        ..., description="Standardized refusal message if guard fails"
+    )

@@ -33,9 +33,7 @@ class BaseEmbeddingAdapter(ABC):
             text = str(text)
         return text.strip()
 
-    def _chunk_batch(
-        self, texts: Sequence[str], batch_size: int
-    ) -> list[list[str]]:
+    def _chunk_batch(self, texts: Sequence[str], batch_size: int) -> list[list[str]]:
         """Divide sequence of text strings into sub-batches."""
         size = max(1, batch_size)
         return [list(texts[i : i + size]) for i in range(0, len(texts), size)]

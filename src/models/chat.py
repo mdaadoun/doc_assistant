@@ -78,4 +78,3 @@ class SSEErrorPayload(BaseDomainModel):
 
     error: str = Field(..., description="Error message description")
     code: str = Field(default="GENERATION_ERROR", description="Error category code")
-

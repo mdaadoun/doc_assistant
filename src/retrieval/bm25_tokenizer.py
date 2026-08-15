@@ -5,12 +5,43 @@ from collections.abc import Sequence
 
 _TOKEN_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 
-_STOPWORDS = frozenset({
-    "a", "an", "and", "are", "as", "at", "be", "but", "by",
-    "for", "if", "in", "into", "is", "it", "no", "not", "of",
-    "on", "or", "such", "that", "the", "their", "then", "there",
-    "these", "they", "this", "to", "was", "will", "with",
-})
+_STOPWORDS = frozenset(
+    {
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "be",
+        "but",
+        "by",
+        "for",
+        "if",
+        "in",
+        "into",
+        "is",
+        "it",
+        "no",
+        "not",
+        "of",
+        "on",
+        "or",
+        "such",
+        "that",
+        "the",
+        "their",
+        "then",
+        "there",
+        "these",
+        "they",
+        "this",
+        "to",
+        "was",
+        "will",
+        "with",
+    }
+)
 
 
 def tokenize(text: str) -> list[str]:

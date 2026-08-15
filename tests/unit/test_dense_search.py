@@ -47,7 +47,9 @@ def sample_chunks() -> list[ChunkDocument]:
     return [
         _make_chunk("chunk_0", "Helvetia insurance policy covers fire damage."),
         _make_chunk("chunk_1", "Employee health benefits include dental coverage."),
-        _make_chunk("chunk_2", "The claims department processes refunds within thirty days."),
+        _make_chunk(
+            "chunk_2", "The claims department processes refunds within thirty days."
+        ),
     ]
 
 
@@ -96,9 +98,7 @@ def test_search_returns_dense_hits_top_k(
     service = _build_service(memory_qdrant_client, top_k=2)
     service.vector_store.ensure_collection()
 
-    embeddings = [
-        service.embedding_adapter.embed_text(c.text) for c in sample_chunks
-    ]
+    embeddings = [service.embedding_adapter.embed_text(c.text) for c in sample_chunks]
     service.vector_store.upsert_chunks(chunks=sample_chunks, embeddings=embeddings)
 
     results = service.search("insurance coverage")
@@ -180,14 +180,10 @@ def test_search_passes_filter_criteria(
     service = _build_service(memory_qdrant_client)
     service.vector_store.ensure_collection()
 
-    embeddings = [
-        service.embedding_adapter.embed_text(c.text) for c in sample_chunks
-    ]
+    embeddings = [service.embedding_adapter.embed_text(c.text) for c in sample_chunks]
     service.vector_store.upsert_chunks(chunks=sample_chunks, embeddings=embeddings)
 
-    filtered = service.search(
-        "insurance", filter_criteria={"file_name": "policy.pdf"}
-    )
+    filtered = service.search("insurance", filter_criteria={"file_name": "policy.pdf"})
     assert all(r.file_name == "policy.pdf" for r in filtered)
     assert len(filtered) >= 1
 
@@ -199,9 +195,7 @@ def test_search_returns_custom_collection_hits(
     service = _build_service(memory_qdrant_client)
     service.vector_store.ensure_collection("custom_collection")
 
-    embeddings = [
-        service.embedding_adapter.embed_text(c.text) for c in sample_chunks
-    ]
+    embeddings = [service.embedding_adapter.embed_text(c.text) for c in sample_chunks]
     service.vector_store.upsert_chunks(
         chunks=sample_chunks,
         embeddings=embeddings,
@@ -213,5 +207,3 @@ def test_search_returns_custom_collection_hits(
     ids = {r.chunk_id for r in results}
     assert ids == {"chunk_0", "chunk_1", "chunk_2"}
     assert all(r.retrieval_method == "dense" for r in results)
-
-

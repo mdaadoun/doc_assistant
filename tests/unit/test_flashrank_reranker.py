@@ -154,9 +154,14 @@ def test_create_reranker_adapter_factory() -> None:
 
 def test_flashrank_real_model_inference_optional() -> None:
     """Test FlashRank adapter with real model using installed flashrank package."""
-    adapter = FlashRankRerankerAdapter(
-        model_name="ms-marco-MiniLM-L-12-v2", candidate_k=10, top_k=3
-    )
+    try:
+        adapter = FlashRankRerankerAdapter(
+            model_name="ms-marco-MiniLM-L-12-v2", candidate_k=10, top_k=3
+        )
+    except RetrievalError as err:
+        pytest.skip(
+            f"FlashRank model download failed (likely offline/sandboxed): {err}"
+        )
     sample_hits = _create_sample_hits(15)
     reranked = adapter.rerank("corporate policy", sample_hits)
 

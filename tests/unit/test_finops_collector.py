@@ -1,7 +1,7 @@
 """Unit tests for FinOpsCollector telemetry collection service."""
 
-from collections.abc import AsyncGenerator
 import time
+from collections.abc import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -13,7 +13,6 @@ from generation.finops import (
     count_tokens,
 )
 from models.chat import FinOpsMetadata
-
 
 
 def test_count_tokens_valid_and_empty() -> None:

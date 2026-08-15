@@ -48,8 +48,6 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def setup_validation_middleware(
-    app: FastAPI, max_body_bytes: int = 10_485_760
-) -> None:
+def setup_validation_middleware(app: FastAPI, max_body_bytes: int = 10_485_760) -> None:
     """Register request validation middleware on FastAPI application."""
     app.add_middleware(RequestValidationMiddleware, max_body_bytes=max_body_bytes)

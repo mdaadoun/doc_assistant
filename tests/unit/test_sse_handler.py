@@ -6,10 +6,6 @@ import pytest
 
 from generation.sse import SSEResponseHandler, format_sse_event
 from models.chat import (
-    Citation,
-    SSEDonePayload,
-    SSEErrorPayload,
-    SSEMetaDataPayload,
     SSETokenPayload,
 )
 

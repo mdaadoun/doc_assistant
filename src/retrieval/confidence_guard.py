@@ -38,9 +38,7 @@ class ConfidenceGuard:
             return False
         return max(hit.relevance_score for hit in hits) >= self.threshold
 
-    def filter_hits(
-        self, hits: Sequence[RetrievalResult]
-    ) -> list[RetrievalResult]:
+    def filter_hits(self, hits: Sequence[RetrievalResult]) -> list[RetrievalResult]:
         """Filter candidates keeping only hits with relevance_score >= S_min."""
         return [hit for hit in hits if hit.relevance_score >= self.threshold]
 

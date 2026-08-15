@@ -1,6 +1,7 @@
 # Ruff linting & formatting config
 line-length = 88
 target-version = "py311"
+extend-exclude = [".venv", "frontend"]
 
 [lint]
 select = [

@@ -23,4 +23,3 @@ __all__ = [
     "OpenAIEmbeddingAdapter",
     "create_reranker_adapter",
 ]
-

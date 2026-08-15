@@ -37,7 +37,7 @@ def format_sse_event(
     if data is not None:
         if isinstance(data, BaseModel):
             payload_str = data.model_dump_json()
-        elif isinstance(data, (dict, list)):
+        elif isinstance(data, dict | list):
             payload_str = json.dumps(data)
         else:
             payload_str = str(data)

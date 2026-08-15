@@ -26,7 +26,7 @@ help:
 	@echo "======================================================================"
 
 install:
-	@if [ -n "$(POETRY)" ]; then poetry install && poetry run pre-commit install; else $(BIN)python -m pip install -e . && $(BIN)pre-commit install; fi
+	@if [ -d ".venv/bin" ]; then $(BIN)python -m pip install -e . && $(BIN)pre-commit install; elif [ -n "$(POETRY)" ]; then poetry install && poetry run pre-commit install; else python -m pip install -e . && pre-commit install; fi
 
 clean:
 	@echo "Cleaning cache directories and temporary files..."
@@ -36,26 +36,27 @@ clean:
 
 lint:
 	@echo "--- [1/2] Static analysis (Ruff) ---"
-	@if [ -n "$(POETRY)" ]; then poetry run ruff check .; else $(BIN)ruff check .; fi
+	@$(BIN)ruff check .
 	@echo "--- [2/2] Code formatting check (Ruff Format) ---"
-	@if [ -n "$(POETRY)" ]; then poetry run ruff format --check .; else $(BIN)ruff format --check .; fi
+	@$(BIN)ruff format --check .
 
 typecheck:
 	@echo "--- Strict type check (Mypy) ---"
-	@if [ -n "$(POETRY)" ]; then poetry run python -m mypy src/; else $(BIN)mypy src/; fi
+	@$(BIN)mypy src/
 
 format:
 	@echo "--- Auto-formatting source code (Ruff) ---"
-	@if [ -n "$(POETRY)" ]; then poetry run ruff format .; poetry run ruff check --fix .; else $(BIN)ruff format .; $(BIN)ruff check --fix .; fi
+	@$(BIN)ruff format .
+	@$(BIN)ruff check --fix .
 
 test:
-	@if [ -n "$(POETRY)" ]; then poetry run python -m pytest; else $(BIN)pytest; fi
+	@$(BIN)pytest
 
 dev:
-	@if [ -n "$(POETRY)" ]; then poetry run uvicorn src.main:app --reload --port 8000; else $(BIN)uvicorn src.main:app --reload --port 8000; fi
+	@$(BIN)uvicorn src.main:app --reload --port 8000
 
 run:
-	@if [ -n "$(POETRY)" ]; then poetry run python -m src.main; else $(BIN)python -m src.main; fi
+	@$(BIN)python -m src.main
 
 build: docker-build
 

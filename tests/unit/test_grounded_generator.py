@@ -5,14 +5,15 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-
 from core.exceptions import ConfigurationError, GenerationError
 from generation.engine import NO_CONTEXT_REFUSAL, SYSTEM_PROMPT, GroundedGenerator
 
 
 def test_grounded_generator_init_with_key() -> None:
     """Verify generator initializes properly when explicit API key is provided."""
-    gen = GroundedGenerator(api_key="test-openai-key", model="gpt-4o-mini", temperature=0.0)
+    gen = GroundedGenerator(
+        api_key="test-openai-key", model="gpt-4o-mini", temperature=0.0
+    )
     assert gen.model == "gpt-4o-mini"
     assert gen.temperature == 0.0
 
@@ -33,7 +34,11 @@ def test_format_context_dicts_and_objects() -> None:
     """Verify _format_context handles both dict and object context representations."""
     gen = GroundedGenerator(api_key="test-key")
 
-    dict_ctx = {"file_name": "guidelines.pdf", "page_number": 3, "text": "Safety rules."}
+    dict_ctx = {
+        "file_name": "guidelines.pdf",
+        "page_number": 3,
+        "text": "Safety rules.",
+    }
 
     class MockContextObj:
         file_name = "policy.docx"
@@ -89,7 +94,9 @@ async def test_generate_stream_success() -> None:
     mock_client.chat.completions.create = AsyncMock(return_value=mock_stream_iter())
 
     gen = GroundedGenerator(client=mock_client, model="gpt-4o-mini", temperature=0.0)
-    contexts = [{"file_name": "manual.pdf", "page_number": 1, "text": "Compliance rule."}]
+    contexts = [
+        {"file_name": "manual.pdf", "page_number": 1, "text": "Compliance rule."}
+    ]
 
     tokens = []
     async for token in gen.generate_stream("Summarize policy", contexts):
@@ -105,7 +112,10 @@ async def test_generate_stream_success() -> None:
     assert kwargs["stream"] is True
     assert kwargs["messages"][0]["role"] == "system"
     assert kwargs["messages"][0]["content"] == SYSTEM_PROMPT
-    assert "CONTEXT INFORMATION:\nSource File: manual.pdf" in kwargs["messages"][1]["content"]
+    assert (
+        "CONTEXT INFORMATION:\nSource File: manual.pdf"
+        in kwargs["messages"][1]["content"]
+    )
 
 
 @pytest.mark.asyncio
@@ -131,9 +141,10 @@ async def test_generate_non_streaming_success() -> None:
 
     mock_client.chat.completions.create = AsyncMock(return_value=mock_stream_iter())
 
-
     gen = GroundedGenerator(client=mock_client)
-    answer = await gen.generate("Test query", [{"file_name": "a.pdf", "page_number": 1, "text": "info"}])
+    answer = await gen.generate(
+        "Test query", [{"file_name": "a.pdf", "page_number": 1, "text": "info"}]
+    )
     assert answer == "Full Answer."
 
 
@@ -141,7 +152,9 @@ async def test_generate_non_streaming_success() -> None:
 async def test_generate_stream_api_error_raises_generation_error() -> None:
     """Verify OpenAI client failures raise GenerationError."""
     mock_client = MagicMock()
-    mock_client.chat.completions.create = AsyncMock(side_effect=RuntimeError("API Connection Timeout"))
+    mock_client.chat.completions.create = AsyncMock(
+        side_effect=RuntimeError("API Connection Timeout")
+    )
 
     gen = GroundedGenerator(client=mock_client)
     contexts = [{"file_name": "doc.pdf", "page_number": 1, "text": "content"}]

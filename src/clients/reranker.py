@@ -39,4 +39,3 @@ def create_reranker_adapter(
             code="UNSUPPORTED_PROVIDER",
             details={"provider": provider},
         )
-

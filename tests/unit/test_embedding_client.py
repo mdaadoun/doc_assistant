@@ -62,7 +62,10 @@ def test_openai_adapter_mocked_client() -> None:
     mock_item_1.embedding = [0.2] * 1536
 
     mock_response = MagicMock()
-    mock_response.data = [mock_item_1, mock_item_0]  # Unsorted order to test index sorting
+    mock_response.data = [
+        mock_item_1,
+        mock_item_0,
+    ]  # Unsorted order to test index sorting
     mock_client.embeddings.create.return_value = mock_response
 
     adapter = OpenAIEmbeddingAdapter(

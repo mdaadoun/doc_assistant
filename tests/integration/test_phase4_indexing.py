@@ -103,9 +103,7 @@ def test_bm25_returns_results_for_sample_queries(
     orchestrator.index_chunks(sample_chunks)
     for query in _SAMPLE_QUERIES:
         hits = orchestrator.bm25_index.search(query, top_k=3)
-        assert len(hits) > 0, (
-            f"BM25 returned no results for query: '{query}'"
-        )
+        assert len(hits) > 0, f"BM25 returned no results for query: '{query}'"
         assert all(h.relevance_score > 0.0 for h in hits)
         assert all(h.retrieval_method == "sparse" for h in hits)
 

@@ -46,9 +46,7 @@ def _map_app_error_status(exc: AppBaseError) -> int:
     return status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
-async def app_base_error_handler(
-    request: Request, exc: AppBaseError
-) -> JSONResponse:
+async def app_base_error_handler(request: Request, exc: AppBaseError) -> JSONResponse:
     """Handle custom AppBaseError domain hierarchy and format response."""
     status_code = _map_app_error_status(exc)
     logger.warning("Domain exception caught on %s: %s", request.url.path, exc)
@@ -93,11 +91,11 @@ async def http_exception_handler(
     )
 
 
-async def unhandled_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all handler for unexpected internal server errors."""
-    logger.error("Unhandled error processing %s: %s", request.url.path, exc, exc_info=True)
+    logger.error(
+        "Unhandled error processing %s: %s", request.url.path, exc, exc_info=True
+    )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=_build_error_payload(

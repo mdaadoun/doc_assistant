@@ -88,12 +88,10 @@ def test_chat_endpoint_http_streaming_success(
     app = create_app()
 
     class CustomChatService(ChatService):
-        async def stream_chat(
-            self, request: ChatRequest
-        ) -> AsyncGenerator[str, None]:
+        async def stream_chat(self, request: ChatRequest) -> AsyncGenerator[str, None]:
             yield "event: metadata\ndata: {}\n\n"
-            yield "event: token\ndata: {\"delta\": \"Answer\"}\n\n"
-            yield "event: done\ndata: {\"status\": \"completed\"}\n\n"
+            yield 'event: token\ndata: {"delta": "Answer"}\n\n'
+            yield 'event: done\ndata: {"status": "completed"}\n\n'
 
     def _override_chat_service(request: Request) -> CustomChatService:
         return CustomChatService()
