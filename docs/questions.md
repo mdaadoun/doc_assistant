@@ -752,6 +752,27 @@ Providers accept the FastAPI `Request`, read `request.app.state.container`, and 
 **Answer:**
 Tests can either run the lifespan via `TestClient` context manager to exercise real wiring, or override providers with `app.dependency_overrides[get_chat_service] = lambda request: mock_service` for isolated endpoint tests.
 
+---
+
+## Phase 9.1: React 18+ / Vite / TypeScript Project Initialization
+
+### Q1: Why use fetch with ReadableStream instead of native EventSource for SSE chat streaming?
+**Answer:**
+Native browser `EventSource` only supports HTTP GET requests and cannot transmit structured JSON request bodies or custom headers without URL query string hacks. Using `fetch()` with a `ReadableStreamDefaultReader` enables standard `POST /api/v1/chat` invocations with `ChatRequest` payloads while incrementally decoding binary chunks with `TextDecoder` and dispatching SSE event frames (`metadata`, `token`, `done`, `error`) as they arrive.
+
+---
+
+### Q2: How is contract parity maintained between Python backend models and TypeScript frontend types?
+**Answer:**
+Domain models in `src/models/chat.py` are mirrored as TypeScript interfaces in `frontend/src/types/index.ts`. An automated Python test suite (`tests/unit/test_frontend.py` using `src/core/frontend.py`) inspects Python Pydantic model fields and verifies that all corresponding interface properties exist in TypeScript definitions, preventing contract drift during development.
+
+---
+
+### Q3: What is the architectural advantage of using Vanilla CSS custom properties over a heavy UI framework?
+**Answer:**
+Vanilla CSS with scoped custom properties eliminates bundle bloat, avoids framework lock-in and upgrade churn, guarantees fast build times, and provides fine-grained control over HSL color spaces and responsive CSS grid/flexbox layouts without adding third-party runtime or build dependencies.
+
+
 
 
 

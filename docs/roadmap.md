@@ -114,7 +114,7 @@
 **Entry Criteria:** Backend API is accessible and stable.
 **Dependencies:** Phase 8.
 **Tasks:**
-- [ ] 9.1: Initialize React 18+ / Vite / TypeScript project
+- [x] 9.1: Initialize React 18+ / Vite / TypeScript project
 - [ ] 9.2: Build query input component with submission handling
 - [ ] 9.3: Implement SSE streaming answer display with real-time rendering
 - [ ] 9.4: Build citation drawer component (clickable citations showing source excerpts)

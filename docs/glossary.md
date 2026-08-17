@@ -539,6 +539,23 @@ Behavior in `_get_container` that creates and caches a default `ServiceContainer
 ### app.state.container
 FastAPI application state attribute holding the lifespan-scoped `ServiceContainer` instance, enabling dependency providers to resolve services per app lifecycle.
 
+---
+
+## ⚛️ 28. React & Vite Presentation Layer
+
+### Server-Sent Events (SSE) (Frontend Stream Consumer)
+Unidirectional HTTP-based streaming protocol used to stream token deltas, citation metadata, and stream lifecycle events from FastAPI to React in real time via `fetch` and `ReadableStream`.
+
+### Vite Dev Server Proxy
+Development-time HTTP proxy configured in `vite.config.ts` forwarding API requests from frontend development port 5173 to the backend ASGI server at port 8000.
+
+### Citation Drawer
+A presentation component displaying interactive source document citations, page numbers, relevance scores, and text excerpts.
+
+### FinOps Telemetry
+Execution metrics tracking token usage (prompt, completion, total), estimated USD costs, execution latency, and cache hit status per interaction.
+
+
 
 
 

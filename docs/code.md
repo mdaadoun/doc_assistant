@@ -1501,6 +1501,61 @@ create_app() -> FastAPI(lifespan=_build_lifespan())
 - **`src/api/app.py`:** Wires lifespan context in `create_app()`.
 - **Runner Registration:** `test_run_project_tests_service_container_suite` and `test_run_project_tests_lifespan_di_suite` in `tests/unit/test_runner.py`.
 
+---
+
+## Phase 9.1: React 18+ / Vite / TypeScript Project Initialization
+
+### Overview
+Initializes the React 18+, Vite, and TypeScript presentation layer skeleton under `frontend/`. Configures strict TypeScript compiler options, Vite dev server proxying to the FastAPI backend, and domain contract synchronization mirroring backend Pydantic models. Implements an SSE streaming client using `fetch` with `ReadableStream` to support POST request bodies, alongside modular UI components (`Header`, `QueryInput`, `ResponseView`, `CitationDrawer`, `App`) styled with custom HSL design system tokens. Core structural validation is provided in `src/core/frontend.py` and tested in `tests/unit/test_frontend.py`.
+
+### Frontend Configuration & Types
+
+#### TypeScript Contracts (`frontend/src/types/index.ts`)
+- **Purpose:** Synchronized domain types mirroring Python Pydantic V2 models for strict type safety across the frontend/backend boundary.
+- **Key Types:**
+  - `Citation`: Source document metadata including `file_name`, `page_number`, `chunk_id`, `excerpt`, and `relevance_score`.
+  - `FinOpsMetadata`: Operational metrics (`prompt_tokens`, `completion_tokens`, `total_tokens`, `estimated_cost_usd`, `execution_time_seconds`, `is_cached`).
+  - `ChatRequest`: DTO sending `query`, `conversation_id`, and optional `top_k`.
+  - `ChatResponse`: Full response payload with answer, citations, confidence, grounding, and finops metadata.
+  - `RetrievalResult` & `DebugRetrievalResponse`: Intermediate and multi-stage retrieval hit diagnostic schemas.
+  - `SSEEvent`: Discriminated union of SSE frame payloads (`metadata`, `token`, `done`, `error`).
+  - `ChatMessage` & `QueryState`: Frontend UI state containers for chat history, streaming states, and selected citations.
+
+### API & SSE Client Service (`frontend/src/services/api.ts`)
+
+#### `streamChat(request: ChatRequest, callbacks: StreamCallbacks) -> Promise<void>`
+- **Purpose:** Initiates streaming chat interaction via `POST /api/v1/chat` and processes incoming SSE events in real time.
+- **Data Flow:**
+  1. Issues `fetch()` POST request with JSON-encoded `ChatRequest` and `Accept: text/event-stream`.
+  2. Obtains `ReadableStreamDefaultReader` from response body.
+  3. Iteratively reads and decodes binary chunks using `TextDecoder("utf-8")`.
+  4. Buffers and parses double-newline separated SSE event frames.
+  5. Dispatches typed event callbacks:
+     - `metadata`: Triggers `callbacks.onMetadata(meta)` with citations and confidence score.
+     - `token`: Triggers `callbacks.onToken(token)` appending text deltas.
+     - `done`: Triggers `callbacks.onDone(status)` finalizing response rendering.
+     - `error`: Triggers `callbacks.onError(error)` on stream-level failure.
+
+#### `getDebugRetrieval(query: string, topK: number = 5) -> Promise<DebugRetrievalResponse>`
+- **Purpose:** Fetches diagnostic multi-stage retrieval hits from `GET /api/v1/debug/retrieval`.
+
+### Python Audit & Validation (`src/core/frontend.py`)
+
+#### `parse_frontend_package_json(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Parses and loads `frontend/package.json` into a dictionary for configuration audits.
+
+#### `parse_frontend_tsconfig(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Parses and loads `frontend/tsconfig.json` to verify strict compiler options.
+
+#### `validate_frontend_setup(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Performs comprehensive validation of the frontend repository structure.
+- **Verifications:**
+  - Presence of all required files (`package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`, `main.tsx`, `App.tsx`, `index.css`, `types/index.ts`, `services/api.ts`, component files).
+  - Validation of npm scripts (`dev`, `build`, `preview`, `typecheck`).
+  - Verification of core dependencies (`react`, `react-dom`) and dev dependencies (`@vitejs/plugin-react`, `typescript`, `vite`).
+  - Verification of TypeScript domain interface definitions matching required schema contracts.
+
+
 
 
 
