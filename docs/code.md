@@ -1555,6 +1555,87 @@ Initializes the React 18+, Vite, and TypeScript presentation layer skeleton unde
   - Verification of core dependencies (`react`, `react-dom`) and dev dependencies (`@vitejs/plugin-react`, `typescript`, `vite`).
   - Verification of TypeScript domain interface definitions matching required schema contracts.
 
+---
+
+## 31. Query Input Component & Submission Handling (Phase 9.2)
+
+### Overview
+Implements a reactive, accessible, and robust user query input component (`frontend/src/components/QueryInput.tsx`) handling input validation, keyboard shortcuts, context depth selection (`top_k`), and asynchronous submission triggering. Includes automated structural and accessibility validation in `src/core/frontend.py` and test suites in `tests/unit/test_query_input.py`.
+
+### React Component Specification (`frontend/src/components/QueryInput.tsx`)
+
+#### `QueryInputProps` Interface
+- `onSubmit: (query: string, topK: number) => void`: Callback invoked on valid form submission with trimmed query and selected top_k depth.
+- `isLoading: boolean`: Disables interactive inputs and triggers button spinner state during in-flight streaming requests.
+- `disabled?: boolean`: General disabling flag (default `false`).
+- `placeholder?: string`: Customizable textarea placeholder text.
+- `initialTopK?: number`: Initial context chunk retrieval count (default `5`).
+- `maxQueryLength?: number`: Upper limit on query character count (default `4000`).
+- `suggestedQueries?: string[]`: List of quick-prompt strings displayed as interactive suggestion pills.
+
+#### Component State & Internal Handlers
+- `query: string`: Active textarea string state.
+- `topK: number`: Context chunk retrieval count.
+- `validationError: string | null`: Error message displayed if query length exceeds limits.
+- `handleChange(e)`: Updates query state and evaluates length validation constraints.
+- `handleSubmit(e)`: Trims whitespace, validates input length, aborts if disabled/empty, executes `onSubmit(trimmed, topK)`, clears the input buffer, and resets errors.
+- `handleKeyDown(e)`:
+  - `Enter` (without Shift): Prevents default newline insertion and invokes `handleSubmit()`.
+  - `Shift+Enter`: Inserts a multiline newline.
+  - `Escape`: Resets query buffer and clears validation errors.
+- `handleSuggestionClick(item)`: Populates textarea with chosen prompt text and focuses the textarea.
+- `handleClear()`: Resets query buffer to empty string and restores focus.
+
+#### Data Flow
+```text
+User types query / clicks suggested query
+  │
+  ▼
+setQuery updates state ──► handleValidation checks character bounds
+  │
+  ▼
+User presses Enter or clicks "Send Query"
+  │
+  ▼
+handleSubmit executes ──► e.preventDefault()
+  │
+  ▼
+Whitespace trimmed & validated against empty / disabled state
+  │
+  ▼
+onSubmit(trimmed, topK) dispatches to App handler (streamChat)
+  │
+  ▼
+setQuery("") clears input buffer & resets error state
+  │
+  ▼
+UI toggles isLoading / aria-busy state and activates loading spinner
+```
+
+### Python Audit & Validation (`src/core/frontend.py`)
+
+#### `validate_query_input_component(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Audits `QueryInput.tsx` component source code for contract compliance, event guards, and accessibility attributes.
+- **Audited Rules:**
+  - File existence at `frontend/src/components/QueryInput.tsx`.
+  - Required props present (`onSubmit`, `isLoading`).
+  - Semantic DOM IDs present (`query-form`, `query-input`, `top-k-select`, `submit-query-btn`).
+  - Submission guard present (`trim()` check before `onSubmit()`).
+  - Keyboard navigation present (`Enter` vs `Shift+Enter` handling).
+  - Context selector present (`top_k` / `topK` options).
+- **Return Value:** Structured dictionary containing `valid: bool`, `missing_props: list[str]`, `missing_ids: list[str]`, and feature booleans.
+
+### Unit Test Suite (`tests/unit/test_query_input.py`)
+- `test_query_input_component_exists_and_valid`: Asserts component satisfies all contract, prop, and a11y requirements.
+- `test_query_input_props_interface`: Verifies `QueryInputProps` TypeScript interface definitions.
+- `test_query_input_keyboard_shortcuts`: Asserts Enter/Shift+Enter key handling.
+- `test_query_input_submission_guards_and_trim`: Verifies whitespace trimming and empty submission guards.
+- `test_query_input_accessibility_and_semantic_ids`: Asserts presence of required ARIA attributes, semantic roles, and DOM IDs.
+- `test_query_input_top_k_options`: Verifies chunk retrieval options (3, 5, 10, 15).
+- `test_query_input_missing_file`: Asserts validator failure when component file is missing.
+- `test_query_input_incomplete_component`: Asserts validator failure when component has missing props/IDs.
+
+
 
 
 

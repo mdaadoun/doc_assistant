@@ -555,6 +555,23 @@ A presentation component displaying interactive source document citations, page 
 ### FinOps Telemetry
 Execution metrics tracking token usage (prompt, completion, total), estimated USD costs, execution latency, and cache hit status per interaction.
 
+---
+
+## ⌨️ 29. Query Input & Submission Handling
+
+### QueryInputComponent
+The presentation layer React component responsible for capturing user queries, validating length and format, configuring top_k retrieval depth, and dispatching search payloads to the chat streaming handler.
+
+### KeyboardSubmissionGuard
+Event handling mechanism that distinguishes between multiline text expansion (`Shift+Enter`) and atomic query submission (`Enter`), preventing accidental whitespace submissions while maintaining seamless typing ergonomics.
+
+### TopKSelector
+Input control allowing users to adjust the number of context chunks retrieved from the dual vector/lexical index before RRF fusion and re-ranking.
+
+### SuggestedQueriesPills
+Pre-configured interactive suggestion chips representing standard corporate document inquiries (obligations, compliance, termination clauses) to accelerate onboarding and benchmark retrieval.
+
+
 
 
 

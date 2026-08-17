@@ -54,6 +54,18 @@ REQUIRED_TS_INTERFACES: Final[list[str]] = [
     "SSEErrorPayload",
 ]
 
+REQUIRED_QUERY_INPUT_PROPS: Final[list[str]] = [
+    "onSubmit",
+    "isLoading",
+]
+
+REQUIRED_QUERY_INPUT_IDS: Final[list[str]] = [
+    "query-form",
+    "query-input",
+    "top-k-select",
+    "submit-query-btn",
+]
+
 
 def parse_frontend_package_json(
     project_root: Path | None = None,
@@ -136,4 +148,51 @@ def validate_frontend_setup(
         "missing_dependencies": missing_deps,
         "missing_dev_dependencies": missing_dev_deps,
         "missing_interfaces": missing_interfaces,
+    }
+
+
+def validate_query_input_component(
+    project_root: Path | None = None,
+) -> dict[str, Any]:
+    """Audit QueryInput React component for contract compliance, submission handling and a11y."""
+    root = project_root or get_project_root()
+    query_input_file = root / "frontend" / "src" / "components" / "QueryInput.tsx"
+
+    if not query_input_file.is_file():
+        return {
+            "valid": False,
+            "error": "QueryInput.tsx file not found",
+            "missing_props": REQUIRED_QUERY_INPUT_PROPS,
+            "missing_ids": REQUIRED_QUERY_INPUT_IDS,
+            "has_submission_guard": False,
+            "has_keyboard_shortcut": False,
+            "has_top_k_selector": False,
+        }
+
+    content = query_input_file.read_text(encoding="utf-8")
+
+    missing_props = [prop for prop in REQUIRED_QUERY_INPUT_PROPS if prop not in content]
+    missing_ids = [
+        elem_id for elem_id in REQUIRED_QUERY_INPUT_IDS if elem_id not in content
+    ]
+
+    has_submission_guard = "trim()" in content and "onSubmit(" in content
+    has_keyboard_shortcut = "Enter" in content and "shiftKey" in content
+    has_top_k_selector = "top_k" in content or "topK" in content or "top-k" in content
+
+    is_valid = (
+        len(missing_props) == 0
+        and len(missing_ids) == 0
+        and has_submission_guard
+        and has_keyboard_shortcut
+        and has_top_k_selector
+    )
+
+    return {
+        "valid": is_valid,
+        "missing_props": missing_props,
+        "missing_ids": missing_ids,
+        "has_submission_guard": has_submission_guard,
+        "has_keyboard_shortcut": has_keyboard_shortcut,
+        "has_top_k_selector": has_top_k_selector,
     }

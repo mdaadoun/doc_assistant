@@ -772,6 +772,27 @@ Domain models in `src/models/chat.py` are mirrored as TypeScript interfaces in `
 **Answer:**
 Vanilla CSS with scoped custom properties eliminates bundle bloat, avoids framework lock-in and upgrade churn, guarantees fast build times, and provides fine-grained control over HSL color spaces and responsive CSS grid/flexbox layouts without adding third-party runtime or build dependencies.
 
+---
+
+## Phase 9.2: Query Input Component with Submission Handling
+
+### Q1: Why handle Enter vs Shift+Enter in the keydown handler rather than relying purely on standard form onSubmit?
+**Answer:**
+Textareas inside HTML forms default to newline insertion on Enter keypress without triggering form submission. Intercepting the `onKeyDown` event allows checking `e.key === "Enter" && !e.shiftKey`, calling `e.preventDefault()`, and delegating directly to the submission handler while preserving `Shift+Enter` for multiline input.
+
+---
+
+### Q2: How does the QueryInput component guard against race conditions or duplicate submissions during active LLM streaming?
+**Answer:**
+The component derives an `isInteractiveDisabled` state from `isLoading || disabled`. When true, the textarea, submit button, clear button, suggestions, and top_k selector are disabled, and the `handleSubmit` routine immediately aborts if triggered programmatically or via hotkeys while an active request is in flight.
+
+---
+
+### Q3: How are accessibility and ARIA requirements enforced across the query submission flow?
+**Answer:**
+The component uses semantic HTML (`<form role="form">`, `<textarea>`, `<select>`), unique stable DOM IDs (`query-form`, `query-input`, `top-k-select`, `submit-query-btn`), `aria-label` descriptions for screen readers, `aria-busy` states on loading buttons, `aria-invalid` bindings on error, and `role="alert"` containers for validation messages.
+
+
 
 
 

@@ -115,7 +115,7 @@
 **Dependencies:** Phase 8.
 **Tasks:**
 - [x] 9.1: Initialize React 18+ / Vite / TypeScript project
-- [ ] 9.2: Build query input component with submission handling
+- [x] 9.2: Build query input component with submission handling
 - [ ] 9.3: Implement SSE streaming answer display with real-time rendering
 - [ ] 9.4: Build citation drawer component (clickable citations showing source excerpts)
 - [ ] 9.5: Add loading states, error handling, and confidence indicators
