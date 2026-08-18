@@ -42,6 +42,7 @@ ALL_TEST_SUITES: Final[list[str]] = [
     "tests/unit/test_lifespan_di.py",
     "tests/unit/test_frontend.py",
     "tests/unit/test_query_input.py",
+    "tests/unit/test_streaming_response_view.py",
 ]
 
 

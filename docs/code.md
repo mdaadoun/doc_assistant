@@ -1635,6 +1635,89 @@ UI toggles isLoading / aria-busy state and activates loading spinner
 - `test_query_input_missing_file`: Asserts validator failure when component file is missing.
 - `test_query_input_incomplete_component`: Asserts validator failure when component has missing props/IDs.
 
+---
+
+## 30. SSE Streaming Answer Display & Real-Time Rendering (`frontend/src/components/ResponseView.tsx`)
+
+### Overview
+Renders real-time conversational exchange between the user and the grounded assistant. Manages incremental token streaming, animated blinking cursor, groundedness status badges, confidence score threshold styling, interactive citation pills, FinOps metrics telemetry, and automatic smooth scroll-to-bottom anchoring.
+
+### React Component Architecture
+
+#### `ResponseViewProps` Interface
+```typescript
+export interface ResponseViewProps {
+  messages: ChatMessage[];
+  isStreaming: boolean;
+  onSelectCitation?: (citation: Citation) => void;
+  autoScroll?: boolean;
+}
+```
+
+#### Core Component Sub-structures
+- `messagesEndRef`: `useRef<HTMLDivElement | null>` anchoring the viewport bottom for smooth auto-scrolling on streaming updates.
+- `messages-empty`: Accessible fallback empty state card (`#empty-state-prompt`) guiding first-time users.
+- `message-item`: Semantic `<article>` container per turn distinguishing user queries (`.message-user`) and assistant answers (`.message-assistant`).
+- `message-header`: Renders sender labels, grounded badge (`Grounded` vs `Ungrounded`), confidence score badge (`Conf: XX.X%` with `S_min >= 0.35` threshold coloring), and timestamp.
+- `message-body`: Preserves whitespace, renders real-time token stream deltas, and conditionally displays the animated blinking cursor (`.streaming-cursor`) while `msg.isStreaming` is active.
+- `message-citations`: Clickable citation pill buttons (`.citation-pill`) that invoke `onSelectCitation` to highlight source document excerpts in the sidebar drawer.
+- `finops-bar`: Execution summary displaying token counts, USD cost estimation, execution time, and cache hit status.
+
+#### Data Flow
+```text
+User submits query via QueryInput
+  │
+  ▼
+App dispatches streamChat() via api.ts
+  │
+  ▼
+Backend emits SSE "metadata" frame (citations, confidence score, grounded flag)
+  │
+  ▼
+App handler updates assistant message metadata in state
+  │
+  ▼
+Backend emits incremental SSE "token" frames
+  │
+  ▼
+App handler appends token deltas to message content
+  │
+  ▼
+ResponseView re-renders real-time text with animated cursor ▌
+  │
+  ▼
+useEffect triggers messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+  │
+  ▼
+Backend emits SSE "done" frame ──► App sets isStreaming: false (cursor terminates)
+```
+
+### Python Audit & Validation (`src/core/frontend.py`)
+
+#### `validate_response_view_component(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Audits `ResponseView.tsx` component source code for contract compliance, streaming handlers, and accessibility attributes.
+- **Audited Rules:**
+  - File existence at `frontend/src/components/ResponseView.tsx`.
+  - Required props present (`messages`, `isStreaming`).
+  - Semantic DOM IDs present (`response-view`, `streaming-cursor`, `empty-state-prompt`).
+  - Auto-scroll hook present (`scrollIntoView` / `useRef`).
+  - Streaming cursor indicator present (`streaming-cursor` / `isStreaming`).
+  - Confidence badge calculation present (`confidenceScore` / `0.35` threshold).
+  - Citation chip display present (`citations` / `citation-pill`).
+- **Return Value:** Structured dictionary containing `valid: bool`, `missing_props: list[str]`, `missing_ids: list[str]`, and feature booleans.
+
+### Unit Test Suite (`tests/unit/test_streaming_response_view.py`)
+- `test_response_view_component_exists_and_valid`: Asserts component satisfies all contract, prop, and streaming requirements.
+- `test_response_view_props_interface`: Verifies `ResponseViewProps` TypeScript interface definitions.
+- `test_response_view_streaming_cursor_and_deltas`: Asserts conditional rendering of animated cursor during streaming.
+- `test_response_view_confidence_and_grounded_badges`: Verifies confidence score badge calculation and grounded status indicators.
+- `test_response_view_auto_scrolling_anchor`: Asserts presence of smooth scroll ref and effect hooks.
+- `test_response_view_citations_and_finops_telemetry`: Verifies citation pill chips and FinOps telemetry display.
+- `test_response_view_accessibility_and_semantic_ids`: Asserts presence of required ARIA attributes, semantic roles, and DOM IDs.
+- `test_response_view_missing_file`: Asserts validator failure when component file is missing.
+- `test_response_view_incomplete_component`: Asserts validator failure when component has missing props/IDs.
+
+
 
 
 

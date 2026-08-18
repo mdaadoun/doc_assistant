@@ -133,7 +133,11 @@ export const App: React.FC = () => {
 
       <main className="main-content">
         <section className="chat-panel">
-          <ResponseView messages={messages} isStreaming={isLoading} />
+          <ResponseView
+            messages={messages}
+            isStreaming={isLoading}
+            onSelectCitation={(c) => setActiveCitation(c)}
+          />
           <QueryInput onSubmit={handleQuerySubmit} isLoading={isLoading} />
         </section>
 

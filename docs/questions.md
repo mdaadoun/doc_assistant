@@ -792,6 +792,27 @@ The component derives an `isInteractiveDisabled` state from `isLoading || disabl
 **Answer:**
 The component uses semantic HTML (`<form role="form">`, `<textarea>`, `<select>`), unique stable DOM IDs (`query-form`, `query-input`, `top-k-select`, `submit-query-btn`), `aria-label` descriptions for screen readers, `aria-busy` states on loading buttons, `aria-invalid` bindings on error, and `role="alert"` containers for validation messages.
 
+---
+
+## Phase 9.3: SSE Streaming Answer Display with Real-Time Rendering
+
+### Q1: How do you prevent excessive re-renders and UI stutter during high-frequency SSE streaming in React?
+**Answer:**
+By maintaining token deltas in local component state or streaming buffers and using targeted sub-component memoization or functional state setters (`setMessages(prev => ...)`), minimizing deep object allocations. Additionally, auto-scrolling is driven by smooth ref anchoring rather than continuous scroll position recalculation.
+
+---
+
+### Q2: Why is `aria-live='polite'` preferred over `aria-live='assertive'` for real-time AI response streaming?
+**Answer:**
+`aria-live='polite'` queues assistive technology announcements after the user has finished their current interaction rather than abruptly interrupting active speech synthesis or screen reader navigation on every micro-token delta.
+
+---
+
+### Q3: How are confidence thresholds visually communicated without leaking internal raw metrics?
+**Answer:**
+By translating raw similarity/cross-encoder scores (e.g. S_min >= 0.35) into categorical semantic badges (e.g., Grounded vs Refusal/Ungrounded) and formatted percentage badges with clear semantic color tokens.
+
+
 
 
 

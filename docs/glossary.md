@@ -571,6 +571,20 @@ Input control allowing users to adjust the number of context chunks retrieved fr
 ### SuggestedQueriesPills
 Pre-configured interactive suggestion chips representing standard corporate document inquiries (obligations, compliance, termination clauses) to accelerate onboarding and benchmark retrieval.
 
+---
+
+## 🌊 30. SSE Streaming Answer Display & Real-Time Rendering
+
+### SSE Token Delta Stream
+Real-time incremental text delivery over HTTP using Server-Sent Events, where tokens are concatenated in the presentation layer as they arrive from the LLM.
+
+### Blinking Streaming Cursor
+Visual affordance indicating active unidirectional text generation from the backend model before the 'done' event frame.
+
+### Grounded Badge Indicator
+UI indicator communicating whether the generated response is strictly grounded in retrieved corpus context or is a safe confidence-gate refusal.
+
+
 
 
 

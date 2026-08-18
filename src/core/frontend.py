@@ -66,6 +66,17 @@ REQUIRED_QUERY_INPUT_IDS: Final[list[str]] = [
     "submit-query-btn",
 ]
 
+REQUIRED_RESPONSE_VIEW_PROPS: Final[list[str]] = [
+    "messages",
+    "isStreaming",
+]
+
+REQUIRED_RESPONSE_VIEW_IDS: Final[list[str]] = [
+    "response-view",
+    "streaming-cursor",
+    "empty-state-prompt",
+]
+
 
 def parse_frontend_package_json(
     project_root: Path | None = None,
@@ -75,7 +86,6 @@ def parse_frontend_package_json(
     pkg_path = root / "frontend" / "package.json"
     if not pkg_path.is_file():
         return {}
-
     try:
         data: dict[str, Any] = json.loads(pkg_path.read_text(encoding="utf-8"))
         return data
@@ -91,7 +101,6 @@ def parse_frontend_tsconfig(
     ts_path = root / "frontend" / "tsconfig.json"
     if not ts_path.is_file():
         return {}
-
     try:
         data: dict[str, Any] = json.loads(ts_path.read_text(encoding="utf-8"))
         return data
@@ -106,30 +115,24 @@ def validate_frontend_setup(
     root = project_root or get_project_root()
     frontend_dir = root / "frontend"
 
-    missing_files: list[str] = [
-        rel_path
-        for rel_path in REQUIRED_FRONTEND_FILES
-        if not (frontend_dir / rel_path).is_file()
+    missing_files = [
+        p for p in REQUIRED_FRONTEND_FILES if not (frontend_dir / p).is_file()
     ]
-
     pkg_data = parse_frontend_package_json(root)
     scripts = pkg_data.get("scripts", {}) or {}
     missing_scripts = [s for s in REQUIRED_PACKAGE_SCRIPTS if s not in scripts]
-
     deps = pkg_data.get("dependencies", {}) or {}
     missing_deps = [d for d in REQUIRED_DEPENDENCIES if d not in deps]
-
     dev_deps = pkg_data.get("devDependencies", {}) or {}
     missing_dev_deps = [d for d in REQUIRED_DEV_DEPENDENCIES if d not in dev_deps]
 
-    # Validate TypeScript interfaces presence in types/index.ts
     types_file = frontend_dir / "src" / "types" / "index.ts"
     missing_interfaces: list[str] = []
     if types_file.is_file():
         content = types_file.read_text(encoding="utf-8")
-        for iface in REQUIRED_TS_INTERFACES:
-            if f"interface {iface}" not in content:
-                missing_interfaces.append(iface)
+        missing_interfaces = [
+            i for i in REQUIRED_TS_INTERFACES if f"interface {i}" not in content
+        ]
     else:
         missing_interfaces = list(REQUIRED_TS_INTERFACES)
 
@@ -140,7 +143,6 @@ def validate_frontend_setup(
         and len(missing_dev_deps) == 0
         and len(missing_interfaces) == 0
     )
-
     return {
         "valid": is_valid,
         "missing_files": missing_files,
@@ -156,9 +158,8 @@ def validate_query_input_component(
 ) -> dict[str, Any]:
     """Audit QueryInput React component for contract compliance, submission handling and a11y."""
     root = project_root or get_project_root()
-    query_input_file = root / "frontend" / "src" / "components" / "QueryInput.tsx"
-
-    if not query_input_file.is_file():
+    comp_file = root / "frontend" / "src" / "components" / "QueryInput.tsx"
+    if not comp_file.is_file():
         return {
             "valid": False,
             "error": "QueryInput.tsx file not found",
@@ -169,30 +170,70 @@ def validate_query_input_component(
             "has_top_k_selector": False,
         }
 
-    content = query_input_file.read_text(encoding="utf-8")
-
-    missing_props = [prop for prop in REQUIRED_QUERY_INPUT_PROPS if prop not in content]
-    missing_ids = [
-        elem_id for elem_id in REQUIRED_QUERY_INPUT_IDS if elem_id not in content
-    ]
-
-    has_submission_guard = "trim()" in content and "onSubmit(" in content
-    has_keyboard_shortcut = "Enter" in content and "shiftKey" in content
-    has_top_k_selector = "top_k" in content or "topK" in content or "top-k" in content
+    content = comp_file.read_text(encoding="utf-8")
+    missing_props = [p for p in REQUIRED_QUERY_INPUT_PROPS if p not in content]
+    missing_ids = [i for i in REQUIRED_QUERY_INPUT_IDS if i not in content]
+    has_sub_guard = "trim()" in content and "onSubmit(" in content
+    has_kb_shortcut = "Enter" in content and "shiftKey" in content
+    has_top_k = "top_k" in content or "topK" in content or "top-k" in content
 
     is_valid = (
         len(missing_props) == 0
         and len(missing_ids) == 0
-        and has_submission_guard
-        and has_keyboard_shortcut
-        and has_top_k_selector
+        and has_sub_guard
+        and has_kb_shortcut
+        and has_top_k
     )
-
     return {
         "valid": is_valid,
         "missing_props": missing_props,
         "missing_ids": missing_ids,
-        "has_submission_guard": has_submission_guard,
-        "has_keyboard_shortcut": has_keyboard_shortcut,
-        "has_top_k_selector": has_top_k_selector,
+        "has_submission_guard": has_sub_guard,
+        "has_keyboard_shortcut": has_kb_shortcut,
+        "has_top_k_selector": has_top_k,
+    }
+
+
+def validate_response_view_component(
+    project_root: Path | None = None,
+) -> dict[str, Any]:
+    """Audit ResponseView React component for SSE streaming real-time rendering compliance."""
+    root = project_root or get_project_root()
+    comp_file = root / "frontend" / "src" / "components" / "ResponseView.tsx"
+    if not comp_file.is_file():
+        return {
+            "valid": False,
+            "error": "ResponseView.tsx file not found",
+            "missing_props": REQUIRED_RESPONSE_VIEW_PROPS,
+            "missing_ids": REQUIRED_RESPONSE_VIEW_IDS,
+            "has_auto_scroll": False,
+            "has_streaming_cursor": False,
+            "has_confidence_badge": False,
+            "has_citations_display": False,
+        }
+
+    content = comp_file.read_text(encoding="utf-8")
+    missing_props = [p for p in REQUIRED_RESPONSE_VIEW_PROPS if p not in content]
+    missing_ids = [i for i in REQUIRED_RESPONSE_VIEW_IDS if i not in content]
+    has_auto_scroll = "scrollIntoView" in content or "useRef" in content
+    has_streaming_cursor = "streaming-cursor" in content or "isStreaming" in content
+    has_confidence_badge = "confidenceScore" in content or "0.35" in content
+    has_citations_display = "citations" in content and "citation-pill" in content
+
+    is_valid = (
+        len(missing_props) == 0
+        and len(missing_ids) == 0
+        and has_auto_scroll
+        and has_streaming_cursor
+        and has_confidence_badge
+        and has_citations_display
+    )
+    return {
+        "valid": is_valid,
+        "missing_props": missing_props,
+        "missing_ids": missing_ids,
+        "has_auto_scroll": has_auto_scroll,
+        "has_streaming_cursor": has_streaming_cursor,
+        "has_confidence_badge": has_confidence_badge,
+        "has_citations_display": has_citations_display,
     }
