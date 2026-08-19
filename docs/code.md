@@ -1790,6 +1790,121 @@ User clicks "Copy Excerpt" ──► navigator.clipboard writes text with "Copie
 - `test_citation_drawer_missing_file`: Asserts validator failure when component file is missing.
 - `test_citation_drawer_incomplete_component`: Asserts validator failure when component has missing props/IDs.
 
+---
+
+## 32. Loading States, Error Handling & Confidence Indicators (`frontend/src/components/ConfidenceIndicator.tsx`, `frontend/src/components/ErrorBanner.tsx`, `frontend/src/components/LoadingIndicator.tsx`, `src/core/resilience_validators.py`)
+
+### Overview
+Provides full resilience, continuous feedback, and visual confidence calibration for the Corporate Document Assistant frontend. Introduces a 3-tier confidence classification model with an accessible progress bar meter and minimum confidence threshold indicator ($S_{\min} = 0.35$), multi-phase pipeline lifecycle state tracking (`retrieving` $\to$ `reranking` $\to$ `generating` $\to$ `complete`) with skeleton shimmer animation, and non-blocking inline error recovery with automated query replay.
+
+### Confidence Indicator Component (`frontend/src/components/ConfidenceIndicator.tsx`)
+
+#### `getConfidenceTier(score: number) -> { tier, label, badgeClass }`
+- **Purpose:** Classifies continuous relevance scores into discrete confidence tiers:
+  - High ($\ge 0.70$): `tier="high"`, `label="High Confidence"`, `badgeClass="badge-confidence-high"`.
+  - Moderate ($0.35 \le score < 0.70$): `tier="medium"`, `label="Moderate Confidence"`, `badgeClass="badge-confidence-medium"`.
+  - Low / Refusal ($< 0.35$): `tier="low"`, `label="Low Confidence / Refusal"`, `badgeClass="badge-confidence-low"`.
+- **Return Value:** Structured tier descriptor object.
+
+#### `ConfidenceIndicator` Component
+- **Props Interface (`ConfidenceIndicatorProps`):**
+  - `confidenceScore: number`: Normalized relevance score $[0.0, 1.0]$.
+  - `grounded?: boolean`: Boolean flag indicating whether the response satisfies factual grounding constraints.
+  - `showMeter?: boolean`: Whether to display the visual progress meter bar.
+  - `compact?: boolean`: Compact display mode for inline badges.
+  - `className?: string`: Optional CSS class name override.
+- **Key Rendered Elements:**
+  - `#confidence-indicator`: Container element with ARIA semantics.
+  - `#confidence-score-badge`: Badge displaying formatted percentage (`(score * 100).toFixed(1)%`).
+  - `#confidence-tier-badge`: Categorical tier badge (`data-tier` attribute).
+  - `#confidence-meter-bar`: Accessible progressbar container (`role="progressbar"`, `aria-valuenow`, `aria-valuemin="0"`, `aria-valuemax="100"`).
+  - `#confidence-threshold-marker`: Visual indicator anchored at $35\%$ representing the $S_{\min} = 0.35$ confidence gate.
+  - `#grounded-status-badge`: Verification badge showing `✓ Verified Grounded` or `⚠ Grounding Warning`.
+
+### Error Banner Component (`frontend/src/components/ErrorBanner.tsx`)
+
+#### `ErrorBanner` Component
+- **Props Interface (`ErrorBannerProps`):**
+  - `error: ErrorInfo | string | null`: Structured error metadata or error message string.
+  - `onRetry?: () => void`: Asynchronous callback invoking query replay.
+  - `onDismiss?: () => void`: Callback clearing the active error state.
+  - `title?: string`: Header title string (defaults to `"Query Execution Failed"`).
+  - `className?: string`: Optional CSS class name override.
+- **Key Rendered Elements:**
+  - `#error-banner`: Alert container (`role="alert"`, `aria-live="assertive"`, `aria-atomic="true"`).
+  - `#error-title`: Header title element.
+  - `#error-code-badge`: Error code tag (e.g., `NETWORK_ERROR`, `STREAM_ERROR`, `HTTP_ERROR`).
+  - `#error-message-text`: Diagnostic error detail text.
+  - `#retry-button`: Interactive button invoking `onRetry()` to replay the failed query.
+  - `#dismiss-error-btn`: Button invoking `onDismiss()` to clear the error banner.
+
+### Loading Indicator Component (`frontend/src/components/LoadingIndicator.tsx`)
+
+#### `LoadingIndicator` Component
+- **Props Interface (`LoadingIndicatorProps`):**
+  - `phase?: RetrievalPhase`: Active pipeline lifecycle phase (`idle`, `retrieving`, `reranking`, `generating`, `complete`, `error`).
+  - `message?: string`: Optional custom status message override.
+  - `elapsedSeconds?: number`: Elapsed time in seconds.
+  - `className?: string`: Optional CSS class name override.
+- **Key Rendered Elements:**
+  - `#loading-indicator`: Live region container (`role="status"`, `aria-live="polite"`, `aria-busy="true"`).
+  - `#loading-spinner`: Animated CSS spinner.
+  - `#retrieval-phase-label`: Human-readable phase description.
+  - `#loading-step-list`: Visual pipeline progression track (`Dual Search` $\to$ `Re-Rank & Guard` $\to$ `Grounded Stream`).
+  - `#loading-skeleton-pulse`: Multi-line CSS shimmer animation simulating incoming content layout before first-token arrival.
+
+### Data Flow Architecture
+
+```text
+User submits query via QueryInput
+  │
+  ▼
+App sets retrievalPhase = 'retrieving' & clears previous errors
+  │
+  ▼
+ResponseView renders in-flight LoadingIndicator with step progression & skeleton pulse
+  │
+  ▼
+streamChat initiates SSE connection to /api/v1/chat
+  │
+  ├─► onMetadata: updates confidenceScore, grounded status, and citations
+  │               retrievalPhase transitions to 'generating'
+  │               ResponseView renders ConfidenceIndicator with visual meter & S_min marker
+  │
+  ├─► onToken: appends streaming tokens to message content in real time
+  │
+  ├─► onDone: retrievalPhase transitions to 'complete' & finalizes FinOps metadata
+  │
+  └─► onError / Catch: captures structured ErrorInfo (code, message, query, topK)
+                       retrievalPhase transitions to 'error'
+                       App renders ErrorBanner & ResponseView renders inline message error card
+                       User clicks "Retry Query" ──► handleRetry replays execution idempotently
+```
+
+### Python Audit & Validation (`src/core/resilience_validators.py`)
+
+#### `validate_confidence_indicator_component(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Audits `ConfidenceIndicator.tsx` for tier calculation logic ($0.70$, $0.35$), progressbar ARIA semantics, meter width, and threshold marker.
+
+#### `validate_error_banner_component(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Audits `ErrorBanner.tsx` for alert role, error code badge, dismiss action, and retry handler.
+
+#### `validate_loading_indicator_component(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Audits `LoadingIndicator.tsx` for pipeline step tracks, skeleton shimmer animation, and live region status role.
+
+#### `validate_resilience_and_confidence_components(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Consolidated facade validating all phase 9.5 resilience and confidence components.
+
+### Unit Test Suite (`tests/unit/test_loading_and_confidence.py`)
+- `test_resilience_and_confidence_components_exist_and_valid`: Validates that all phase 9.5 components pass structural and accessibility audits.
+- `test_confidence_indicator_component_contract`: Asserts presence of required props, IDs, tier thresholds, and progressbar attributes.
+- `test_error_banner_component_contract`: Asserts presence of alert role, error code badge, and retry/dismiss handlers.
+- `test_loading_indicator_component_contract`: Asserts presence of status role, pipeline step tracks, spinner, and skeleton pulse.
+- `test_response_view_integration_with_confidence_and_errors`: Asserts integration of `ConfidenceIndicator`, `LoadingIndicator`, and inline error retry cards.
+- `test_app_integration_with_error_banner_and_retry`: Asserts `ErrorBanner` rendering and `handleRetry` query replay in `App.tsx`.
+- `test_resilience_validators_missing_files`: Asserts validator failure on missing component files.
+- `test_resilience_validators_incomplete_components`: Asserts validator failure on incomplete component stubs.
+
 
 
 

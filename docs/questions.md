@@ -832,6 +832,26 @@ Filtering is memoized via React `useMemo` with dependencies strictly tied to `[c
 **Answer:**
 The core validation module (`src/core/frontend_validators.py`) performs automated structural and contract audits on component source files, verifying required prop interfaces, DOM element IDs (e.g., `#citation-drawer`, `#citations-count-badge`), ARIA accessibility roles (`role="complementary"`, `role="listitem"`), keyboard handlers, and conditional rendering guards without requiring a headless browser runtime in unit test suites.
 
+---
+
+## Phase 9.5: Loading States, Error Handling & Confidence Indicators
+
+### Q1: Why is it critical to expose confidence indicators and retrieval thresholds directly in corporate document RAG interfaces?
+**Answer:**
+In corporate and enterprise knowledge retrieval, silent hallucinations or overconfident answers on ambiguous queries pose significant compliance and operational risks. By explicitly displaying calibrated confidence scores, grounding verification badges, and visual threshold markers ($S_{\min} \ge 0.35$), users can immediately distinguish between verified factual grounding and low-confidence refusals, maintaining trust and auditability.
+
+---
+
+### Q2: How does multi-phase loading state tracking enhance UX over a simple indeterminate spinner in SSE streaming architectures?
+**Answer:**
+RAG pipelines incur latency across distinct backend stages: dense vector similarity search, BM25 sparse keyword scanning, cross-encoder re-ranking, and LLM token generation. Communicating discrete phase transitions (`Dual Search` $\to$ `Re-Rank & Guard` $\to$ `Grounded Stream`) reduces perceived user wait time, sets accurate latency expectations, and provides immediate visibility if a specific pipeline stage encounters bottlenecks or timeouts.
+
+---
+
+### Q3: How does the architecture achieve idempotent retry capabilities on network or stream failure?
+**Answer:**
+The application state captures query metadata (query string, `top_k` parameters, conversation ID) in the query state container and binds this context directly to the generated error object. When a stream or HTTP failure occurs, the retry action handler invokes the execution pipeline with the preserved parameters without mutating previous user query history or losing session context.
+
 
 
 

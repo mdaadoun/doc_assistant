@@ -600,6 +600,25 @@ An interactive, inline document reference badge embedded in assistant messages t
 ### Client-Side Substring Filtering
 A reactive in-memory search mechanism that dynamically filters the visible citation cards by document name, chunk ID, or excerpt keywords without network overhead.
 
+---
+
+## 📑 32. Loading States, Error Handling & Confidence Indicators
+
+### Confidence Meter
+A visual and accessible UI component displaying the cross-encoder relevance score as a percentage bar with explicit indication of the minimum confidence threshold (S_min = 0.35).
+
+### Retrieval Phase Tracking
+A multi-state lifecycle indicator representing the progressive execution stages of a RAG query: idle, dual search retrieval, cross-encoder re-ranking, and grounded SSE streaming.
+
+### Inline Error Recovery
+A non-blocking error display pattern that renders failure diagnostics within the conversation thread alongside an automated retry action button to re-execute failed operations.
+
+### Skeleton Shimmer Loading
+An animated placeholder UI simulating incoming content structure during retrieval latency before the first streaming response token arrives.
+
+### Confidence Tiering
+A discrete categorical classification of continuous retrieval relevance scores into High (>= 0.70), Moderate (0.35 - 0.699), and Low / Refusal (< 0.35).
+
 
 
 
