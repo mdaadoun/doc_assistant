@@ -812,6 +812,26 @@ By maintaining token deltas in local component state or streaming buffers and us
 **Answer:**
 By translating raw similarity/cross-encoder scores (e.g. S_min >= 0.35) into categorical semantic badges (e.g., Grounded vs Refusal/Ungrounded) and formatted percentage badges with clear semantic color tokens.
 
+---
+
+## Phase 9.4: Citation Drawer Component with Clickable Source Excerpts
+
+### Q1: Why is citation selection state lifted up to the parent App component rather than encapsulated locally inside CitationDrawer?
+**Answer:**
+Lifting citation selection state to the root `App` component enables unified bidirectional control between decoupled presentation components: clicking an inline citation pill in `ResponseView` immediately activates and scrolls to the corresponding source card in `CitationDrawer`, while clicking a card in `CitationDrawer` updates the highlighted active context across the entire UI.
+
+---
+
+### Q2: How do you ensure search filtering and excerpt inspection inside CitationDrawer do not degrade performance during high-frequency SSE token streaming?
+**Answer:**
+Filtering is memoized via React `useMemo` with dependencies strictly tied to `[citations, searchTerm]`, ensuring that token streaming state updates in the parent message list do not trigger re-filtering or DOM recalculations within the citation list.
+
+---
+
+### Q3: How does the backend Python testing framework validate frontend React component contracts and accessibility standards?
+**Answer:**
+The core validation module (`src/core/frontend_validators.py`) performs automated structural and contract audits on component source files, verifying required prop interfaces, DOM element IDs (e.g., `#citation-drawer`, `#citations-count-badge`), ARIA accessibility roles (`role="complementary"`, `role="listitem"`), keyboard handlers, and conditional rendering guards without requiring a headless browser runtime in unit test suites.
+
 
 
 

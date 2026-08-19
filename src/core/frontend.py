@@ -4,6 +4,17 @@ import json
 from pathlib import Path
 from typing import Any, Final
 
+from core.frontend_validators import (
+    REQUIRED_CITATION_DRAWER_IDS,
+    REQUIRED_CITATION_DRAWER_PROPS,
+    REQUIRED_QUERY_INPUT_IDS,
+    REQUIRED_QUERY_INPUT_PROPS,
+    REQUIRED_RESPONSE_VIEW_IDS,
+    REQUIRED_RESPONSE_VIEW_PROPS,
+    validate_citation_drawer_component,
+    validate_query_input_component,
+    validate_response_view_component,
+)
 from core.layout import get_project_root
 
 REQUIRED_FRONTEND_FILES: Final[list[str]] = [
@@ -52,29 +63,6 @@ REQUIRED_TS_INTERFACES: Final[list[str]] = [
     "SSETokenPayload",
     "SSEDonePayload",
     "SSEErrorPayload",
-]
-
-REQUIRED_QUERY_INPUT_PROPS: Final[list[str]] = [
-    "onSubmit",
-    "isLoading",
-]
-
-REQUIRED_QUERY_INPUT_IDS: Final[list[str]] = [
-    "query-form",
-    "query-input",
-    "top-k-select",
-    "submit-query-btn",
-]
-
-REQUIRED_RESPONSE_VIEW_PROPS: Final[list[str]] = [
-    "messages",
-    "isStreaming",
-]
-
-REQUIRED_RESPONSE_VIEW_IDS: Final[list[str]] = [
-    "response-view",
-    "streaming-cursor",
-    "empty-state-prompt",
 ]
 
 
@@ -153,87 +141,22 @@ def validate_frontend_setup(
     }
 
 
-def validate_query_input_component(
-    project_root: Path | None = None,
-) -> dict[str, Any]:
-    """Audit QueryInput React component for contract compliance, submission handling and a11y."""
-    root = project_root or get_project_root()
-    comp_file = root / "frontend" / "src" / "components" / "QueryInput.tsx"
-    if not comp_file.is_file():
-        return {
-            "valid": False,
-            "error": "QueryInput.tsx file not found",
-            "missing_props": REQUIRED_QUERY_INPUT_PROPS,
-            "missing_ids": REQUIRED_QUERY_INPUT_IDS,
-            "has_submission_guard": False,
-            "has_keyboard_shortcut": False,
-            "has_top_k_selector": False,
-        }
-
-    content = comp_file.read_text(encoding="utf-8")
-    missing_props = [p for p in REQUIRED_QUERY_INPUT_PROPS if p not in content]
-    missing_ids = [i for i in REQUIRED_QUERY_INPUT_IDS if i not in content]
-    has_sub_guard = "trim()" in content and "onSubmit(" in content
-    has_kb_shortcut = "Enter" in content and "shiftKey" in content
-    has_top_k = "top_k" in content or "topK" in content or "top-k" in content
-
-    is_valid = (
-        len(missing_props) == 0
-        and len(missing_ids) == 0
-        and has_sub_guard
-        and has_kb_shortcut
-        and has_top_k
-    )
-    return {
-        "valid": is_valid,
-        "missing_props": missing_props,
-        "missing_ids": missing_ids,
-        "has_submission_guard": has_sub_guard,
-        "has_keyboard_shortcut": has_kb_shortcut,
-        "has_top_k_selector": has_top_k,
-    }
-
-
-def validate_response_view_component(
-    project_root: Path | None = None,
-) -> dict[str, Any]:
-    """Audit ResponseView React component for SSE streaming real-time rendering compliance."""
-    root = project_root or get_project_root()
-    comp_file = root / "frontend" / "src" / "components" / "ResponseView.tsx"
-    if not comp_file.is_file():
-        return {
-            "valid": False,
-            "error": "ResponseView.tsx file not found",
-            "missing_props": REQUIRED_RESPONSE_VIEW_PROPS,
-            "missing_ids": REQUIRED_RESPONSE_VIEW_IDS,
-            "has_auto_scroll": False,
-            "has_streaming_cursor": False,
-            "has_confidence_badge": False,
-            "has_citations_display": False,
-        }
-
-    content = comp_file.read_text(encoding="utf-8")
-    missing_props = [p for p in REQUIRED_RESPONSE_VIEW_PROPS if p not in content]
-    missing_ids = [i for i in REQUIRED_RESPONSE_VIEW_IDS if i not in content]
-    has_auto_scroll = "scrollIntoView" in content or "useRef" in content
-    has_streaming_cursor = "streaming-cursor" in content or "isStreaming" in content
-    has_confidence_badge = "confidenceScore" in content or "0.35" in content
-    has_citations_display = "citations" in content and "citation-pill" in content
-
-    is_valid = (
-        len(missing_props) == 0
-        and len(missing_ids) == 0
-        and has_auto_scroll
-        and has_streaming_cursor
-        and has_confidence_badge
-        and has_citations_display
-    )
-    return {
-        "valid": is_valid,
-        "missing_props": missing_props,
-        "missing_ids": missing_ids,
-        "has_auto_scroll": has_auto_scroll,
-        "has_streaming_cursor": has_streaming_cursor,
-        "has_confidence_badge": has_confidence_badge,
-        "has_citations_display": has_citations_display,
-    }
+__all__ = [
+    "REQUIRED_CITATION_DRAWER_IDS",
+    "REQUIRED_CITATION_DRAWER_PROPS",
+    "REQUIRED_DEPENDENCIES",
+    "REQUIRED_DEV_DEPENDENCIES",
+    "REQUIRED_FRONTEND_FILES",
+    "REQUIRED_PACKAGE_SCRIPTS",
+    "REQUIRED_QUERY_INPUT_IDS",
+    "REQUIRED_QUERY_INPUT_PROPS",
+    "REQUIRED_RESPONSE_VIEW_IDS",
+    "REQUIRED_RESPONSE_VIEW_PROPS",
+    "REQUIRED_TS_INTERFACES",
+    "parse_frontend_package_json",
+    "parse_frontend_tsconfig",
+    "validate_citation_drawer_component",
+    "validate_frontend_setup",
+    "validate_query_input_component",
+    "validate_response_view_component",
+]

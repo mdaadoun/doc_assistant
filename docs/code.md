@@ -1717,6 +1717,80 @@ Backend emits SSE "done" frame ──► App sets isStreaming: false (cursor ter
 - `test_response_view_missing_file`: Asserts validator failure when component file is missing.
 - `test_response_view_incomplete_component`: Asserts validator failure when component has missing props/IDs.
 
+---
+
+## 33. Citation Drawer & Source Excerpt Inspector (`frontend/src/components/CitationDrawer.tsx`)
+
+### Overview
+Renders the complementary sidebar panel displaying retrieved grounded document citations, provenance metadata, search filtering, and an active source excerpt inspector.
+
+### Component Interface (`CitationDrawerProps`)
+```typescript
+export interface CitationDrawerProps {
+  citations: Citation[];
+  activeCitation: Citation | null;
+  onSelectCitation: (citation: Citation | null) => void;
+  onClose?: () => void;
+  title?: string;
+}
+```
+
+### Core Sub-structures & Features
+- `drawer-header`: Displays drawer title, dynamic citation count badge (`#citations-count-badge`), and optional drawer close action.
+- `citation-search-box`: Input field (`#citation-search-input`) with in-memory substring filtering over document names, excerpts, and chunk IDs via `useMemo`.
+- `active-citation-inspector`: Dedicated container (`#active-citation-inspector`) rendering the full text excerpt (`#active-excerpt-text`), provenance metadata (file name, page number, relevance score), chunk ID tag, and clipboard copy action (`#copy-excerpt-btn`).
+- `empty-citations-card`: Informative placeholder (`#empty-citations-state` / `#empty-citations-prompt`) displayed when no citations have been retrieved or when search filter produces zero matches.
+- `citations-list`: Accessible list (`#citations-list`, `role="list"`) containing interactive citation cards (`role="listitem"`, `tabIndex={0}`, `aria-selected`).
+
+### Data Flow
+```text
+SSE stream delivers citations: Citation[] to App state
+  │
+  ▼
+App supplies citations & activeCitation to CitationDrawer
+  │
+  ▼
+User interacts via search input ──► useMemo dynamically filters card list
+  │
+  ▼
+User clicks Citation Card or inline Citation Pill in ResponseView
+  │
+  ▼
+onSelectCitation(citation) updates activeCitation in App state
+  │
+  ▼
+CitationDrawer opens active-citation-inspector with full source excerpt
+  │
+  ▼
+User clicks "Copy Excerpt" ──► navigator.clipboard writes text with "Copied!" feedback
+```
+
+### Python Audit & Validation (`src/core/frontend_validators.py`)
+
+#### `validate_citation_drawer_component(project_root: Path | None = None) -> dict[str, Any]`
+- **Purpose:** Audits `CitationDrawer.tsx` component source code for contract compliance, search filtering, inspector structure, and accessibility attributes.
+- **Audited Rules:**
+  - File existence at `frontend/src/components/CitationDrawer.tsx`.
+  - Required props present (`citations`, `activeCitation`, `onSelectCitation`).
+  - Semantic DOM IDs present (`citation-drawer`, `citations-count-badge`, `empty-citations-state`, `citations-list`).
+  - Active inspector structure present (`activeCitation`, `active-citation-inspector`).
+  - Clipboard copy action present (`handleCopyExcerpt`, `clipboard` / `Copy`).
+  - Search filter mechanism present (`filter`, `searchTerm`).
+  - Metadata display present (`page_number`, `relevance_score`, `file_name`).
+- **Return Value:** Structured dictionary containing `valid: bool`, `missing_props: list[str]`, `missing_ids: list[str]`, and feature booleans.
+
+### Unit Test Suite (`tests/unit/test_citation_drawer.py`)
+- `test_citation_drawer_component_exists_and_valid`: Asserts component satisfies all contract, prop, and inspection requirements.
+- `test_citation_drawer_props_interface`: Verifies `CitationDrawerProps` TypeScript interface definitions.
+- `test_citation_drawer_active_inspector_and_copy`: Asserts active source excerpt inspector and clipboard copy handlers.
+- `test_citation_drawer_empty_and_filter_states`: Asserts empty state and search filter fallback rendering.
+- `test_citation_drawer_search_filter_logic`: Verifies in-memory search filtering by filename or excerpt text.
+- `test_citation_drawer_page_and_score_formatting`: Asserts page number, relevance score, and chunk ID formatting.
+- `test_citation_drawer_accessibility_and_semantic_ids`: Asserts presence of required ARIA attributes, semantic roles, and DOM IDs.
+- `test_citation_drawer_missing_file`: Asserts validator failure when component file is missing.
+- `test_citation_drawer_incomplete_component`: Asserts validator failure when component has missing props/IDs.
+
+
 
 
 

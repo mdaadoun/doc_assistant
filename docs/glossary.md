@@ -584,6 +584,22 @@ Visual affordance indicating active unidirectional text generation from the back
 ### Grounded Badge Indicator
 UI indicator communicating whether the generated response is strictly grounded in retrieved corpus context or is a safe confidence-gate refusal.
 
+---
+
+## 📑 31. Citation Drawer & Source Excerpt Inspection
+
+### Citation Drawer
+A complementary presentation sidebar component displaying grounded document references, page numbers, relevance scores, and source context excerpts retrieved during RAG execution.
+
+### Active Source Inspector
+An expanded inspection view within the citation drawer displaying full context text, provenance metadata, chunk identifiers, and clipboard copy actions for a selected citation.
+
+### Citation Pill
+An interactive, inline document reference badge embedded in assistant messages that highlights and focuses the corresponding citation in the citation drawer.
+
+### Client-Side Substring Filtering
+A reactive in-memory search mechanism that dynamically filters the visible citation cards by document name, chunk ID, or excerpt keywords without network overhead.
+
 
 
 

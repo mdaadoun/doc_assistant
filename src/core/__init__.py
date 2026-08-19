@@ -24,6 +24,8 @@ from core.exceptions import (
     RetrievalError,
 )
 from core.frontend import (
+    REQUIRED_CITATION_DRAWER_IDS,
+    REQUIRED_CITATION_DRAWER_PROPS,
     REQUIRED_DEPENDENCIES,
     REQUIRED_DEV_DEPENDENCIES,
     REQUIRED_FRONTEND_FILES,
@@ -31,6 +33,7 @@ from core.frontend import (
     REQUIRED_TS_INTERFACES,
     parse_frontend_package_json,
     parse_frontend_tsconfig,
+    validate_citation_drawer_component,
     validate_frontend_setup,
 )
 from core.layout import (
@@ -48,6 +51,8 @@ from core.quality import validate_quality_configs
 
 __all__ = [
     "MIN_PYTHON_VERSION",
+    "REQUIRED_CITATION_DRAWER_IDS",
+    "REQUIRED_CITATION_DRAWER_PROPS",
     "REQUIRED_DEPENDENCIES",
     "REQUIRED_DEV_DEPENDENCIES",
     "REQUIRED_DIRECTORIES",
@@ -76,6 +81,7 @@ __all__ = [
     "parse_frontend_package_json",
     "parse_frontend_tsconfig",
     "parse_makefile_targets",
+    "validate_citation_drawer_component",
     "validate_docker_setup",
     "validate_frontend_setup",
     "validate_makefile",
