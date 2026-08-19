@@ -79,6 +79,25 @@ export type SSEEvent =
   | { type: "done"; payload: SSEDonePayload }
   | { type: "error"; payload: SSEErrorPayload };
 
+export type ConfidenceTier = "high" | "medium" | "low";
+
+export type RetrievalPhase =
+  | "idle"
+  | "retrieving"
+  | "reranking"
+  | "generating"
+  | "complete"
+  | "error";
+
+export interface ErrorInfo {
+  message: string;
+  code?: string;
+  retryable?: boolean;
+  timestamp?: string;
+  query?: string;
+  topK?: number;
+}
+
 export interface ChatMessage {
   id: string;
   sender: "user" | "assistant";
@@ -89,6 +108,8 @@ export interface ChatMessage {
   timestamp: string;
   finops?: FinOpsMetadata;
   isStreaming?: boolean;
+  error?: ErrorInfo;
+  retrievalPhase?: RetrievalPhase;
 }
 
 export interface QueryState {
@@ -97,4 +118,7 @@ export interface QueryState {
   selectedTopK: number;
   activeCitation: Citation | null;
   errorMessage: string | null;
+  lastFailedQuery?: string;
+  lastFailedTopK?: number;
+  retrievalPhase?: RetrievalPhase;
 }

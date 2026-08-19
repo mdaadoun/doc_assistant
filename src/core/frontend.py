@@ -16,6 +16,18 @@ from core.frontend_validators import (
     validate_response_view_component,
 )
 from core.layout import get_project_root
+from core.resilience_validators import (
+    REQUIRED_CONFIDENCE_INDICATOR_IDS,
+    REQUIRED_CONFIDENCE_INDICATOR_PROPS,
+    REQUIRED_ERROR_BANNER_IDS,
+    REQUIRED_ERROR_BANNER_PROPS,
+    REQUIRED_LOADING_INDICATOR_IDS,
+    REQUIRED_LOADING_INDICATOR_PROPS,
+    validate_confidence_indicator_component,
+    validate_error_banner_component,
+    validate_loading_indicator_component,
+    validate_resilience_and_confidence_components,
+)
 
 REQUIRED_FRONTEND_FILES: Final[list[str]] = [
     "package.json",
@@ -32,6 +44,9 @@ REQUIRED_FRONTEND_FILES: Final[list[str]] = [
     "src/components/QueryInput.tsx",
     "src/components/CitationDrawer.tsx",
     "src/components/ResponseView.tsx",
+    "src/components/ConfidenceIndicator.tsx",
+    "src/components/ErrorBanner.tsx",
+    "src/components/LoadingIndicator.tsx",
 ]
 
 REQUIRED_PACKAGE_SCRIPTS: Final[list[str]] = [
@@ -63,6 +78,7 @@ REQUIRED_TS_INTERFACES: Final[list[str]] = [
     "SSETokenPayload",
     "SSEDonePayload",
     "SSEErrorPayload",
+    "ErrorInfo",
 ]
 
 
@@ -144,9 +160,15 @@ def validate_frontend_setup(
 __all__ = [
     "REQUIRED_CITATION_DRAWER_IDS",
     "REQUIRED_CITATION_DRAWER_PROPS",
+    "REQUIRED_CONFIDENCE_INDICATOR_IDS",
+    "REQUIRED_CONFIDENCE_INDICATOR_PROPS",
     "REQUIRED_DEPENDENCIES",
     "REQUIRED_DEV_DEPENDENCIES",
+    "REQUIRED_ERROR_BANNER_IDS",
+    "REQUIRED_ERROR_BANNER_PROPS",
     "REQUIRED_FRONTEND_FILES",
+    "REQUIRED_LOADING_INDICATOR_IDS",
+    "REQUIRED_LOADING_INDICATOR_PROPS",
     "REQUIRED_PACKAGE_SCRIPTS",
     "REQUIRED_QUERY_INPUT_IDS",
     "REQUIRED_QUERY_INPUT_PROPS",
@@ -156,7 +178,11 @@ __all__ = [
     "parse_frontend_package_json",
     "parse_frontend_tsconfig",
     "validate_citation_drawer_component",
+    "validate_confidence_indicator_component",
+    "validate_error_banner_component",
     "validate_frontend_setup",
+    "validate_loading_indicator_component",
     "validate_query_input_component",
+    "validate_resilience_and_confidence_components",
     "validate_response_view_component",
 ]

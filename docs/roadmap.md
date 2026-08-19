@@ -118,7 +118,7 @@
 - [x] 9.2: Build query input component with submission handling
 - [x] 9.3: Implement SSE streaming answer display with real-time rendering
 - [x] 9.4: Build citation drawer component (clickable citations showing source excerpts)
-- [ ] 9.5: Add loading states, error handling, and confidence indicators
+- [x] 9.5: Add loading states, error handling, and confidence indicators
 **Deliverables:** Working web UI consuming the chat API with streaming and citations.
 **Verification:** Manual E2E test: submit query → see streaming answer → click citation drawer.
 
