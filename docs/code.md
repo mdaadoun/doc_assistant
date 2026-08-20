@@ -1905,19 +1905,82 @@ streamChat initiates SSE connection to /api/v1/chat
 - `test_resilience_validators_missing_files`: Asserts validator failure on missing component files.
 - `test_resilience_validators_incomplete_components`: Asserts validator failure on incomplete component stubs.
 
+---
 
+## 33. Evaluation Dataset Schemas & Quality Audit (`src/models/evaluation.py`, `src/core/eval_dataset.py`)
 
+### Overview
+Defines immutable domain models and robust I/O utilities for loading, validating, and persisting ground-truth benchmark datasets used by evaluation frameworks.
 
+### Architecture & Data Flow
 
+```text
+  data/eval_dataset.jsonl
+            │
+            ▼ (line-by-line streaming)
+  load_eval_dataset_from_jsonl()
+            │
+            ├─► Pydantic Model Validation (EvalDatasetItem, EvalGroundTruthCitation)
+            │      └─► IngestionError wrapping on JSON syntax / schema corruption
+            │
+            ▼
+       EvalDataset (frozen container)
+            │
+            ├─► validate_eval_dataset_quality()
+            │      ├─► Total queries >= 50
+            │      ├─► Out-of-corpus queries >= 10
+            │      ├─► Query ID uniqueness
+            │      └─► Citation attribution integrity
+            ▼
+     RetrievalMonitor Benchmarking Suite
+```
 
+### Domain Models (`src/models/evaluation.py`)
 
+#### `EvalGroundTruthCitation(BaseDomainModel)`
+- `file_name: str`: Source document file name.
+- `page_number: int`: 1-indexed source page number (default 1).
+- `chunk_id: str`: Target ground-truth chunk ID.
+- `excerpt: str`: Optional reference text excerpt.
 
+#### `EvalDatasetItem(BaseDomainModel)`
+- `query_id: str`: Unique query identifier (e.g. `eval-001`).
+- `query: str`: User question or evaluation query string.
+- `ground_truth_answer: str`: Expected grounded answer or standard refusal response.
+- `ground_truth_citations: list[EvalGroundTruthCitation]`: List of expected supporting citations.
+- `is_out_of_corpus: bool`: Flag indicating whether query is out-of-corpus expecting refusal.
+- `category: str`: Domain policy category (e.g., `sla`, `security`, `hr_policy`, `out_of_corpus`).
 
+#### `EvalDataset(BaseDomainModel)`
+- `items: list[EvalDatasetItem]`: Collection of validated evaluation items.
+- `version: str`: Dataset schema version (default `1.0.0`).
+- Properties: `total_queries`, `out_of_corpus_count`, `in_corpus_count`.
 
+### Functions (`src/core/eval_dataset.py`)
 
+#### `get_default_eval_dataset_path(base_dir: Path | None = None) -> Path`
+- **Purpose:** Resolves standard path to `data/eval_dataset.jsonl`.
+- **Return Value:** Absolute `Path` to dataset file.
 
+#### `load_eval_dataset_from_jsonl(file_path: Path | str | None = None) -> EvalDataset`
+- **Purpose:** Streams JSONL file line-by-line, parses each line into `EvalDatasetItem`, catches I/O or JSON formatting exceptions, and wraps them in `IngestionError`.
+- **Return Value:** Populated `EvalDataset` instance.
 
+#### `save_eval_dataset_to_jsonl(dataset: EvalDataset, file_path: Path | str) -> int`
+- **Purpose:** Serializes `EvalDataset` items into JSON Lines format at the target path, creating parent folders if necessary.
+- **Return Value:** Integer count of written records.
 
+#### `validate_eval_dataset_quality(dataset: EvalDataset, min_total: int = 50, min_out_of_corpus: int = 10) -> dict[str, Any]`
+- **Purpose:** Validates minimum cardinality thresholds, uniqueness of `query_id`, empty citations for out-of-corpus records, and valid citations for in-corpus records.
+- **Return Value:** Audit result dictionary with `valid: bool`, counts, and error list.
+
+### Unit Test Suite (`tests/unit/test_eval_dataset.py`)
+- `test_load_default_eval_dataset_and_validate_thresholds`: Asserts default dataset contains $\ge 50$ total and $\ge 10$ out-of-corpus records, and passes quality audit.
+- `test_eval_dataset_item_immutability`: Verifies immutable Pydantic `frozen=True` constraint on evaluation models.
+- `test_validate_eval_dataset_quality_error_branches`: Tests quality audit detection of duplicate IDs and misconfigured out-of-corpus citations.
+- `test_load_eval_dataset_missing_file_raises_ingestion_error`: Tests `IngestionError` (`EVAL_DATASET_NOT_FOUND`) on missing file.
+- `test_load_eval_dataset_corrupted_json_raises_ingestion_error`: Tests `IngestionError` (`EVAL_DATASET_CORRUPTED`) on corrupted lines.
+- `test_save_and_reload_eval_dataset_roundtrip`: Verifies roundtrip persistence and schema preservation.
 
 
 

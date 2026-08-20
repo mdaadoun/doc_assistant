@@ -852,18 +852,24 @@ RAG pipelines incur latency across distinct backend stages: dense vector similar
 **Answer:**
 The application state captures query metadata (query string, `top_k` parameters, conversation ID) in the query state container and binds this context directly to the generated error object. When a stream or HTTP failure occurs, the retry action handler invokes the execution pipeline with the preserved parameters without mutating previous user query history or losing session context.
 
+---
 
+## Phase 10.1: Evaluation Dataset Creation & Schema Validation
 
+### Q1: Why is an explicit out-of-corpus query partition required in evaluation benchmark datasets?
+**Answer:**
+RAG systems in corporate production environments are prone to hallucinating plausible-sounding answers when relevant context is missing. Incorporating out-of-corpus test cases allows benchmark runners to compute honesty filter precision and verify that the confidence guard ($S_{\min} \ge 0.35$) correctly triggers the standardized refusal message without invoking generative LLM inference.
 
+---
 
+### Q2: How does line-by-line JSONL streaming improve evaluation dataset loading resilience?
+**Answer:**
+JSONL enables per-record schema validation and line-indexed error reporting. If a single line is corrupted, the parser fails fast with exact line number diagnostics wrapped in domain `IngestionError` rather than failing silently or corrupting the entire dataset in memory.
 
+---
 
-
-
-
-
-
-
-
+### Q3: How do ground-truth citations enable automated calculation of retrieval_precision@5?
+**Answer:**
+By annotating the exact `chunk_id`, `file_name`, and `page_number` for in-corpus questions, the `RetrievalMonitor` can compare the top 5 retrieved/reranked chunks against labeled ground-truth chunks to measure precision@k deterministically without requiring human evaluation loops.
 
 

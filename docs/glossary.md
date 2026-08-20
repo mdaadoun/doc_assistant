@@ -619,18 +619,20 @@ An animated placeholder UI simulating incoming content structure during retrieva
 ### Confidence Tiering
 A discrete categorical classification of continuous retrieval relevance scores into High (>= 0.70), Moderate (0.35 - 0.699), and Low / Refusal (< 0.35).
 
+---
 
+## 📊 33. Evaluation Datasets & QA Benchmarking
 
+### EvalDatasetItem
+An immutable domain schema representing an annotated evaluation benchmark record, containing the query ID, question prompt, ground-truth answer, expected source citations, and out-of-corpus classification flag.
 
+### EvalGroundTruthCitation
+A structured attribution record defining the target source file name, 1-indexed page number, and chunk identifier required for automated retrieval precision calculations.
 
+### Honesty Filter Evaluation
+An evaluation testing protocol validating that the retrieval and generation pipeline accurately refuses to hallucinate when prompted with out-of-corpus, adversarial, or low-relevance queries.
 
-
-
-
-
-
-
-
-
+### Retrieval Ground Truth Triplet
+A standardized benchmark tuple comprising an input query prompt, labeled context citations, and reference ground-truth answer used to evaluate retrieval precision@k and RAGAS faithfulness metrics.
 
 

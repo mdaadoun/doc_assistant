@@ -19,6 +19,11 @@ from models.differential import (
     StateManifest,
 )
 from models.document import DocumentMetadata, PageMetadata, ParsedDocument, ParsedPage
+from models.evaluation import (
+    EvalDataset,
+    EvalDatasetItem,
+    EvalGroundTruthCitation,
+)
 from models.retrieval import DebugRetrievalHit, DebugRetrievalResponse, RetrievalResult
 
 __all__: list[str] = [
@@ -44,4 +49,7 @@ __all__: list[str] = [
     "StateManifest",
     "DifferentialDelta",
     "DifferentialResult",
+    "EvalGroundTruthCitation",
+    "EvalDatasetItem",
+    "EvalDataset",
 ]
