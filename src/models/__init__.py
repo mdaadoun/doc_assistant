@@ -23,6 +23,9 @@ from models.evaluation import (
     EvalDataset,
     EvalDatasetItem,
     EvalGroundTruthCitation,
+    RetrievalBenchmarkReport,
+    RetrievalMetricThresholds,
+    RetrievalQueryResult,
 )
 from models.retrieval import DebugRetrievalHit, DebugRetrievalResponse, RetrievalResult
 
@@ -52,4 +55,7 @@ __all__: list[str] = [
     "EvalGroundTruthCitation",
     "EvalDatasetItem",
     "EvalDataset",
+    "RetrievalQueryResult",
+    "RetrievalMetricThresholds",
+    "RetrievalBenchmarkReport",
 ]

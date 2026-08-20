@@ -872,4 +872,23 @@ JSONL enables per-record schema validation and line-indexed error reporting. If 
 **Answer:**
 By annotating the exact `chunk_id`, `file_name`, and `page_number` for in-corpus questions, the `RetrievalMonitor` can compare the top 5 retrieved/reranked chunks against labeled ground-truth chunks to measure precision@k deterministically without requiring human evaluation loops.
 
+---
+
+## Phase 10.2: RetrievalMonitor Benchmark Runner & Metric Evaluation
+
+### Q1: Why is Reciprocal Rank (MRR) a critical metric alongside Precision@k in RAG retrieval evaluation?
+**Answer:**
+While Precision@k measures the density of relevant context in the top-k slots, it is position-agnostic within those k items. In LLM generation with limited attention span ("lost in the middle" phenomenon), placing the most relevant chunks at rank 1 or 2 significantly improves generation faithfulness. MRR measures how early the first relevant source appears, penalizing relevant hits that appear lower in the context window.
+
+---
+
+### Q2: How does RetrievalMonitor evaluate out-of-corpus queries and honesty filter precision without hallucinating false matches?
+**Answer:**
+Out-of-corpus items in `eval_dataset.jsonl` have `is_out_of_corpus=True` and empty ground-truth citations. The `RetrievalMonitor` runs these queries through the pipeline and verifies whether the `ConfidenceGuard` ($S_{\min} \ge 0.35$ threshold) properly flags them as unconfident and triggers refusal. Honesty filter precision measures the proportion of out-of-corpus queries that are successfully intercepted and refused prior to LLM generation.
+
+---
+
+### Q3: What is the architectural benefit of decoupling metric calculation functions from the benchmark runner?
+**Answer:**
+Decoupling metric calculations into a pure function module (`src/retrieval/metrics.py`) eliminates dependencies on external databases, network sockets, or filesystem I/O. It guarantees mathematical determinism, enables high-speed unit testing of edge cases (empty results, $k=0$, boundary percentiles), and conforms to strict layer isolation rules.
 

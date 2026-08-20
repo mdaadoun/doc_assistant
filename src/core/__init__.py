@@ -25,6 +25,7 @@ from core.eval_dataset import (
 from core.exceptions import (
     AppBaseError,
     ConfigurationError,
+    EvaluationError,
     GenerationError,
     IngestionError,
     RetrievalError,
@@ -91,6 +92,7 @@ __all__ = [
     "REQUIRED_VOLUMES",
     "AppBaseError",
     "ConfigurationError",
+    "EvaluationError",
     "GenerationError",
     "IngestionError",
     "RetrievalError",

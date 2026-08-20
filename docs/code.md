@@ -1982,5 +1982,141 @@ Defines immutable domain models and robust I/O utilities for loading, validating
 - `test_load_eval_dataset_corrupted_json_raises_ingestion_error`: Tests `IngestionError` (`EVAL_DATASET_CORRUPTED`) on corrupted lines.
 - `test_save_and_reload_eval_dataset_roundtrip`: Verifies roundtrip persistence and schema preservation.
 
+---
 
+## 34. Retrieval Benchmark Runner & Metrics Engine (`src/retrieval/monitor.py`, `src/retrieval/metrics.py`, `src/retrieval/report_formatter.py`, `src/models/evaluation.py`)
+
+### Overview
+Orchestrates automated offline quality benchmarking across the evaluation dataset, computing ranking precision, recall, MRR, guardrail refusal behavior, and statistical latency percentiles with formatted Markdown reporting.
+
+### Architecture & Data Flow
+
+```text
+  data/eval_dataset.jsonl
+            │
+            ▼ (batch iteration)
+  RetrievalMonitor.evaluate_item(item, top_k=5)
+            │
+            ├─► Timer (time.perf_counter)
+            │
+            ├─► Hybrid Pipeline / Retriever Callable
+            │      ├─► Dense Search + Sparse Search
+            │      ├─► RRF Fusion (k=60)
+            │      └─► Re-ranker (FlashRank / Cohere)
+            │
+            ├─► Confidence Guard ($S_min >= 0.35$)
+            │
+            ├─► Pure Metric Calculation (src/retrieval/metrics.py)
+            │      ├─► compute_precision_at_k()
+            │      ├─► compute_recall_at_k()
+            │      ├─► compute_reciprocal_rank()
+            │      ├─► compute_hit_at_k()
+            │      └─► match_retrieved_chunks()
+            │
+            ▼
+     RetrievalQueryResult (per-query metric outcome)
+            │
+            ▼ (batch aggregation)
+  RetrievalMonitor.run_benchmark(dataset)
+            │
+            ├─► compute_latency_statistics() [p50, p90, p95, p99, mean, max]
+            ├─► Honesty Filter Precision (refusals / out-of-corpus)
+            ├─► Quality Thresholds Validation (Precision >= 0.75, Honesty >= 0.90, p95 <= 3000ms)
+            │
+            ▼
+  RetrievalBenchmarkReport (frozen summary DTO)
+            │
+            ▼
+  format_retrieval_markdown_report() / write_retrieval_markdown_report()
+            │
+            ▼
+     retrieval_report.md
+```
+
+### Domain Models (`src/models/evaluation.py`)
+
+#### `RetrievalQueryResult(BaseDomainModel)`
+- `query_id: str`: Unique query identifier from dataset.
+- `query: str`: Evaluated query text.
+- `category: str`: Policy or benchmark category.
+- `is_out_of_corpus: bool`: Flag indicating whether query was out-of-corpus.
+- `retrieved_chunk_ids: list[str]`: Top-k chunk identifiers returned by retriever.
+- `ground_truth_chunk_ids: list[str]`: Chunk identifiers annotated in ground truth.
+- `top_k: int`: Evaluation depth (default 5).
+- `precision_at_k: float`: Precision@k metric score ($0.0 \dots 1.0$).
+- `recall_at_k: float`: Recall@k metric score ($0.0 \dots 1.0$).
+- `reciprocal_rank: float`: Reciprocal rank $1/	ext{rank}$ of first relevant hit.
+- `hit_at_k: bool`: True if at least one ground-truth chunk was retrieved.
+- `passed_confidence_guard: bool`: True if top hit score satisfied $S_{\min}$.
+- `top_score: float`: Highest cross-encoder score among candidate hits.
+- `is_correctly_refused: bool`: True if refusal status correctly aligned with out-of-corpus expectations.
+- `latency_ms: float`: Execution latency in milliseconds.
+- `error: str | None`: Error diagnostic string if execution failed.
+
+#### `RetrievalMetricThresholds(BaseDomainModel)`
+- `min_precision_at_5: float`: Target minimum precision@5 (default 0.75).
+- `min_honesty_filter_precision: float`: Target minimum honesty precision (default 0.90).
+- `max_p95_latency_ms: float`: Target maximum 95th percentile latency in ms (default 3000.0).
+
+#### `RetrievalBenchmarkReport(BaseDomainModel)`
+- `total_queries: int`: Total queries evaluated.
+- `in_corpus_queries: int`: Count of factual in-corpus queries.
+- `out_of_corpus_queries: int`: Count of out-of-corpus refusal queries.
+- `mean_precision_at_k: float`: Average precision across in-corpus queries.
+- `mean_recall_at_k: float`: Average recall across in-corpus queries.
+- `mrr: float`: Mean Reciprocal Rank across in-corpus queries.
+- `hit_rate_at_k: float`: Proportion of queries with $\ge 1$ relevant hit.
+- `honesty_filter_precision: float`: Proportion of out-of-corpus queries correctly refused.
+- `latency_p50_ms`, `latency_p90_ms`, `latency_p95_ms`, `latency_p99_ms`, `latency_mean_ms`, `latency_max_ms`: Statistical latency metrics.
+- `thresholds: RetrievalMetricThresholds`: Target criteria configuration.
+- `precision_threshold_passed: bool`, `honesty_threshold_passed: bool`, `latency_threshold_passed: bool`, `all_passed: bool`: Target validation status flags.
+- `query_results: list[RetrievalQueryResult]`: Detailed list of individual query outcomes.
+- `timestamp: str`: ISO 8601 UTC timestamp of execution.
+
+### Pure Metrics & Calculations (`src/retrieval/metrics.py`)
+
+#### `compute_precision_at_k(retrieved_ids: Sequence[str], ground_truth_ids: Sequence[str], k: int = 5) -> float`
+- **Purpose:** Calculates $|	ext{retrieved}_{\le k} \cap 	ext{ground\_truth}| / k$.
+- **Boundary Handling:** Returns `0.0` if $k \le 0$ or either input list is empty.
+
+#### `compute_recall_at_k(retrieved_ids: Sequence[str], ground_truth_ids: Sequence[str], k: int = 5) -> float`
+- **Purpose:** Calculates $|	ext{retrieved}_{\le k} \cap 	ext{ground\_truth}| / |	ext{ground\_truth}|$.
+- **Boundary Handling:** Returns `1.0` if ground truth is empty and retrieved is empty; returns `0.0` if $k \le 0$.
+
+#### `compute_reciprocal_rank(retrieved_ids: Sequence[str], ground_truth_ids: Sequence[str], k: int = 5) -> float`
+- **Purpose:** Identifies 1-indexed rank of first relevant chunk in retrieved top-k and returns $1/	ext{rank}$. Returns `0.0` if no hit found.
+
+#### `compute_hit_at_k(retrieved_ids: Sequence[str], ground_truth_ids: Sequence[str], k: int = 5) -> bool`
+- **Purpose:** Returns `True` if any element in `retrieved_ids[:k]` exists in `ground_truth_ids`.
+
+#### `match_retrieved_chunks(retrieved_hits: Sequence[RetrievalResult], item: EvalDatasetItem) -> list[str]`
+- **Purpose:** Evaluates retrieved hits against `item.ground_truth_citations` by exact `chunk_id` OR `(file_name, page_number)` pair, returning list of matched chunk IDs.
+
+#### `compute_percentile(values: Sequence[float], percentile: float) -> float`
+- **Purpose:** Computes linear-interpolated percentile ($0.0 \dots 100.0$) from numeric sequences.
+
+#### `compute_latency_statistics(latencies: Sequence[float]) -> dict[str, float]`
+- **Purpose:** Returns dictionary with `p50_ms`, `p90_ms`, `p95_ms`, `p99_ms`, `mean_ms`, and `max_ms`.
+
+### Report Formatter (`src/retrieval/report_formatter.py`)
+
+#### `format_retrieval_markdown_report(report: RetrievalBenchmarkReport) -> str`
+- **Purpose:** Renders structured Markdown report with executive summary table, pass/fail badges (`✅ PASS` / `❌ FAIL`), latency distribution table, per-category breakdown, and failure/outlier inspection sections.
+
+#### `write_retrieval_markdown_report(report: RetrievalBenchmarkReport, output_path: Path | str) -> Path`
+- **Purpose:** Writes rendered markdown string to disk, creating parent directories and wrapping `OSError` in domain `EvaluationError`.
+
+### Benchmark Runner Service (`src/retrieval/monitor.py`)
+
+#### `RetrievalMonitor`
+- **Constructor Parameters:** `dense_search`, `sparse_search`, `rrf_fusion`, `reranker`, `confidence_guard`, `retriever_fn`, `thresholds`.
+- **`retrieve(query: str, top_k: int = 5) -> list[RetrievalResult]`:** Executes retrieval via `retriever_fn` callable or via chained domain services (`dense_search` + `sparse_search` $	o$ `rrf_fusion` $	o$ `reranker`).
+- **`evaluate_item(item: EvalDatasetItem, top_k: int = 5) -> RetrievalQueryResult`:** Times single-query retrieval, evaluates confidence guard, matches citations, calculates precision/recall/MRR/hit metrics, and handles exceptions safely.
+- **`run_benchmark(dataset: EvalDataset | None, dataset_path: Path | str | None, top_k: int = 5) -> RetrievalBenchmarkReport`:** Iterates through dataset, aggregates metric means and latency percentiles, audits threshold compliance, and returns `RetrievalBenchmarkReport`.
+- **`generate_report(report: RetrievalBenchmarkReport, output_path: Path | str | None = None) -> str`:** Formats and optionally writes benchmark report to disk.
+
+### Unit Test Suites
+- `tests/unit/test_retrieval_metrics.py`: Asserts precision@k, recall@k, MRR, hit rate, percentile interpolation, latency dictionary aggregation, and report formatting/error handling.
+- `tests/unit/test_retrieval_monitor.py`: Asserts monitor initialization, retriever callable dispatch, hybrid service chaining, reranker omission fallback, unconfigured monitor error raising, per-item evaluation, and exception resilience.
+- `tests/unit/test_retrieval_benchmark.py`: Asserts batch dataset benchmark execution, quality threshold evaluation, report file persistence, empty dataset rejection, and Pydantic immutability.
 

@@ -77,3 +77,15 @@ class GenerationError(AppBaseError):
         details: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message=message, code=code, details=details)
+
+
+class EvaluationError(AppBaseError):
+    """Raised on benchmark execution, metric evaluation, or dataset failures."""
+
+    def __init__(
+        self,
+        message: str,
+        code: str = "EVALUATION_ERROR",
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(message=message, code=code, details=details)

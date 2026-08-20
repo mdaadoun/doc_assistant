@@ -46,6 +46,9 @@ ALL_TEST_SUITES: Final[list[str]] = [
     "tests/unit/test_citation_drawer.py",
     "tests/unit/test_loading_and_confidence.py",
     "tests/unit/test_eval_dataset.py",
+    "tests/unit/test_retrieval_metrics.py",
+    "tests/unit/test_retrieval_monitor.py",
+    "tests/unit/test_retrieval_benchmark.py",
 ]
 
 

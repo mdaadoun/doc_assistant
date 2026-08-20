@@ -635,4 +635,31 @@ An evaluation testing protocol validating that the retrieval and generation pipe
 ### Retrieval Ground Truth Triplet
 A standardized benchmark tuple comprising an input query prompt, labeled context citations, and reference ground-truth answer used to evaluate retrieval precision@k and RAGAS faithfulness metrics.
 
+---
+
+## 📈 34. Retrieval Benchmark Metrics & RetrievalMonitor
+
+### RetrievalMonitor
+Core evaluation runner that executes automated benchmark batches across annotated evaluation queries, measuring precision@k, recall@k, MRR, guardrail triggers, and latency percentiles.
+
+### Precision@k
+The proportion of top-k retrieved chunks that belong to the annotated ground-truth citations for a given query.
+
+### Recall@k
+The proportion of all relevant ground-truth chunks that are successfully retrieved within the top-k candidate results.
+
+### Mean Reciprocal Rank (MRR)
+The statistical average of reciprocal ranks (1/rank) of the first relevant document retrieved across all evaluation queries.
+
+### Honesty Filter Precision
+The ratio of correctly refused out-of-corpus queries to the total number of out-of-corpus queries evaluated, measuring refusal guard reliability.
+
+### RetrievalQueryResult
+An immutable Pydantic V2 domain schema recording per-query benchmark metrics including retrieved chunk IDs, ground-truth matches, precision@k, recall@k, MRR, confidence guard decision, and latency in milliseconds.
+
+### RetrievalBenchmarkReport
+A comprehensive aggregate report model capturing total query count, in/out-of-corpus breakdowns, mean precision, mean recall, MRR, hit rate, honesty filter precision, latency percentiles ($p_{50}, p_{90}, p_{95}, p_{99}$), and threshold compliance status.
+
+### RetrievalMetricThresholds
+A domain schema encapsulating non-negotiable benchmark targets ($	ext{precision@5} \ge 0.75$, $	ext{honesty} \ge 0.90$, $p_{95} \le 3000	ext{ ms}$) used for automated pass/fail gating.
 
