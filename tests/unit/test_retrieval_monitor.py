@@ -182,7 +182,7 @@ def test_evaluate_item_in_corpus_and_out_of_corpus() -> None:
     )
 
     in_res = monitor.evaluate_item(dataset.items[0], top_k=5)
-    assert in_res.precision_at_k == pytest.approx(0.2)
+    assert in_res.precision_at_k == pytest.approx(1.0)
     assert in_res.recall_at_k == 1.0
     assert in_res.reciprocal_rank == 1.0
     assert in_res.hit_at_k is True

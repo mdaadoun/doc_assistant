@@ -184,3 +184,28 @@ class RetrievalBenchmarkReport(BaseDomainModel):
         default_factory=_get_utc_timestamp,
         description="Benchmark execution timestamp (ISO format)",
     )
+
+
+class RetrievalPrecisionValidationResult(BaseDomainModel):
+    """Domain model capturing retrieval precision validation outcomes for Phase 10.3."""
+
+    passed: bool = Field(
+        ..., description="True if precision meets or exceeds threshold"
+    )
+    measured_precision_at_5: float = Field(
+        ..., ge=0.0, le=1.0, description="Measured retrieval precision@5"
+    )
+    target_threshold: float = Field(
+        default=0.75, ge=0.0, le=1.0, description="Target minimum precision threshold"
+    )
+    total_queries: int = Field(..., ge=0, description="Total queries evaluated")
+    in_corpus_queries: int = Field(..., ge=0, description="Total in-corpus queries")
+    out_of_corpus_queries: int = Field(
+        ..., ge=0, description="Total out-of-corpus queries"
+    )
+    category_precisions: dict[str, float] = Field(
+        default_factory=dict, description="Precision@5 breakdown by query category"
+    )
+    report: RetrievalBenchmarkReport = Field(
+        ..., description="Full underlying retrieval benchmark report"
+    )

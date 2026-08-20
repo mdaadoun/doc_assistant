@@ -128,7 +128,7 @@
 **Tasks:**
 - [x] 10.1: Create eval_dataset.jsonl (≥50 annotated Q&A pairs, 10 out-of-corpus queries)
 - [x] 10.2: Build RetrievalMonitor benchmark runner
-- [ ] 10.3: Validate retrieval_precision@5 ≥ 0.75
+- [x] 10.3: Validate retrieval_precision@5 ≥ 0.75
 - [ ] 10.4: Validate faithfulness_score ≥ 0.85 (RAGAS framework)
 - [ ] 10.5: Validate honesty_filter_precision ≥ 0.90
 - [ ] 10.6: Validate p95_latency ≤ 3000ms

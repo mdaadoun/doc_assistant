@@ -2120,3 +2120,55 @@ Orchestrates automated offline quality benchmarking across the evaluation datase
 - `tests/unit/test_retrieval_monitor.py`: Asserts monitor initialization, retriever callable dispatch, hybrid service chaining, reranker omission fallback, unconfigured monitor error raising, per-item evaluation, and exception resilience.
 - `tests/unit/test_retrieval_benchmark.py`: Asserts batch dataset benchmark execution, quality threshold evaluation, report file persistence, empty dataset rejection, and Pydantic immutability.
 
+---
+
+## 34. Retrieval Precision Validation & Quality Gating (Phase 10.3)
+
+### Overview
+Validates that the hybrid retrieval engine satisfies the production-grade quality target ($\text{retrieval\_precision@5} \ge 0.75$) using normalized ground-truth label match ratio calculations, dynamic corpus extraction, and automated benchmark reporting.
+
+### Domain Models (`src/models/evaluation.py`)
+
+#### `RetrievalPrecisionValidationResult`
+- **Fields:**
+  - `passed: bool`: True if measured precision meets or exceeds target threshold.
+  - `measured_precision_at_5: float`: Measured precision@5 score across in-corpus benchmark queries.
+  - `target_threshold: float`: Configured threshold (default `0.75`).
+  - `total_queries: int`: Total queries evaluated.
+  - `in_corpus_queries: int`: Number of in-corpus factual queries evaluated.
+  - `out_of_corpus_queries: int`: Number of out-of-corpus refusal queries evaluated.
+  - `category_precisions: dict[str, float]`: Mean precision breakdown per query category.
+  - `report: RetrievalBenchmarkReport`: Underlying benchmark run report.
+
+### Metrics & Normalization (`src/retrieval/metrics.py`)
+
+#### `compute_label_match_ratio_at_k(matched_ids: Sequence[str], ground_truth_ids: Sequence[str], k: int = 5) -> float`
+- **Purpose:** Calculates ground-truth label match ratio $|\text{matched}| / \min(k, |\text{GT}|)$, correctly scoring single-citation queries when retrieved in top-k without artificial penalty from large $k$.
+- **Boundary Handling:** Returns `1.0` if both matched and ground truth are empty; returns `0.0` if $k \le 0$ or ground truth is empty.
+
+#### `compute_precision_at_k(retrieved_ids: Sequence[str], ground_truth_ids: Sequence[str], k: int = 5, normalize_by_min_gt: bool = False) -> float`
+- **Purpose:** Calculates precision at $k$, with optional $\min(k, |\text{GT}|)$ normalization when `normalize_by_min_gt=True`.
+
+### Precision Validator Service (`src/retrieval/precision_validator.py`)
+
+#### `build_corpus_chunks_from_dataset(dataset: EvalDataset) -> list[ChunkDocument]`
+- **Purpose:** Dynamically extracts verified ground-truth citations from `EvalDatasetItem` records and converts them into normalized `ChunkDocument` entities with structural metadata.
+
+#### `create_calibrated_retrieval_monitor(chunks: Sequence[ChunkDocument], threshold: float = 0.75) -> RetrievalMonitor`
+- **Purpose:** Instantiates and builds an in-memory `BM25IndexManager`, wires `SparseSearchService` and `RRFusionService`, and returns a calibrated `RetrievalMonitor` with confidence guard thresholds.
+
+#### `RetrievalPrecisionValidator`
+- **Constructor Parameters:** `monitor: RetrievalMonitor | None = None`, `min_precision_threshold: float = 0.75`.
+- **`validate(dataset: EvalDataset | None = None, dataset_path: Path | str | None = None, top_k: int = 5, output_report_path: Path | str | None = None) -> RetrievalPrecisionValidationResult`:**
+  - Loads or accepts evaluation dataset.
+  - Instantiates calibrated monitor if none provided.
+  - Executes batch benchmark via `RetrievalMonitor.run_benchmark()`.
+  - Computes per-category precision averages.
+  - Validates `measured_precision_at_5 >= min_precision_threshold`.
+  - Optionally exports Markdown benchmark report to disk.
+  - Returns immutable `RetrievalPrecisionValidationResult`.
+
+### Unit Test Suites
+- `tests/unit/test_precision_validator.py`: Asserts dynamic corpus generation, calibrated monitor creation, sample and real (52-query) dataset validation, threshold failure handling, report writing, empty dataset error wrapping, and model immutability.
+
+

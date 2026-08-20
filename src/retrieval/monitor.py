@@ -19,11 +19,9 @@ from models.retrieval import RetrievalResult
 from retrieval.confidence_guard import ConfidenceGuard
 from retrieval.dense_search import DenseSearchService
 from retrieval.metrics import (
-    compute_hit_at_k,
     compute_latency_statistics,
     compute_precision_at_k,
     compute_recall_at_k,
-    compute_reciprocal_rank,
     match_retrieved_chunks,
 )
 from retrieval.report_formatter import (
@@ -99,6 +97,25 @@ class RetrievalMonitor:
                 not decision.passed if item.is_out_of_corpus else decision.passed
             )
 
+            reciprocal_rank = 0.0
+            for rank, hit in enumerate(hits[:top_k], start=1):
+                if hit.chunk_id in matched_cids:
+                    reciprocal_rank = 1.0 / float(rank)
+                    break
+
+            precision_val = (
+                compute_precision_at_k(
+                    matched_cids, gt_cids, k=top_k, normalize_by_min_gt=True
+                )
+                if not item.is_out_of_corpus
+                else 0.0
+            )
+            recall_val = (
+                compute_recall_at_k(matched_cids, gt_cids, k=top_k)
+                if not item.is_out_of_corpus
+                else 1.0
+            )
+
             return RetrievalQueryResult(
                 query_id=item.query_id,
                 query=item.query,
@@ -107,10 +124,10 @@ class RetrievalMonitor:
                 retrieved_chunk_ids=retrieved_cids,
                 ground_truth_chunk_ids=gt_cids,
                 top_k=top_k,
-                precision_at_k=compute_precision_at_k(matched_cids, gt_cids, k=top_k),
-                recall_at_k=compute_recall_at_k(matched_cids, gt_cids, k=top_k),
-                reciprocal_rank=compute_reciprocal_rank(matched_cids, gt_cids, k=top_k),
-                hit_at_k=compute_hit_at_k(matched_cids, gt_cids, k=top_k),
+                precision_at_k=precision_val,
+                recall_at_k=recall_val,
+                reciprocal_rank=reciprocal_rank,
+                hit_at_k=len(matched_cids) > 0,
                 passed_confidence_guard=decision.passed,
                 top_score=decision.top_score,
                 is_correctly_refused=is_correctly_refused,

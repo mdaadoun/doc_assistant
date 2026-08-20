@@ -661,5 +661,22 @@ An immutable Pydantic V2 domain schema recording per-query benchmark metrics inc
 A comprehensive aggregate report model capturing total query count, in/out-of-corpus breakdowns, mean precision, mean recall, MRR, hit rate, honesty filter precision, latency percentiles ($p_{50}, p_{90}, p_{95}, p_{99}$), and threshold compliance status.
 
 ### RetrievalMetricThresholds
-A domain schema encapsulating non-negotiable benchmark targets ($	ext{precision@5} \ge 0.75$, $	ext{honesty} \ge 0.90$, $p_{95} \le 3000	ext{ ms}$) used for automated pass/fail gating.
+A domain schema encapsulating non-negotiable benchmark targets ($\text{precision@5} \ge 0.75$, $\text{honesty} \ge 0.90$, $p_{95} \le 3000\text{ ms}$) used for automated pass/fail gating.
+
+---
+
+## 🎯 35. Retrieval Precision Validation & Quality Gating
+
+### Retrieval Precision@5 (Ground-Truth Label Match Ratio)
+The proportion of ground-truth target citations retrieved within the top-5 candidate chunks, computed as $|\text{Retrieved}_5 \cap \text{GT}| / \min(5, |\text{GT}|)$.
+
+### RetrievalPrecisionValidator
+Domain validation service orchestrating benchmark execution across in-corpus queries and asserting that mean precision@5 satisfies the target threshold ($\ge 0.75$).
+
+### Calibrated Hybrid Monitor
+In-memory retrieval monitor wired with BM25 indexing, sparse search, and RRF fusion, producing calibrated relevance scores for evaluation.
+
+### Category Precision Breakdown
+Granular precision metrics calculated across distinct document domains (SLA, Security, HR, Remote Work, Cloud Infra, Legal, Travel, Privacy, Incident Response, SDLC).
+
 

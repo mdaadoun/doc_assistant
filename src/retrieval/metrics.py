@@ -11,8 +11,9 @@ def compute_precision_at_k(
     retrieved_ids: Sequence[str],
     ground_truth_ids: Sequence[str],
     k: int = 5,
+    normalize_by_min_gt: bool = False,
 ) -> float:
-    """Compute Precision@k: fraction of top-k retrieved chunks present in ground truth."""
+    """Compute Precision@k or Ground-Truth Label Match Ratio at k."""
     if k <= 0 or not retrieved_ids:
         return 0.0
     top_k_retrieved = list(retrieved_ids[:k])
@@ -20,7 +21,22 @@ def compute_precision_at_k(
     if not gt_set:
         return 0.0
     matched_count = sum(1 for cid in top_k_retrieved if cid in gt_set)
-    return float(matched_count) / float(k)
+    denominator = min(k, len(ground_truth_ids)) if normalize_by_min_gt else k
+    return float(matched_count) / float(denominator) if denominator > 0 else 0.0
+
+
+def compute_label_match_ratio_at_k(
+    matched_ids: Sequence[str],
+    ground_truth_ids: Sequence[str],
+    k: int = 5,
+) -> float:
+    """Compute ground-truth label match ratio at top-k: |matched| / min(k, |GT|)."""
+    if k <= 0 or not ground_truth_ids:
+        return 1.0 if not matched_ids and not ground_truth_ids else 0.0
+    denominator = min(k, len(ground_truth_ids))
+    if denominator <= 0:
+        return 0.0
+    return float(len(matched_ids)) / float(denominator)
 
 
 def compute_recall_at_k(

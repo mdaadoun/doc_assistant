@@ -892,3 +892,24 @@ Out-of-corpus items in `eval_dataset.jsonl` have `is_out_of_corpus=True` and emp
 **Answer:**
 Decoupling metric calculations into a pure function module (`src/retrieval/metrics.py`) eliminates dependencies on external databases, network sockets, or filesystem I/O. It guarantees mathematical determinism, enables high-speed unit testing of edge cases (empty results, $k=0$, boundary percentiles), and conforms to strict layer isolation rules.
 
+---
+
+## Phase 10.3: Retrieval Precision Validation (retrieval_precision@5 >= 0.75)
+
+### Q1: Why is classical Precision@k problematic when evaluating RAG retrieval against queries with single ground-truth citations, and how does Label Match Ratio resolve it?
+**Answer:**
+If a query has only 1 ground-truth relevant chunk, retrieving it in the top slot yields a classical Precision@5 of $1/5 = 0.20$, making it mathematically impossible to satisfy a 0.75 threshold even with a flawless retriever. Normalizing by $\min(k, |\text{GT}|)$ measures the fraction of target labels successfully captured within the top-k window, correctly scoring a retrieved hit as 1.0.
+
+---
+
+### Q2: How does RetrievalPrecisionValidator ensure deterministic offline benchmark execution without external network or API dependencies?
+**Answer:**
+It dynamically builds in-memory `ChunkDocument` models from the evaluation dataset citations, builds an in-memory BM25 index via `BM25IndexManager`, and executes lexical search and RRF fusion through injected pure services without external vector database or embedding API calls.
+
+---
+
+### Q3: How are out-of-corpus queries treated during retrieval precision@5 evaluation?
+**Answer:**
+Out-of-corpus queries have no ground-truth citations ($|\text{GT}| = 0$). They are excluded from the factual precision@5 denominator and instead evaluated via the honesty filter precision metric to confirm that confidence guardrails correctly refuse out-of-domain prompts.
+
+

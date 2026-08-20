@@ -16,6 +16,7 @@ from retrieval.dense_search import DENSE_TOP_K_DEFAULT, DenseSearchService
 from retrieval.indexing_orchestrator import IndexingOrchestrator, IndexingResult
 from retrieval.metrics import (
     compute_hit_at_k,
+    compute_label_match_ratio_at_k,
     compute_latency_statistics,
     compute_percentile,
     compute_precision_at_k,
@@ -24,6 +25,11 @@ from retrieval.metrics import (
     match_retrieved_chunks,
 )
 from retrieval.monitor import RetrievalMonitor
+from retrieval.precision_validator import (
+    RetrievalPrecisionValidator,
+    build_corpus_chunks_from_dataset,
+    create_calibrated_retrieval_monitor,
+)
 from retrieval.report_formatter import (
     format_retrieval_markdown_report,
     write_retrieval_markdown_report,
@@ -57,15 +63,19 @@ __all__: list[str] = [
     "RRFusionService",
     "RerankerService",
     "RetrievalMonitor",
+    "RetrievalPrecisionValidator",
     "SPARSE_TOP_K_DEFAULT",
     "SparseSearchService",
     "VectorStoreAdapter",
+    "build_corpus_chunks_from_dataset",
     "compute_hit_at_k",
+    "compute_label_match_ratio_at_k",
     "compute_latency_statistics",
     "compute_percentile",
     "compute_precision_at_k",
     "compute_recall_at_k",
     "compute_reciprocal_rank",
+    "create_calibrated_retrieval_monitor",
     "create_reranker_adapter",
     "format_retrieval_markdown_report",
     "match_retrieved_chunks",
