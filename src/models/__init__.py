@@ -28,6 +28,12 @@ from models.evaluation import (
     RetrievalPrecisionValidationResult,
     RetrievalQueryResult,
 )
+from models.faithfulness import (
+    FaithfulnessMetricThresholds,
+    FaithfulnessQueryResult,
+    FaithfulnessValidationResult,
+    StatementVerification,
+)
 from models.retrieval import DebugRetrievalHit, DebugRetrievalResponse, RetrievalResult
 
 __all__: list[str] = [
@@ -60,4 +66,9 @@ __all__: list[str] = [
     "RetrievalMetricThresholds",
     "RetrievalBenchmarkReport",
     "RetrievalPrecisionValidationResult",
+    "StatementVerification",
+    "FaithfulnessQueryResult",
+    "FaithfulnessMetricThresholds",
+    "FaithfulnessValidationResult",
 ]
+

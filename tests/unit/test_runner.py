@@ -50,7 +50,9 @@ ALL_TEST_SUITES: Final[list[str]] = [
     "tests/unit/test_retrieval_monitor.py",
     "tests/unit/test_retrieval_benchmark.py",
     "tests/unit/test_precision_validator.py",
+    "tests/unit/test_faithfulness_validator.py",
 ]
+
 
 
 def test_run_project_tests_invocation() -> None:

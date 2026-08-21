@@ -912,4 +912,25 @@ It dynamically builds in-memory `ChunkDocument` models from the evaluation datas
 **Answer:**
 Out-of-corpus queries have no ground-truth citations ($|\text{GT}| = 0$). They are excluded from the factual precision@5 denominator and instead evaluated via the honesty filter precision metric to confirm that confidence guardrails correctly refuse out-of-domain prompts.
 
+---
+
+## Phase 10.4: RAGAS Faithfulness Validation (faithfulness_score >= 0.85)
+
+### Q1: How does the RAGAS Faithfulness framework differ from classic semantic similarity metrics (such as BLEU, ROUGE, or BERTScore)?
+**Answer:**
+BLEU and ROUGE evaluate surface n-gram overlap against a reference answer, while BERTScore evaluates token embedding cosine similarity. Neither verifies whether generated factual claims are grounded in retrieved context passages. RAGAS Faithfulness decomposes the generated answer into atomic statements and explicitly verifies the entailment/support of each statement against the context, directly measuring hallucination rate.
+
+---
+
+### Q2: Why is handling out-of-corpus refusals critical when calculating system-wide faithfulness scores?
+**Answer:**
+If an evaluation dataset includes out-of-corpus questions designed to test guardrails, a faithful RAG system must output a standard refusal message. If the evaluation pipeline treated refusals as unsupported text because no passage supported the query topic, it would penalize correct defensive behavior. Conversely, correctly recognizing a grounded refusal rewards defensive accuracy and discourages ungrounded generation.
+
+---
+
+### Q3: What are the trade-offs between LLM-as-a-Judge and rule-based statement verification for continuous integration CI benchmarks?
+**Answer:**
+LLM-as-a-Judge provides high semantic flexibility for complex inferences but introduces network latency, nondeterminism, and API spend, making it unsuitable for rapid pre-commit or CI execution. Rule-based statement verification with morphological stemming and entity/number matching delivers deterministic, zero-cost, sub-second test execution while catching hallucinations and ungrounded statements.
+
+
 

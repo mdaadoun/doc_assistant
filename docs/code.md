@@ -2171,4 +2171,82 @@ Validates that the hybrid retrieval engine satisfies the production-grade qualit
 ### Unit Test Suites
 - `tests/unit/test_precision_validator.py`: Asserts dynamic corpus generation, calibrated monitor creation, sample and real (52-query) dataset validation, threshold failure handling, report writing, empty dataset error wrapping, and model immutability.
 
+---
+
+## 35. RAGAS Faithfulness Validation & Context Alignment (Phase 10.4)
+
+### Overview
+Implements the RAGAS Faithfulness evaluation framework to validate that generated answers are strictly grounded in retrieved context passages ($\text{faithfulness\_score} \ge 0.85$). Decomposes responses into atomic claims, verifies statement entailment via morphological root matching, handles grounded refusals on out-of-corpus queries, and generates structured benchmark audit reports.
+
+### Domain Models (`src/models/faithfulness.py`)
+
+#### `StatementVerification`
+- **Fields:**
+  - `statement: str`: Extracted atomic claim or statement.
+  - `is_faithful: bool`: True if statement is verified and supported by context.
+  - `reason: str`: Verification rationale or support explanation.
+  - `supporting_chunk_id: str | None`: Chunk ID of supporting context passage if matched.
+  - `matched_keywords: list[str]`: Key entity and fact tokens matched in context.
+
+#### `FaithfulnessQueryResult`
+- **Fields:**
+  - `query_id: str`: Evaluation query identifier.
+  - `query: str`: Executed user question.
+  - `generated_answer: str`: Generated or evaluated answer text.
+  - `contexts: list[str]`: Context strings used for grounding.
+  - `statements: list[str]`: List of discrete statements evaluated.
+  - `verifications: list[StatementVerification]`: Detailed per-statement verification records.
+  - `verified_statements_count: int`: Count of statements supported by context.
+  - `total_statements_count: int`: Total statements extracted from answer.
+  - `faithfulness_score: float`: Faithfulness score (supported / total).
+  - `is_faithful: bool`: True if score meets or exceeds minimum threshold.
+  - `is_out_of_corpus: bool`: Whether query was an out-of-corpus refusal test.
+  - `is_refusal: bool`: True if response was a valid grounded refusal.
+  - `category: str`: Evaluation domain category.
+
+#### `FaithfulnessValidationResult`
+- **Fields:**
+  - `passed: bool`: True if mean faithfulness meets or exceeds target threshold.
+  - `mean_faithfulness_score: float`: Measured mean faithfulness score.
+  - `target_threshold: float`: Target minimum faithfulness threshold (default `0.85`).
+  - `total_queries: int`: Total queries evaluated.
+  - `in_corpus_queries: int`: Total in-corpus queries.
+  - `out_of_corpus_queries: int`: Total out-of-corpus queries.
+  - `category_scores: dict[str, float]`: Mean faithfulness score breakdown by category.
+  - `query_results: list[FaithfulnessQueryResult]`: Detailed per-query records.
+  - `timestamp: str`: Validation execution timestamp (ISO format).
+
+### Statement Extractor (`src/generation/statement_extractor.py`)
+
+#### `StatementExtractor`
+- **`clean_text_for_extraction(text: str) -> str`:** Strips inline citation tags (`[Doc: ... | Page: ...]`) and normalizes whitespace.
+- **`extract_statements(text: str) -> list[str]`:** Decomposes answers into discrete propositions while avoiding incorrect splits on abbreviations (`e.g.`, `v1.5+`, `approx.`), decimals (`99.9%`), currency (`$5,000`), and standardized refusal messages.
+
+### RAGAS Evaluator (`src/generation/faithfulness.py`)
+
+#### `RAGASFaithfulnessEvaluator`
+- **`verify_statement(statement: str, contexts: Sequence[str | dict[str, Any] | Any], is_out_of_corpus: bool = False) -> StatementVerification`:**
+  - Evaluates statement against context passages.
+  - Confirms standardized refusal on out-of-corpus queries yields `is_faithful=True`.
+  - Normalizes keywords and applies morphological root stemming (`_stem()`) to evaluate factual overlap across syntactic inflections.
+  - Requires $\ge 40\%$ keyword overlap (or $\ge 3$ keywords and $\ge 30\%$ overlap) to confirm claim entailment.
+- **`evaluate_answer(query: str, answer: str, contexts: Sequence[str | dict[str, Any] | Any], is_out_of_corpus: bool = False, query_id: str = "eval", category: str = "general", min_threshold: float = 0.85) -> FaithfulnessQueryResult`:**
+  - Extracts statements and evaluates all claims.
+  - Computes $\text{faithfulness\_score} = \text{verified\_count} / \text{total\_count}$.
+  - Returns complete `FaithfulnessQueryResult`.
+
+### Faithfulness Validator Service (`src/generation/faithfulness_validator.py`)
+
+#### `FaithfulnessValidator`
+- **Constructor Parameters:** `min_faithfulness_threshold: float = 0.85`, `evaluator: type[RAGASFaithfulnessEvaluator] | None = None`.
+- **`validate(dataset: EvalDataset | None = None, dataset_path: Path | str | None = None, output_report_path: Path | str | None = None) -> FaithfulnessValidationResult`:**
+  - Iterates over all dataset queries (in-corpus and out-of-corpus).
+  - Evaluates faithfulness against context blocks.
+  - Aggregates category-level scores and asserts `mean_faithfulness_score >= target_threshold`.
+  - Optionally renders and writes Markdown benchmark report to disk.
+
+### Unit Test Suites
+- `tests/unit/test_faithfulness_validator.py`: Asserts statement extraction, citation stripping, refusal handling, claim grounding, partial faithfulness scoring, sample and real (52-query) dataset validation, Markdown report export, empty dataset error handling, and model immutability.
+
+
 

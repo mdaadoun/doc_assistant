@@ -679,4 +679,21 @@ In-memory retrieval monitor wired with BM25 indexing, sparse search, and RRF fus
 ### Category Precision Breakdown
 Granular precision metrics calculated across distinct document domains (SLA, Security, HR, Remote Work, Cloud Infra, Legal, Travel, Privacy, Incident Response, SDLC).
 
+---
+
+## 🛡️ 36. RAGAS Faithfulness Framework & Context Alignment
+
+### RAGAS Faithfulness
+A quality evaluation metric measuring the ratio of factual statements in the generated response that can be directly inferred from or verified by the retrieved context passages.
+
+### Atomic Statement Decomposition
+The process of parsing natural language text into discrete, independent propositions or claims to enable granular verification against supporting evidence.
+
+### Grounded Refusal
+A verified refusal behavior where the system abstains from answering when the retrieved context lacks sufficient evidence, achieving zero hallucination on out-of-scope queries.
+
+### Morphological Root Matching
+A token normalization technique stripping grammatical suffixes to evaluate semantic alignment between query answers and source document excerpts.
+
+
 

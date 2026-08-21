@@ -8,6 +8,12 @@ from generation.citations import (
     RawCitation,
 )
 from generation.engine import NO_CONTEXT_REFUSAL, SYSTEM_PROMPT, GroundedGenerator
+from generation.faithfulness import RAGASFaithfulnessEvaluator
+from generation.faithfulness_validator import (
+    FaithfulnessValidator,
+    format_faithfulness_markdown_report,
+    write_faithfulness_markdown_report,
+)
 from generation.finops import (
     MODEL_PRICING,
     FinOpsCollector,
@@ -15,6 +21,7 @@ from generation.finops import (
     count_tokens,
 )
 from generation.sse import SSEResponseHandler, format_sse_event
+from generation.statement_extractor import StatementExtractor
 
 __all__: list[str] = [
     "GroundedGenerator",
@@ -31,4 +38,10 @@ __all__: list[str] = [
     "count_tokens",
     "calculate_cost",
     "MODEL_PRICING",
+    "StatementExtractor",
+    "RAGASFaithfulnessEvaluator",
+    "FaithfulnessValidator",
+    "format_faithfulness_markdown_report",
+    "write_faithfulness_markdown_report",
 ]
+
