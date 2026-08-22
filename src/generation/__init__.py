@@ -44,4 +44,3 @@ __all__: list[str] = [
     "format_faithfulness_markdown_report",
     "write_faithfulness_markdown_report",
 ]
-

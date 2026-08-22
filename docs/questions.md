@@ -934,3 +934,63 @@ LLM-as-a-Judge provides high semantic flexibility for complex inferences but int
 
 
 
+
+---
+
+## Phase 10.5: Honesty Filter Precision Validation (honesty_filter_precision >= 0.90)
+
+### Q1: Why is measuring both honesty filter precision and false refusal rate critical when tuning confidence thresholds in enterprise RAG systems?
+**Answer:**
+High refusal precision alone can be trivially achieved by rejecting every incoming query. Tracking the full $2 \times 2$ confusion matrix (both True Refusals on out-of-corpus queries and False Refusals on in-corpus queries) ensures the system prevents hallucination leakage without degrading retrieval recall for legitimate business inquiries.
+
+---
+
+### Q2: How does calibrated token and stem overlap prevent lexical BM25 false acceptances on out-of-corpus queries?
+**Answer:**
+Sparse keyword search over an indexed corpus can return incidental matches on common question words (e.g., "what", "between", "history"). Calibrating relevance scores via root stemming, stopword elimination, and multi-token overlap requirements ensures queries lacking domain content overlap remain strictly below the confidence threshold ($S_{\text{min}} < 0.35$).
+
+---
+
+### Q3: How do immutable domain schemas (`frozen=True`, `extra="forbid"`) protect auditability in automated quality evaluation pipelines?
+**Answer:**
+Frozen Pydantic models guarantee that benchmark metric results and per-query classification records cannot be mutated during aggregation or reporting, preventing telemetry contamination and ensuring deterministic verification across CI/CD runs.
+
+---
+
+## Phase 10.6: Pipeline Latency SLA Validation (p95_latency <= 3000ms)
+
+### Q1: Why is p95 latency preferred over arithmetic mean latency for SLA enforcement in conversational RAG applications?
+**Answer:**
+Arithmetic mean conceals tail latency spikes caused by garbage collection, cold caches, or complex tokenization bottlenecks. P95 latency ensures that 95% of user interactions complete within acceptable thresholds, providing a more robust measure of system responsiveness and user experience.
+
+---
+
+### Q2: How does warmup execution affect the reliability of latency benchmarks in Python microservices?
+**Answer:**
+Warmup runs prime module imports, in-memory inverted indices, regex caches, and memory allocators. Without warmup passes, initial cold-start latency can skew percentiles and produce non-representative tail latency spikes during automated CI benchmarks.
+
+---
+
+### Q3: How do immutable domain models (`frozen=True`, `extra="forbid"`) prevent concurrency bugs when gathering performance telemetry across parallel workers?
+**Answer:**
+Frozen Pydantic models prevent accidental field mutation or state leakage across asynchronous tasks or threads during benchmark aggregation, guaranteeing telemetry thread-safety and deterministic reporting.
+
+---
+
+## Phase 10.7: Automated Test Coverage Quality Assurance (test_coverage >= 80%)
+
+### Q1: Why is mocked I/O mandatory for CI/CD test suites in enterprise RAG pipelines?
+**Answer:**
+Live LLM and embedding API calls introduce non-deterministic latencies, rate limit throttles (429 errors), network flakiness, and ongoing API costs. Mocked I/O guarantees deterministic sub-second test execution, zero external dependencies, and complete test isolation.
+
+---
+
+### Q2: How does achieving >= 80% test coverage support modular refactoring under strict architectural guardrails (e.g. 250 LOC limit)?
+**Answer:**
+When splitting large classes or modules into smaller single-responsibility units to comply with file size limits, a high-coverage test suite acts as an automated safety harness, verifying that contracts, error mappings, and layer boundaries remain intact.
+
+---
+
+### Q3: What techniques prevent test state leakage across parameterized pytest test suites?
+**Answer:**
+Using isolated fixtures (`tmp_path` for filesystem operations, fresh in-memory index managers, dependency injection containers) and resetting global settings caches ensures that test executions do not pollute shared state or produce order-dependent test failures.

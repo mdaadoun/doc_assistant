@@ -19,11 +19,53 @@ from models.faithfulness import (
 logger = structlog.get_logger(__name__)
 
 STOPWORDS: Final[set[str]] = {
-    "the", "and", "is", "in", "to", "of", "for", "with", "a", "an", "on",
-    "that", "this", "by", "from", "at", "as", "be", "are", "was", "were",
-    "or", "it", "its", "all", "any", "can", "may", "will", "shall", "must",
-    "under", "over", "such", "than", "then", "into", "their", "they", "them",
-    "which", "who", "when", "what", "where", "why", "how",
+    "the",
+    "and",
+    "is",
+    "in",
+    "to",
+    "of",
+    "for",
+    "with",
+    "a",
+    "an",
+    "on",
+    "that",
+    "this",
+    "by",
+    "from",
+    "at",
+    "as",
+    "be",
+    "are",
+    "was",
+    "were",
+    "or",
+    "it",
+    "its",
+    "all",
+    "any",
+    "can",
+    "may",
+    "will",
+    "shall",
+    "must",
+    "under",
+    "over",
+    "such",
+    "than",
+    "then",
+    "into",
+    "their",
+    "they",
+    "them",
+    "which",
+    "who",
+    "when",
+    "what",
+    "where",
+    "why",
+    "how",
 }
 
 TOKEN_SPLIT_REGEX = re.compile(r"[\w']+|[0-9]+(?:\.[0-9]+)?%?|\$[0-9,]+")
@@ -43,11 +85,17 @@ def _extract_context_passages(
                 or ctx.get("id")
                 or f"{ctx.get('file_name', 'doc')}_p{ctx.get('page_number', 1)}"
             )
-            text = str(ctx.get("text") or ctx.get("content") or ctx.get("excerpt") or "")
+            text = str(
+                ctx.get("text") or ctx.get("content") or ctx.get("excerpt") or ""
+            )
             passages.append((cid, text.lower()))
         else:
             cid = str(getattr(ctx, "chunk_id", getattr(ctx, "id", f"chunk_{idx + 1}")))
-            text = str(getattr(ctx, "text", getattr(ctx, "content", getattr(ctx, "excerpt", ""))))
+            text = str(
+                getattr(
+                    ctx, "text", getattr(ctx, "content", getattr(ctx, "excerpt", ""))
+                )
+            )
             passages.append((cid, text.lower()))
     return passages
 
@@ -64,7 +112,9 @@ def _stem(token: str) -> str:
 def _extract_keywords(text: str) -> list[str]:
     """Extract alphanumeric keywords and numeric tokens from text excluding stopwords."""
     raw_tokens = TOKEN_SPLIT_REGEX.findall(text.lower())
-    return [t for t in raw_tokens if (len(t) >= 2 or t.isdigit()) and t not in STOPWORDS]
+    return [
+        t for t in raw_tokens if (len(t) >= 2 or t.isdigit()) and t not in STOPWORDS
+    ]
 
 
 class RAGASFaithfulnessEvaluator:
@@ -80,7 +130,10 @@ class RAGASFaithfulnessEvaluator:
         """Verify if a discrete factual statement is supported by retrieved context passages."""
         stmt_lower = statement.lower().strip()
 
-        if NO_CONTEXT_REFUSAL_CLEAN in stmt_lower or NO_CONTEXT_REFUSAL.lower() in stmt_lower:
+        if (
+            NO_CONTEXT_REFUSAL_CLEAN in stmt_lower
+            or NO_CONTEXT_REFUSAL.lower() in stmt_lower
+        ):
             is_faithful = is_out_of_corpus or not contexts
             return StatementVerification(
                 statement=statement,
@@ -125,7 +178,11 @@ class RAGASFaithfulnessEvaluator:
             matched: list[str] = []
             for kw in keywords:
                 kw_stem = _stem(kw)
-                if kw in passage_text or kw in passage_words or kw_stem in passage_stems:
+                if (
+                    kw in passage_text
+                    or kw in passage_words
+                    or kw_stem in passage_stems
+                ):
                     matched.append(kw)
 
             overlap_ratio = len(matched) / len(keywords) if keywords else 1.0
@@ -181,7 +238,9 @@ class RAGASFaithfulnessEvaluator:
             )
 
         verifications = [
-            cls.verify_statement(statement=s, contexts=contexts, is_out_of_corpus=is_out_of_corpus)
+            cls.verify_statement(
+                statement=s, contexts=contexts, is_out_of_corpus=is_out_of_corpus
+            )
             for s in statements
         ]
         verified_count = sum(1 for v in verifications if v.is_faithful)

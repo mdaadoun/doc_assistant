@@ -26,7 +26,8 @@ class StatementVerification(BaseDomainModel):
         default=None, description="Chunk ID of supporting context passage if matched"
     )
     matched_keywords: list[str] = Field(
-        default_factory=list, description="Key entity and fact tokens matched in context"
+        default_factory=list,
+        description="Key entity and fact tokens matched in context",
     )
 
 

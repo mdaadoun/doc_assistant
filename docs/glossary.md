@@ -697,3 +697,69 @@ A token normalization technique stripping grammatical suffixes to evaluate seman
 
 
 
+
+---
+
+## 🛡️ 37. Honesty Filter & Out-of-Corpus Refusal Gating
+
+### Honesty Filter Precision
+The proportion of out-of-corpus or unanswerable queries correctly identified and refused by the confidence guard or grounding engine ($\text{TR} / (\text{TR} + \text{FA})$).
+
+### True Refusal (TR)
+A guardrail outcome where an out-of-corpus or ungrounded user query is correctly identified and gated with a standardized refusal response.
+
+### False Acceptance (FA)
+A guardrail failure where an ungrounded or out-of-corpus query slips past retrieval confidence gates, leading to potential hallucination leakage.
+
+### False Refusal (FR)
+An erroneous refusal where a legitimate in-corpus query with relevant documentation is incorrectly rejected by an over-sensitive confidence filter.
+
+### Refusal Confusion Matrix
+A $2 \times 2$ contingency table tracking True Refusals, False Acceptances, True Acceptances, and False Refusals to evaluate refusal precision alongside legitimate retrieval retention.
+
+### HonestyQueryClassification
+An immutable Pydantic V2 domain model recording per-query refusal evaluation details including expected behavior, observed system action, confidence score, and decision rationale.
+
+### HonestyValidationResult
+A domain schema encapsulating aggregate honesty benchmark results, confusion matrix counts, category breakdowns, and pass/fail quality compliance status.
+
+---
+
+## ⏱️ 38. Latency Benchmarking & Performance SLAs
+
+### P95 Latency
+The 95th percentile latency threshold representing the execution duration under which 95% of benchmark queries complete.
+
+### Tail Latency
+The upper extreme percentiles ($p_{90}, p_{95}, p_{99}$) of execution response times that disproportionately impact user experience in production distributed systems.
+
+### Warmup Run
+Pre-execution query passes to prime in-memory data structures, caching layers, and tokenization buffers prior to statistical latency measurement.
+
+### Linear Percentile Interpolation
+A mathematical method for calculating exact percentile ranks across discrete sample sets by linearly weighting adjacent ranked observations.
+
+### LatencyStageBreakdown
+An immutable domain schema capturing granular execution times across retrieval, reranking, confidence evaluation, and generation stages.
+
+### LatencyValidationResult
+An immutable Pydantic V2 domain model recording aggregate latency percentiles, SLA target thresholds, category breakdowns, and pass/fail quality compliance status.
+
+---
+
+## 🧪 39. Test Automation & Coverage Quality Assurance
+
+### Code Coverage
+The percentage of source code statements executed during automated test runs, measuring test suite completeness and identifying untested branches.
+
+### Mocked I/O
+A test isolation pattern replacing real network sockets, filesystem operations, and third-party APIs with deterministic in-memory test doubles.
+
+### Branch Coverage
+A testing metric evaluating whether every possible branch (`if/else`, `try/except`) within a control structure has been executed by tests.
+
+### Regression Shielding
+The defensive capacity of an extensive test suite ($\ge 80\%$ coverage) to immediately detect unintended breaking changes during refactoring.
+
+### Deterministic Test Execution
+A quality property ensuring test suites yield identical pass/fail outcomes regardless of execution environment, hardware, or external network availability.

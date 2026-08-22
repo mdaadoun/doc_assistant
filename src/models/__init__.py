@@ -34,6 +34,19 @@ from models.faithfulness import (
     FaithfulnessValidationResult,
     StatementVerification,
 )
+from models.honesty import (
+    HonestyConfusionMatrix,
+    HonestyMetricThresholds,
+    HonestyQueryClassification,
+    HonestyValidationResult,
+)
+from models.latency import (
+    LatencyMetricThresholds,
+    LatencyPercentileMetrics,
+    LatencyQueryBenchmark,
+    LatencyStageBreakdown,
+    LatencyValidationResult,
+)
 from models.retrieval import DebugRetrievalHit, DebugRetrievalResponse, RetrievalResult
 
 __all__: list[str] = [
@@ -70,5 +83,13 @@ __all__: list[str] = [
     "FaithfulnessQueryResult",
     "FaithfulnessMetricThresholds",
     "FaithfulnessValidationResult",
+    "HonestyQueryClassification",
+    "HonestyConfusionMatrix",
+    "HonestyMetricThresholds",
+    "HonestyValidationResult",
+    "LatencyStageBreakdown",
+    "LatencyQueryBenchmark",
+    "LatencyPercentileMetrics",
+    "LatencyMetricThresholds",
+    "LatencyValidationResult",
 ]
-

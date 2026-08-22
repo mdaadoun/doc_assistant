@@ -151,7 +151,6 @@ class FaithfulnessValidator:
                     for gt in item.ground_truth_citations
                 ]
 
-
             result = self.evaluator.evaluate_answer(
                 query=item.query,
                 answer=item.ground_truth_answer,

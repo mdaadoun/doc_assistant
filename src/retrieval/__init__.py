@@ -13,7 +13,18 @@ from retrieval.confidence_guard import (
 )
 from retrieval.debug_retrieval import DebugRetrievalBuilder
 from retrieval.dense_search import DENSE_TOP_K_DEFAULT, DenseSearchService
+from retrieval.honesty_validator import (
+    HonestyFilterValidator,
+    format_honesty_markdown_report,
+    write_honesty_markdown_report,
+)
 from retrieval.indexing_orchestrator import IndexingOrchestrator, IndexingResult
+from retrieval.latency_validator import (
+    LatencyBenchmarkValidator,
+    compute_standard_deviation,
+    format_latency_markdown_report,
+    write_latency_markdown_report,
+)
 from retrieval.metrics import (
     compute_hit_at_k,
     compute_label_match_ratio_at_k,
@@ -54,8 +65,10 @@ __all__: list[str] = [
     "DebugRetrievalBuilder",
     "DenseSearchService",
     "FlashRankRerankerAdapter",
+    "HonestyFilterValidator",
     "IndexingOrchestrator",
     "IndexingResult",
+    "LatencyBenchmarkValidator",
     "MockRerankerAdapter",
     "RRF_K_DEFAULT",
     "RRF_METHOD",
@@ -75,11 +88,16 @@ __all__: list[str] = [
     "compute_precision_at_k",
     "compute_recall_at_k",
     "compute_reciprocal_rank",
+    "compute_standard_deviation",
     "create_calibrated_retrieval_monitor",
     "create_reranker_adapter",
+    "format_honesty_markdown_report",
+    "format_latency_markdown_report",
     "format_retrieval_markdown_report",
     "match_retrieved_chunks",
     "tokenize",
     "tokenize_corpus",
+    "write_honesty_markdown_report",
+    "write_latency_markdown_report",
     "write_retrieval_markdown_report",
 ]

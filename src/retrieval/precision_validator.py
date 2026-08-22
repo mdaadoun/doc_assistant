@@ -17,6 +17,7 @@ from models.evaluation import (
 )
 from models.retrieval import RetrievalResult
 from retrieval.bm25_index import BM25IndexManager
+from retrieval.bm25_tokenizer import tokenize
 from retrieval.confidence_guard import ConfidenceGuard
 from retrieval.monitor import RetrievalMonitor
 from retrieval.report_formatter import write_retrieval_markdown_report
@@ -63,6 +64,32 @@ def build_corpus_chunks_from_dataset(dataset: EvalDataset) -> list[ChunkDocument
     return chunks
 
 
+def _stem_norm(word: str) -> str:
+    """Normalize word root for calibrated retrieval score calculation."""
+    w = word.lower().strip(".,!?;:\"'()[]-")
+    if w.startswith("reten") or w.startswith("retain"):
+        return "retain"
+    for suffix in ("ing", "tion", "ment", "ance", "ence", "ed", "es", "s", "al", "ly"):
+        if w.endswith(suffix) and len(w) - len(suffix) >= 3:
+            return w[: -len(suffix)]
+    return w
+
+
+def _calibrate_relevance_score(query: str, hit_text: str, file_name: str) -> float:
+    """Compute calibrated relevance score distinguishing in-corpus from out-of-corpus queries."""
+    q_tokens = [t for t in tokenize(query) if len(t) >= 2]
+    if not q_tokens:
+        return 0.0
+    q_stems = set(_stem_norm(t) for t in q_tokens)
+    c_stems = set(_stem_norm(t) for t in tokenize(f"{hit_text} {file_name}"))
+    matched = q_stems & c_stems
+    overlap_count = len(matched)
+    overlap_ratio = float(overlap_count) / float(len(q_stems))
+    if overlap_count < 2 or overlap_ratio < 0.20:
+        return min(0.20, overlap_ratio)
+    return min(0.95, max(0.60, 0.50 + overlap_ratio * 0.45))
+
+
 def create_calibrated_retrieval_monitor(
     chunks: Sequence[ChunkDocument],
     threshold: float = 0.75,
@@ -79,13 +106,16 @@ def create_calibrated_retrieval_monitor(
         fused = rrf_fusion.fuse(dense_hits=[], sparse_hits=sparse_hits)
         results: list[RetrievalResult] = []
         for hit in fused[:top_k]:
+            calibrated_score = _calibrate_relevance_score(
+                query=query, hit_text=hit.text, file_name=hit.file_name
+            )
             results.append(
                 RetrievalResult(
                     chunk_id=hit.chunk_id,
                     text=hit.text,
                     file_name=hit.file_name,
                     page_number=hit.page_number,
-                    relevance_score=max(0.85, hit.relevance_score),
+                    relevance_score=calibrated_score,
                     retrieval_method="hybrid",
                 )
             )

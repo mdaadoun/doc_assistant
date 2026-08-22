@@ -130,9 +130,9 @@
 - [x] 10.2: Build RetrievalMonitor benchmark runner
 - [x] 10.3: Validate retrieval_precision@5 ≥ 0.75
 - [x] 10.4: Validate faithfulness_score ≥ 0.85 (RAGAS framework)
-- [ ] 10.5: Validate honesty_filter_precision ≥ 0.90
-- [ ] 10.6: Validate p95_latency ≤ 3000ms
-- [ ] 10.7: Achieve ≥80% test coverage with pytest (unit + integration, mocked I/O)
+- [x] 10.5: Validate honesty_filter_precision ≥ 0.90
+- [x] 10.6: Validate p95_latency ≤ 3000ms
+- [x] 10.7: Achieve ≥80% test coverage with pytest (unit + integration, mocked I/O)
 **Deliverables:** Passing benchmark report (retrieval_report.md), test coverage report.
 **Verification:** All metric thresholds met, `make test` passes, coverage ≥ 80%.
 

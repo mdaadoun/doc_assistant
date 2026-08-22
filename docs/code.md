@@ -2250,3 +2250,201 @@ Implements the RAGAS Faithfulness evaluation framework to validate that generate
 
 
 
+
+---
+
+## 37. Honesty Filter Precision Validation (`src/models/honesty.py`, `src/retrieval/honesty_validator.py`)
+
+### Overview
+Validates that the retrieval engine and confidence guard reliably identify out-of-corpus queries, issue standardized refusal responses, and achieve `honesty_filter_precision >= 0.90` across benchmark evaluation datasets without degrading in-corpus retrieval availability.
+
+### Domain Schemas (`src/models/honesty.py`)
+
+#### `HonestyQueryClassification`
+- **Fields:**
+  - `query_id: str`: Unique query identifier.
+  - `query: str`: Executed user question.
+  - `category: str`: Evaluation domain category (default `"general"`).
+  - `is_out_of_corpus: bool`: True if query is outside corporate documentation.
+  - `expected_refusal: bool`: True if refusal is expected behavior.
+  - `system_refused: bool`: True if confidence guard or grounding rejected query.
+  - `is_correctly_classified: bool`: True if system decision matches ground truth expectation.
+  - `confidence_score: float`: Highest relevance score observed among candidates.
+  - `relevance_threshold: float`: Confidence cutoff threshold (default `0.35`).
+  - `refusal_reason: str`: Rationale for refusal or acceptance decision.
+  - `generated_answer: str | None`: Generated response payload if evaluated.
+
+#### `HonestyConfusionMatrix`
+- **Fields:**
+  - `true_refusals: int`: Out-of-corpus queries correctly refused (TR).
+  - `false_acceptances: int`: Out-of-corpus queries incorrectly accepted (FA).
+  - `true_acceptances: int`: In-corpus queries correctly accepted (TA).
+  - `false_refusals: int`: In-corpus queries incorrectly refused (FR).
+
+#### `HonestyMetricThresholds`
+- **Fields:**
+  - `min_honesty_filter_precision: float`: Target minimum honesty precision threshold (default `0.90`).
+  - `max_false_refusal_rate: float`: Maximum allowable false refusal rate on in-corpus queries (default `0.10`).
+
+#### `HonestyValidationResult`
+- **Fields:**
+  - `passed: bool`: True if honesty precision and false refusal rate satisfy threshold criteria.
+  - `measured_honesty_precision: float`: Measured honesty filter precision ($\text{TR} / (\text{TR} + \text{FA})$).
+  - `target_threshold: float`: Target minimum honesty precision threshold (default `0.90`).
+  - `total_queries: int`: Total queries evaluated.
+  - `in_corpus_queries: int`: Total in-corpus queries.
+  - `out_of_corpus_queries: int`: Total out-of-corpus queries.
+  - `true_refusals: int`: Count of correctly refused out-of-corpus queries.
+  - `false_acceptances: int`: Count of hallucinated out-of-corpus acceptances.
+  - `true_acceptances: int`: Count of correctly accepted in-corpus queries.
+  - `false_refusals: int`: Count of falsely refused in-corpus queries.
+  - `out_of_corpus_refusal_rate: float`: Out-of-corpus refusal proportion.
+  - `in_corpus_pass_rate: float`: In-corpus acceptance proportion.
+  - `false_refusal_rate: float`: In-corpus false refusal proportion.
+  - `confusion_matrix: HonestyConfusionMatrix`: Complete confusion matrix record.
+  - `category_metrics: dict[str, float]`: Accuracy / precision breakdown by query category.
+  - `query_classifications: list[HonestyQueryClassification]`: Detailed per-query classification logs.
+  - `timestamp: str`: Validation execution timestamp (ISO format).
+
+### Honesty Validator Service (`src/retrieval/honesty_validator.py`)
+
+#### `HonestyFilterValidator`
+- **Constructor Parameters:**
+  - `monitor: RetrievalMonitor | None = None`: Optional injected benchmark monitor.
+  - `confidence_guard: ConfidenceGuard | None = None`: Optional confidence gate evaluator.
+  - `min_honesty_threshold: float = 0.90`: Minimum acceptable honesty precision.
+  - `max_false_refusal_rate: float = 0.10`: Maximum allowable false refusal rate.
+- **`validate(dataset: EvalDataset | None = None, dataset_path: Path | str | None = None, top_k: int = 5, output_report_path: Path | str | None = None) -> HonestyValidationResult`:**
+  - Loads target evaluation dataset.
+  - Constructs in-memory calibrated monitor if none provided.
+  - Evaluates each query against candidate retrieval and `ConfidenceGuard(S_min=0.35)`.
+  - Calculates confusion matrix metrics ($\text{TR}, \text{FA}, \text{TA}, \text{FR}$).
+  - Asserts `measured_honesty_precision >= min_honesty_threshold` and `false_refusal_rate <= max_false_refusal_rate`.
+  - Optionally renders and writes Markdown benchmark report to filesystem.
+- **`format_honesty_markdown_report(result: HonestyValidationResult) -> str`:**
+  - Renders executive summary table, confusion matrix, domain category breakdown, and query refusal audit log.
+- **`write_honesty_markdown_report(result: HonestyValidationResult, output_path: Path | str) -> Path`:**
+  - Persists formatted benchmark report to specified filesystem path.
+
+### Unit Test Suites
+- `tests/unit/test_honesty_validator.py`: Comprehensive test suite verifying sample dataset benchmarking, real 52-query dataset validation (`honesty_filter_precision >= 0.90`), report formatting, false acceptance detection, empty dataset error handling, and model immutability.
+
+---
+
+## 38. End-to-End Latency SLA Validation (`src/models/latency.py`, `src/retrieval/latency_validator.py`)
+
+### Overview
+Validates that the end-to-end retrieval and confidence gating pipeline satisfies production SLA targets ($p_{95} \le 3000\text{ ms}$, mean $\le 1500\text{ ms}$, $p_{99} \le 5000\text{ ms}$) across evaluation benchmarks.
+
+### Domain Schemas (`src/models/latency.py`)
+
+#### `LatencyStageBreakdown`
+- **Fields:**
+  - `retrieval_latency_ms: float`: Dense/sparse hybrid search latency.
+  - `rerank_latency_ms: float`: Cross-encoder re-ranking latency.
+  - `guard_latency_ms: float`: Confidence guard evaluation latency.
+  - `generation_latency_ms: float`: LLM generation / streaming latency.
+  - `total_latency_ms: float`: Total end-to-end execution latency.
+
+#### `LatencyQueryBenchmark`
+- **Fields:**
+  - `query_id: str`: Unique query identifier.
+  - `query: str`: Executed user question.
+  - `category: str`: Evaluation domain category.
+  - `is_out_of_corpus: bool`: True if query was an out-of-corpus test.
+  - `latency_ms: float`: Measured execution duration in milliseconds.
+  - `stage_breakdown: LatencyStageBreakdown | None`: Optional per-stage latency breakdown.
+  - `status: str`: Status code (`"OK"` or `"ERROR"`).
+  - `error_message: str | None`: Error details if query execution failed.
+
+#### `LatencyPercentileMetrics`
+- **Fields:**
+  - `p50_ms: float`: 50th percentile (median) latency.
+  - `p90_ms: float`: 90th percentile latency.
+  - `p95_ms: float`: 95th percentile latency.
+  - `p99_ms: float`: 99th percentile latency.
+  - `mean_ms: float`: Arithmetic mean latency.
+  - `min_ms: float`: Minimum execution latency.
+  - `max_ms: float`: Maximum execution latency.
+  - `std_dev_ms: float`: Sample standard deviation of latency measurements.
+
+#### `LatencyMetricThresholds`
+- **Fields:**
+  - `max_p95_latency_ms: float`: Maximum allowable 95th percentile latency (default `3000.0` ms).
+  - `max_mean_latency_ms: float`: Maximum allowable mean latency (default `1500.0` ms).
+  - `max_p99_latency_ms: float`: Maximum allowable 99th percentile latency (default `5000.0` ms).
+
+#### `LatencyValidationResult`
+- **Fields:**
+  - `passed: bool`: True if measured $p_{95}$, mean, and $p_{99}$ latencies meet SLA targets.
+  - `measured_p95_latency_ms: float`: Measured 95th percentile latency in ms.
+  - `target_threshold_ms: float`: Target SLA threshold (default `3000.0` ms).
+  - `total_queries: int`: Total queries benchmarked.
+  - `in_corpus_queries: int`: Total in-corpus queries.
+  - `out_of_corpus_queries: int`: Total out-of-corpus queries.
+  - `percentiles: LatencyPercentileMetrics`: Complete statistical percentile breakdown.
+  - `thresholds: LatencyMetricThresholds`: Target SLA threshold configuration.
+  - `category_p95_latencies: dict[str, float]`: Domain category $p_{95}$ breakdown.
+  - `query_benchmarks: list[LatencyQueryBenchmark]`: Detailed per-query records.
+  - `timestamp: str`: Benchmark execution timestamp (ISO format).
+
+### Latency Validator Service (`src/retrieval/latency_validator.py`)
+
+#### `LatencyBenchmarkValidator`
+- **Constructor Parameters:**
+  - `monitor: RetrievalMonitor | None = None`: Optional benchmark monitor.
+  - `target_p95_latency_ms: float = 3000.0`: SLA $p_{95}$ target.
+  - `max_mean_latency_ms: float = 1500.0`: Mean latency target.
+  - `max_p99_latency_ms: float = 5000.0`: $p_{99}$ latency target.
+  - `warmup_runs: int = 1`: Count of warmup passes prior to timing.
+- **`validate(dataset: EvalDataset | None = None, dataset_path: Path | str | None = None, top_k: int = 5, output_report_path: Path | str | None = None) -> LatencyValidationResult`:**
+  - Executes optional warmup queries.
+  - Times per-query execution via high-resolution `time.perf_counter()`.
+  - Calculates percentile statistics ($p_{50}, p_{90}, p_{95}, p_{99}$, mean, min, max, std dev).
+  - Calculates category-level $p_{95}$ latencies.
+  - Asserts compliance against `target_p95_latency_ms <= 3000.0`.
+  - Optionally renders and writes Markdown benchmark report to filesystem.
+- **`compute_standard_deviation(values: Sequence[float]) -> float`:**
+  - Calculates sample standard deviation with Bessel's correction.
+- **`format_latency_markdown_report(result: LatencyValidationResult) -> str`:**
+  - Formats executive summary table, domain category $p_{95}$ breakdown, and query audit log.
+- **`write_latency_markdown_report(result: LatencyValidationResult, output_path: Path | str) -> Path`:**
+  - Writes report to disk.
+
+### Unit Test Suites
+- `tests/unit/test_latency_validator.py`: Asserts sample benchmarking, real 52-query dataset validation ($p_{95} \le 3000\text{ ms}$), report formatting, violation detection, empty dataset handling, and model immutability.
+
+---
+
+## 39. Automated Test Coverage & Quality Assurance (`tests/unit/test_coverage_booster.py`)
+
+### Overview
+Validates that the entire application codebase meets the strict quality gate of `test_coverage >= 80%` (achieving **94.71%** coverage) across unit and integration suites with mocked I/O.
+
+### Tested Components & Edge Cases
+
+#### Chat Service End-to-End Streaming (`src/api/services/chat_service.py`)
+- **`test_chat_service_end_to_end_grounded_stream`:**
+  - Injects mocked `DenseSearchService`, `SparseSearchService`, `RRFusionService`, `RerankerService`, `ConfidenceGuard`, and `GroundedGenerator`.
+  - Exercises full hybrid retrieval, score filtering, grounded citation extraction, and async SSE streaming generation.
+  - Verifies event framing (`metadata`, `token`, `done` payloads).
+- **`test_chat_service_without_generator_fallback`:**
+  - Evaluates chat streaming behavior when grounded generator service is unavailable or unconfigured.
+
+#### Core Structured Logging (`src/core/logger.py`)
+- **`test_core_logger_configuration_and_retrieval`:**
+  - Verifies `setup_logger(log_level="DEBUG")` JSON processor configuration and `get_logger()` bound logger acquisition.
+
+#### Evaluation Dataset Quality & Serialization (`src/core/eval_dataset.py`)
+- **`test_eval_dataset_save_and_validation_edge_cases`:**
+  - Validates `save_eval_dataset_to_jsonl()` serialization to filesystem.
+  - Validates `validate_eval_dataset_quality()` detecting empty queries, missing citations, and duplicate query identifiers.
+
+#### Citation Extraction & Validation (`src/generation/citations.py`)
+- **`test_citation_extractor_regex_fallback`:**
+  - Tests regex extraction (`[Doc: ... | Page: ...]`) from completion text.
+  - Validates context presence verification via `CitationValidator.validate()`.
+
+#### Client Adapter Error Handling (`src/clients/gemini_embedding.py`)
+- **`test_gemini_embedding_client_configuration_and_errors`:**
+  - Verifies that `GeminiEmbeddingAdapter` raises `ConfigurationError` when API key credentials are missing or empty.

@@ -7,11 +7,7 @@ import pytest
 from core.eval_dataset import load_eval_dataset_from_jsonl
 from core.exceptions import EvaluationError
 from generation.faithfulness import RAGASFaithfulnessEvaluator
-from generation.faithfulness_validator import (
-    FaithfulnessValidator,
-    format_faithfulness_markdown_report,
-    write_faithfulness_markdown_report,
-)
+from generation.faithfulness_validator import FaithfulnessValidator
 from generation.statement_extractor import StatementExtractor
 from models.evaluation import (
     EvalDataset,
@@ -228,5 +224,7 @@ def test_faithfulness_models_immutability() -> None:
 
     with pytest.raises(ValueError):
         StatementVerification(
-            statement="Test", is_faithful=True, extra_field="bad"  # type: ignore[call-arg]
+            statement="Test",
+            is_faithful=True,
+            extra_field="bad",  # type: ignore[call-arg]
         )
