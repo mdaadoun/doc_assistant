@@ -2448,3 +2448,44 @@ Validates that the entire application codebase meets the strict quality gate of 
 #### Client Adapter Error Handling (`src/clients/gemini_embedding.py`)
 - **`test_gemini_embedding_client_configuration_and_errors`:**
   - Verifies that `GeminiEmbeddingAdapter` raises `ConfigurationError` when API key credentials are missing or empty.
+
+---
+
+## 40. Multi-Stage Containerization & Non-Root Hardening (`Dockerfile`, `src/core/docker.py`)
+
+### Overview
+Establishes the production container packaging architecture, ensuring lean multi-stage builds (< 250MB), non-root execution (UID 10001), healthcheck observability, and automated Dockerfile contract auditing.
+
+### Components & Functions
+
+#### Dockerfile Structure (`Dockerfile`)
+- **Stage 1: `builder` (`python:3.11-slim`):**
+  - Installs Poetry 1.8.2 via `pip install --no-cache-dir`.
+  - Copies `pyproject.toml` and `poetry.lock`.
+  - Executes `poetry install --no-interaction --no-ansi --no-root --only main` to install production dependencies directly into `/usr/local/lib/python3.11/site-packages`.
+- **Stage 2: `runtime` (`python:3.11-slim`):**
+  - Creates dedicated unprivileged group (`appgroup`, GID 10001) and user (`appuser`, UID 10001) with `/bin/false` shell.
+  - Sets runtime environment variables (`PYTHONUNBUFFERED=1`, `PYTHONDONTWRITEBYTECODE=1`, `PORT=8000`, `HOST=0.0.0.0`).
+  - Copies `/usr/local/lib/python3.11/site-packages` and `/usr/local/bin` from `builder`.
+  - Copies `src/` and `data/` application assets.
+  - Changes directory ownership to `appuser:appgroup` and switches execution to `USER 10001`.
+  - Declares `EXPOSE 8000`, container `HEALTHCHECK`, and `CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]`.
+
+#### Main Application Entrypoint (`src/main.py`)
+- **`app = create_app()`:** Exposes FastAPI application instance for ASGI servers.
+- **`create_app()`:** Factory constructing configured FastAPI application.
+- **`if __name__ == "__main__": uvicorn.run(...)`:** Local script execution bootstrap.
+
+#### Docker Infrastructure Validator (`src/core/docker.py`)
+- **`parse_dockerfile_stages(project_root: Path | None = None, dockerfile_path: Path | str | None = None) -> list[str]`:**
+  - Extracts multi-stage aliases (`builder`, `runtime`) from `FROM ... AS <stage>` instructions.
+- **`validate_dockerfile(project_root: Path | None = None, dockerfile_path: Path | str | None = None) -> dict[str, Any]`:**
+  - Verifies presence of multi-stage build (`builder`, `runtime`).
+  - Audits non-root user creation and runtime declaration (UID/GID 10001).
+  - Verifies port exposure (`EXPOSE 8000`) and entrypoint declarations.
+- **`validate_docker_setup(project_root: Path | None = None) -> dict[str, Any]`:**
+  - Aggregates multi-service `docker-compose.yml` inspection with `validate_dockerfile()`.
+
+### Unit Test Suites
+- `tests/unit/test_docker.py`: Validates Dockerfile multi-stage parsing, non-root UID 10001 compliance, missing file detection, single-stage failure, and docker-compose service configuration.
+- `tests/unit/test_main.py`: Validates `src.main` symbol exports and `create_app` invocation.

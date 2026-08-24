@@ -763,3 +763,19 @@ The defensive capacity of an extensive test suite ($\ge 80\%$ coverage) to immed
 
 ### Deterministic Test Execution
 A quality property ensuring test suites yield identical pass/fail outcomes regardless of execution environment, hardware, or external network availability.
+
+---
+
+## 🐳 40. Containerization & Production Hardening
+
+### Multi-Stage Container Build
+A Docker build pattern utilizing multiple FROM statements where intermediate build dependencies and tools (e.g. poetry, gcc) are discarded before assembling the final minimal runtime image.
+
+### Non-Root Security Hardening (UID 10001)
+The practice of running application container processes under an explicit non-privileged user and group identifier (e.g. UID 10001) to prevent privilege escalation and container-escape vulnerabilities.
+
+### Layer Cache Optimization
+Structuring Dockerfile instructions from least-to-most frequently changing (base image -> dependency manifests -> dependency installation -> source code) to maximize build cache reuse.
+
+### ASGI Runtime Packaging
+Configuring the minimal container entrypoint to execute Uvicorn ASGI server with standard environment settings (`PYTHONUNBUFFERED`, `PYTHONDONTWRITEBYTECODE`).

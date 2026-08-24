@@ -54,6 +54,7 @@ ALL_TEST_SUITES: Final[list[str]] = [
     "tests/unit/test_honesty_validator.py",
     "tests/unit/test_latency_validator.py",
     "tests/unit/test_coverage_booster.py",
+    "tests/unit/test_main.py",
 ]
 
 

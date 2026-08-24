@@ -994,3 +994,23 @@ When splitting large classes or modules into smaller single-responsibility units
 ### Q3: What techniques prevent test state leakage across parameterized pytest test suites?
 **Answer:**
 Using isolated fixtures (`tmp_path` for filesystem operations, fresh in-memory index managers, dependency injection containers) and resetting global settings caches ensures that test executions do not pollute shared state or produce order-dependent test failures.
+
+---
+
+## Phase 11.1: Multi-Stage Non-Root Dockerfile (< 250MB, UID 10001)
+
+### Q1: Why is multi-stage containerization critical for high-performance Python microservices in enterprise environments?
+**Answer:**
+Multi-stage containerization allows separating heavy compilation tools, package managers (Poetry, pip), and intermediate artifacts in an initial builder stage. The final runtime stage receives only the compiled wheels and site-packages on top of a minimal base image (e.g. `python:3.11-slim`). This reduces the attack surface, eliminates unnecessary binaries/caching, and slashes image size (< 250MB) for faster cluster pull and rollout times.
+
+---
+
+### Q2: Why should container processes never run as root, and why is an explicit numerical UID like 10001 preferred over a named user?
+**Answer:**
+Running as root means any arbitrary code execution or container escape vulnerability gives the attacker root privileges on the underlying host kernel. Using an explicit numerical UID like 10001 allows Kubernetes `securityContext` policies (e.g., `runAsNonRoot: true`, `runAsUser: 10001`) to validate user ID constraints without needing to inspect container `/etc/passwd` files.
+
+---
+
+### Q3: How does .dockerignore contribute to build efficiency, reproducibility, and security?
+**Answer:**
+`.dockerignore` prevents local temporary files (`.venv`, `__pycache__`, `.pytest_cache`, `.coverage`), test fixtures, git histories (`.git`), and secrets (`.env`) from being sent into the Docker build context. This prevents credential leakage, minimizes build context transfer latency, and prevents host platform binaries from polluting the Linux container environment.
