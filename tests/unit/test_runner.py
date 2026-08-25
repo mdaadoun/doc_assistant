@@ -54,6 +54,12 @@ ALL_TEST_SUITES: Final[list[str]] = [
     "tests/unit/test_honesty_validator.py",
     "tests/unit/test_latency_validator.py",
     "tests/unit/test_coverage_booster.py",
+    "tests/unit/test_cache_key.py",
+    "tests/unit/test_cache_models.py",
+    "tests/unit/test_memory_cache.py",
+    "tests/unit/test_file_cache.py",
+    "tests/unit/test_cache_service.py",
+    "tests/unit/test_grounded_generator_caching.py",
     "tests/unit/test_main.py",
 ]
 

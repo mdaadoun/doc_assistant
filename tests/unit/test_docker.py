@@ -8,10 +8,12 @@ from core.docker import (
     NON_ROOT_UID,
     REQUIRED_DOCKER_SERVICES,
     REQUIRED_DOCKERFILE_STAGES,
+    REQUIRED_NETWORKS,
     REQUIRED_PORT_MAPPINGS,
     REQUIRED_VOLUMES,
     parse_docker_compose,
     parse_dockerfile_stages,
+    validate_docker_compose,
     validate_docker_setup,
     validate_dockerfile,
 )
@@ -25,7 +27,9 @@ def test_docker_setup_exists_and_valid() -> None:
     assert result["missing_files"] == []
     assert result["missing_services"] == []
     assert result["missing_volumes"] == []
+    assert result["missing_networks"] == []
     assert result["dockerfile"]["valid"] is True
+    assert result["compose"]["valid"] is True
 
 
 def test_parse_docker_compose_structure() -> None:
@@ -48,6 +52,29 @@ def test_parse_docker_compose_structure() -> None:
     assert "volumes" in parsed
     for vol in REQUIRED_VOLUMES:
         assert vol in parsed["volumes"]
+
+    assert "networks" in parsed
+    for net in REQUIRED_NETWORKS:
+        assert net in parsed["networks"]
+
+
+def test_validate_docker_compose_complete() -> None:
+    """Verify validate_docker_compose validates services, healthchecks, and volumes."""
+    root = Path(__file__).resolve().parent.parent.parent
+    result = validate_docker_compose(root)
+    assert result["valid"] is True
+    assert result["missing_services"] == []
+    assert result["missing_volumes"] == []
+    assert result["missing_networks"] == []
+    assert result["has_healthchecks"] is True
+    assert result["has_valid_dependencies"] is True
+
+
+def test_validate_docker_compose_missing_file(tmp_path: Path) -> None:
+    """Verify validate_docker_compose returns error when file is missing."""
+    result = validate_docker_compose(tmp_path)
+    assert result["valid"] is False
+    assert "not found" in result["error"]
 
 
 def test_validate_docker_setup_missing_compose(tmp_path: Path) -> None:

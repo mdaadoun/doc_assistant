@@ -22,7 +22,8 @@ REQUIRED_PORT_MAPPINGS: Final[dict[str, list[str]]] = {
     "frontend": ["5173:5173"],
 }
 
-REQUIRED_VOLUMES: Final[list[str]] = ["qdrant_data"]
+REQUIRED_VOLUMES: Final[list[str]] = ["qdrant_data", "cache_data"]
+REQUIRED_NETWORKS: Final[list[str]] = ["doc_network"]
 
 NON_ROOT_UID: Final[int] = 10001
 NON_ROOT_GID: Final[int] = 10001
@@ -32,16 +33,88 @@ REQUIRED_DOCKERFILE_STAGES: Final[list[str]] = ["builder", "runtime"]
 MAX_TARGET_IMAGE_SIZE_MB: Final[int] = 250
 
 
-def parse_docker_compose(project_root: Path | None = None) -> dict[str, Any]:
+def parse_docker_compose(
+    project_root: Path | None = None, compose_path: Path | str | None = None
+) -> dict[str, Any]:
     """Parse docker-compose.yml content into structured dictionary."""
     root = project_root or get_project_root()
-    compose_path = root / "docker-compose.yml"
-    if not compose_path.is_file():
+    file_path = Path(compose_path) if compose_path else root / "docker-compose.yml"
+    if not file_path.is_file():
         return {}
 
-    content = compose_path.read_text(encoding="utf-8")
+    content = file_path.read_text(encoding="utf-8")
     parsed: dict[str, Any] = yaml.safe_load(content) or {}
     return parsed
+
+
+def validate_docker_compose(
+    project_root: Path | None = None, compose_path: Path | str | None = None
+) -> dict[str, Any]:
+    """Audit docker-compose.yml for complete services, ports, volumes, and healthchecks."""
+    root = project_root or get_project_root()
+    file_path = Path(compose_path) if compose_path else root / "docker-compose.yml"
+    if not file_path.is_file():
+        return {
+            "valid": False,
+            "error": f"docker-compose.yml not found at {file_path}",
+            "missing_services": REQUIRED_DOCKER_SERVICES,
+            "missing_volumes": REQUIRED_VOLUMES,
+            "missing_networks": REQUIRED_NETWORKS,
+            "has_healthchecks": False,
+        }
+
+    compose_data = parse_docker_compose(root, file_path)
+    services = compose_data.get("services", {}) or {}
+    defined_services = list(services.keys())
+    missing_services = [
+        s for s in REQUIRED_DOCKER_SERVICES if s not in defined_services
+    ]
+
+    volumes = compose_data.get("volumes", {}) or {}
+    defined_volumes = list(volumes.keys())
+    missing_volumes = [v for v in REQUIRED_VOLUMES if v not in defined_volumes]
+
+    networks = compose_data.get("networks", {}) or {}
+    defined_networks = list(networks.keys())
+    missing_networks = [n for n in REQUIRED_NETWORKS if n not in defined_networks]
+
+    has_healthchecks = all(
+        isinstance(services.get(s), dict) and "healthcheck" in services[s]
+        for s in REQUIRED_DOCKER_SERVICES
+        if s in services
+    )
+
+    has_valid_deps = False
+    if "api" in services and "frontend" in services:
+        api_dep = services["api"].get("depends_on")
+        frontend_dep = services["frontend"].get("depends_on")
+        api_has_qdrant = (isinstance(api_dep, list) and "qdrant" in api_dep) or (
+            isinstance(api_dep, dict) and "qdrant" in api_dep
+        )
+        fe_has_api = (isinstance(frontend_dep, list) and "api" in frontend_dep) or (
+            isinstance(frontend_dep, dict) and "api" in frontend_dep
+        )
+        has_valid_deps = api_has_qdrant and fe_has_api
+
+    is_valid = (
+        len(missing_services) == 0
+        and len(missing_volumes) == 0
+        and len(missing_networks) == 0
+        and has_healthchecks
+        and has_valid_deps
+    )
+
+    return {
+        "valid": is_valid,
+        "services": defined_services,
+        "missing_services": missing_services,
+        "volumes": defined_volumes,
+        "missing_volumes": missing_volumes,
+        "networks": defined_networks,
+        "missing_networks": missing_networks,
+        "has_healthchecks": has_healthchecks,
+        "has_valid_dependencies": has_valid_deps,
+    }
 
 
 def parse_dockerfile_stages(
@@ -126,36 +199,24 @@ def validate_docker_setup(project_root: Path | None = None) -> dict[str, Any]:
         if not (root / rel_path).is_file()
     ]
 
-    compose_data = parse_docker_compose(root)
-    services_dict = compose_data.get("services", {}) or {}
-    defined_services = list(services_dict.keys())
-
-    missing_services: list[str] = [
-        svc for svc in REQUIRED_DOCKER_SERVICES if svc not in defined_services
-    ]
-
-    volumes_dict = compose_data.get("volumes", {}) or {}
-    defined_volumes = list(volumes_dict.keys())
-
-    missing_volumes: list[str] = [
-        vol for vol in REQUIRED_VOLUMES if vol not in defined_volumes
-    ]
-
+    compose_audit = validate_docker_compose(root)
     dockerfile_audit = validate_dockerfile(root)
 
     is_valid = (
         len(missing_files) == 0
-        and len(missing_services) == 0
-        and len(missing_volumes) == 0
+        and bool(compose_audit.get("valid"))
         and bool(dockerfile_audit.get("valid"))
     )
 
     return {
         "valid": is_valid,
         "missing_files": missing_files,
-        "missing_services": missing_services,
-        "missing_volumes": missing_volumes,
-        "services": defined_services,
-        "volumes": defined_volumes,
+        "missing_services": compose_audit.get("missing_services", []),
+        "missing_volumes": compose_audit.get("missing_volumes", []),
+        "missing_networks": compose_audit.get("missing_networks", []),
+        "services": compose_audit.get("services", []),
+        "volumes": compose_audit.get("volumes", []),
+        "networks": compose_audit.get("networks", []),
+        "compose": compose_audit,
         "dockerfile": dockerfile_audit,
     }

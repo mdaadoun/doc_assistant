@@ -141,8 +141,8 @@
 **Dependencies:** Phase 10.
 **Tasks:**
 - [x] 11.1: Build multi-stage non-root Dockerfile (< 250MB, UID 10001)
-- [ ] 11.2: Complete docker-compose.yml (FastAPI + Qdrant + React + volumes)
-- [ ] 11.3: Implement SHA-256 cache layer (keyed on input + prompt + model)
+- [x] 11.2: Complete docker-compose.yml (FastAPI + Qdrant + React + volumes)
+- [x] 11.3: Implement SHA-256 cache layer (keyed on input + prompt + model)
 - [ ] 11.4: Add Tenacity retry policies on all external I/O (LLM, embedding, reranker APIs)
 - [ ] 11.5: Final Ruff + Mypy strict pass (0 errors)
 - [ ] 11.6: Generate final retrieval_report.md and README.md

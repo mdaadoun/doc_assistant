@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-import yaml  # type: ignore[import-untyped]
+import yaml  # type: ignore
 
 from core.exceptions import IngestionError
 from ingestion.base import BaseDocumentParser

@@ -779,3 +779,33 @@ Structuring Dockerfile instructions from least-to-most frequently changing (base
 
 ### ASGI Runtime Packaging
 Configuring the minimal container entrypoint to execute Uvicorn ASGI server with standard environment settings (`PYTHONUNBUFFERED`, `PYTHONDONTWRITEBYTECODE`).
+
+---
+
+## 🐳 41. Complete Docker Compose Orchestration & Production Deployment
+
+### Docker Compose Orchestration
+Multi-container application specification orchestrating service startup order, networks, volumes, environment variables, and health probes.
+
+### Named Volume
+Docker engine-managed persistent storage abstraction decoupled from container lifecycles to ensure database and cache state persistence across restarts.
+
+### Container Healthcheck
+Configurable in-container diagnostic command executed periodically to assess service readiness and prevent traffic routing to unready instances.
+
+### Service Mesh Network Bridge
+Private virtual network created by Docker allowing isolated inter-container communication via container name hostnames.
+
+---
+
+## ⚡ 42. SHA-256 Response Caching & Persistence
+
+### SHA-256 Cache Digest
+A 64-character hexadecimal cryptographic hash computed deterministically over normalized input text, prompt instructions, and model name to act as a unique immutable cache key.
+
+### Exact-Match Response Caching
+A caching strategy that matches identical incoming queries and context prompts byte-for-byte to return previously generated answers and citations without calling upstream LLMs.
+
+### Atomic Cache Persistence
+A file writing technique where cache entries are written to a temporary staging file before being atomically replaced via filesystem rename operations, preventing corrupted reads during concurrent writes.
+

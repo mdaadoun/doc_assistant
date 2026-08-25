@@ -1,6 +1,7 @@
 """Domain schemas: Pydantic V2 frozen models, DTOs, and request/response payloads."""
 
 from models.base import BaseDomainModel
+from models.cache import CacheEntry, CacheStats
 from models.chat import (
     ChatRequest,
     ChatResponse,
@@ -51,6 +52,8 @@ from models.retrieval import DebugRetrievalHit, DebugRetrievalResponse, Retrieva
 
 __all__: list[str] = [
     "BaseDomainModel",
+    "CacheEntry",
+    "CacheStats",
     "ChunkMetadata",
     "ChunkDocument",
     "DocumentMetadata",

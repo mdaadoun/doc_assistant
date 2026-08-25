@@ -4,6 +4,7 @@ import pytest
 
 from core import (
     AppBaseError,
+    CacheError,
     ConfigurationError,
     GenerationError,
     IngestionError,
@@ -77,6 +78,15 @@ def test_generation_error_instantiation() -> None:
     assert err.to_dict()["details"]["model"] == "gpt-4o"
 
 
+def test_cache_error_instantiation() -> None:
+    """Verify CacheError default error code and serialization."""
+    err = CacheError("Failed to write cache entry", details={"key": "abc123"})
+
+    assert isinstance(err, AppBaseError)
+    assert err.code == "CACHE_ERROR"
+    assert err.to_dict()["details"]["key"] == "abc123"
+
+
 def test_polymorphic_exception_catching() -> None:
     """Verify all domain errors are caught by AppBaseError block."""
     exceptions = [
@@ -84,6 +94,7 @@ def test_polymorphic_exception_catching() -> None:
         IngestionError("Parse failed"),
         RetrievalError("Vector search failed"),
         GenerationError("Generation failed"),
+        CacheError("Cache failed"),
     ]
 
     for exc in exceptions:
@@ -94,4 +105,5 @@ def test_polymorphic_exception_catching() -> None:
             "INGESTION_ERROR",
             "RETRIEVAL_ERROR",
             "GENERATION_ERROR",
+            "CACHE_ERROR",
         }

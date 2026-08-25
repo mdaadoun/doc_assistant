@@ -3,6 +3,7 @@
 import structlog
 
 from api.services.chat_service import ChatService
+from cache.service import ResponseCacheService
 from retrieval.debug_retrieval import DebugRetrievalBuilder
 
 logger = structlog.get_logger(__name__)
@@ -15,8 +16,10 @@ class ServiceContainer:
         self,
         chat_service: ChatService | None = None,
         debug_builder: DebugRetrievalBuilder | None = None,
+        cache_service: ResponseCacheService | None = None,
     ) -> None:
         """Initialize container with provided services or default implementations."""
+        self.cache_service = cache_service or ResponseCacheService()
         self.chat_service = chat_service or ChatService()
         self.debug_builder = debug_builder or DebugRetrievalBuilder()
 

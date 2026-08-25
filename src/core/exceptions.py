@@ -89,3 +89,15 @@ class EvaluationError(AppBaseError):
         details: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message=message, code=code, details=details)
+
+
+class CacheError(AppBaseError):
+    """Raised on cache reading, writing, serialization, or persistence failures."""
+
+    def __init__(
+        self,
+        message: str,
+        code: str = "CACHE_ERROR",
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(message=message, code=code, details=details)

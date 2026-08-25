@@ -2489,3 +2489,193 @@ Establishes the production container packaging architecture, ensuring lean multi
 ### Unit Test Suites
 - `tests/unit/test_docker.py`: Validates Dockerfile multi-stage parsing, non-root UID 10001 compliance, missing file detection, single-stage failure, and docker-compose service configuration.
 - `tests/unit/test_main.py`: Validates `src.main` symbol exports and `create_app` invocation.
+
+---
+
+## 41. Complete Production Docker Compose Orchestration (`docker-compose.yml`, `frontend/nginx.conf`, `src/core/docker.py`)
+
+### Overview
+Implements Phase 11.2 multi-container Docker Compose orchestration uniting the FastAPI ASGI server (`doc-assistant-api`), Qdrant vector database (`doc-assistant-qdrant`), and React Vite frontend (`doc-assistant-frontend`). Establishes a dedicated bridge network (`doc_network`) for secure inter-service DNS resolution, configures persistent named volumes (`qdrant_data`, `cache_data`) alongside a corpus ingestion bind mount (`./data:/app/data`), provisions production healthcheck probes across all services, and delivers static contract auditing via `validate_docker_compose()`.
+
+### Container Services & Topology (`docker-compose.yml`)
+
+#### 1. FastAPI API Service (`api`)
+- **Container Name:** `doc-assistant-api`
+- **Build Context:** `.` with `Dockerfile` (multi-stage non-root runtime, UID 10001).
+- **Port Mapping:** `8000:8000`
+- **Environment:** `PYTHONUNBUFFERED=1`, `HOST=0.0.0.0`, `PORT=8000`, `QDRANT_HOST=qdrant`, `QDRANT_PORT=6333`, `DATA_DIR=/app/data`.
+- **Dependencies:** `depends_on: [qdrant]`
+- **Volumes:**
+  - `./data:/app/data`: Host bind mount for input corpus documents.
+  - `cache_data:/app/.cache`: Named persistent volume for response caching.
+- **Healthcheck:** Probes `/api/v1/chat` endpoint using Python standard library `urllib.request` (`interval: 15s`, `timeout: 5s`, `retries: 3`, `start_period: 10s`).
+- **Network:** Connected to `doc_network`.
+
+#### 2. Qdrant Vector Store Service (`qdrant`)
+- **Container Name:** `doc-assistant-qdrant`
+- **Image:** `qdrant/qdrant:latest`
+- **Port Mappings:** `6333:6333` (REST API), `6334:6334` (gRPC API).
+- **Environment:** `QDRANT__SERVICE__HTTP_PORT=6333`, `QDRANT__SERVICE__GRPC_PORT=6334`.
+- **Volume:** `qdrant_data:/qdrant/storage` (preserves collections and indexes across restarts).
+- **Healthcheck:** Evaluates TCP port readiness via raw socket probe `bash -c ":> /dev/tcp/127.0.0.1/6333"` (`interval: 10s`, `timeout: 5s`, `retries: 5`).
+- **Network:** Connected to `doc_network`.
+
+#### 3. React Frontend Client Service (`frontend`)
+- **Container Name:** `doc-assistant-frontend`
+- **Build Context:** `./frontend` with `frontend/Dockerfile` (multi-stage Node build -> Nginx Alpine runtime).
+- **Port Mapping:** `5173:5173`
+- **Environment:** `VITE_API_URL=http://api:8000`
+- **Dependencies:** `depends_on: [api]`
+- **Nginx Reverse Proxy (`frontend/nginx.conf`):**
+  - Listens on port `5173`.
+  - Serves static SPA build with `try_files $uri $uri/ /index.html`.
+  - Proxies `/api/` to `http://api:8000` with `proxy_buffering off;` and `proxy_read_timeout 300s;` for real-time SSE streaming.
+- **Healthcheck:** HTTP spider probe via `wget --spider http://127.0.0.1:5173` (`interval: 15s`, `timeout: 5s`, `retries: 3`).
+- **Network:** Connected to `doc_network`.
+
+### Orchestration Data Flow
+
+```text
+Host Browser Client
+   │
+   ▼ (Port 5173:5173)
+┌─────────────────────────────────────────────────────────────┐
+│ doc-assistant-frontend (Nginx 1.25 Alpine)                 │
+│  ├── Static Assets (HTML/CSS/JS)                            │
+│  └── /api/* Proxy Pass (proxy_buffering off, 300s timeout)  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ (Internal doc_network bridge: http://api:8000)
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ doc-assistant-api (Python 3.11 Slim, UID 10001)             │
+│  ├── Ingestion & Recursive Chunker (./data mount)          │
+│  ├── Hybrid Retrieval & Re-ranking Engine                   │
+│  ├── Grounded LLM Generation & SSE Stream Handler           │
+│  └── Cache Manager (cache_data volume)                      │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ (Internal doc_network bridge: http://qdrant:6333)
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ doc-assistant-qdrant (Qdrant Vector Database)               │
+│  ├── Dense Vector Index (COSINE distance, dim=1536)         │
+│  └── Storage Engine (qdrant_data volume)                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Static Compose Auditing Engine (`src/core/docker.py`)
+
+#### Constants
+- `REQUIRED_DOCKER_SERVICES`: `["api", "qdrant", "frontend"]`
+- `REQUIRED_PORT_MAPPINGS`: `{"api": ["8000:8000"], "qdrant": ["6333:6333", "6334:6334"], "frontend": ["5173:5173"]}`
+- `REQUIRED_VOLUMES`: `["qdrant_data", "cache_data"]`
+- `REQUIRED_NETWORKS`: `["doc_network"]`
+
+#### Functions
+- **`parse_docker_compose(project_root: Path | None = None, compose_path: Path | str | None = None) -> dict[str, Any]`:**
+  - Safely reads and parses `docker-compose.yml` into a structured dictionary.
+- **`validate_docker_compose(project_root: Path | None = None, compose_path: Path | str | None = None) -> dict[str, Any]`:**
+  - Validates service completeness (`api`, `qdrant`, `frontend`).
+  - Verifies presence and structure of named volumes (`qdrant_data`, `cache_data`).
+  - Verifies network definitions (`doc_network`).
+  - Asserts healthcheck declarations across all services.
+  - Verifies dependency graph (`api` depends on `qdrant`, `frontend` depends on `api`).
+- **`validate_docker_setup(project_root: Path | None = None) -> dict[str, Any]`:**
+  - Comprehensive audit combining file presence checks, `validate_docker_compose()`, and `validate_dockerfile()`.
+
+### Unit Test Suites
+- `tests/unit/test_docker.py`:
+  - `test_docker_setup_exists_and_valid`: Asserts total infrastructure audit passes.
+  - `test_parse_docker_compose_structure`: Verifies services, ports, dependencies, volumes, and networks extraction.
+  - `test_validate_docker_compose_complete`: Verifies complete compose audit and healthcheck assertions.
+  - `test_validate_docker_compose_missing_file`: Verifies error handling when compose file is absent.
+  - `test_validate_docker_setup_missing_compose`: Verifies audit failure on missing compose file.
+  - `test_validate_docker_setup_missing_services`: Verifies audit failure when required services are missing.
+
+---
+
+## 42. SHA-256 Response Cache Layer (`src/cache/`, `src/models/cache.py`)
+
+### Overview
+Implements deterministic SHA-256 response caching for grounded LLM generation and contextual retrieval (Phase 11.3). Derives canonical 64-character hexadecimal digests from user query input, prompt instructions, model identifier, and sorted extra parameters. Encapsulates persistence behind the abstract `BaseCacheStore` interface with concrete `InMemoryCacheStore` (asynchronous LRU with TTL) and `FileCacheStore` (atomic file-based persistence) adapters. Integrates directly into `GroundedGenerator` and `ServiceContainer` to eliminate redundant upstream API invocations and provide zero-cost FinOps telemetry on cache hits.
+
+### Domain Models (`src/models/cache.py`)
+
+#### `CacheEntry(BaseDomainModel)`
+- **Purpose:** Immutable domain schema representing a cached generation answer, associated source citations, and execution telemetry.
+- **Fields:**
+  - `key: str`: 64-character SHA-256 hexadecimal digest.
+  - `input_text: str`: Normalized user input query or prompt string.
+  - `prompt: str`: Full prompt text, instructions, and grounding context blocks.
+  - `model: str`: Target LLM model identifier (e.g., `gpt-4o-mini`).
+  - `response: str`: Cached response text payload.
+  - `created_at: float`: Epoch timestamp of cache entry creation.
+  - `ttl_seconds: int | None = None`: Optional time-to-live expiration duration in seconds.
+  - `citations: list[Citation] = []`: Retrieved source citations associated with the response.
+  - `metadata: dict[str, Any] = {}`: Diagnostic and telemetry metadata.
+- **Methods:**
+  - `is_expired(current_time: float | None = None) -> bool`: Evaluates if elapsed duration exceeds configured TTL.
+
+#### `CacheStats(BaseDomainModel)`
+- **Purpose:** Telemetry schema capturing cache performance metrics.
+- **Fields:** `hits` (int), `misses` (int), `evictions` (int), `entries_count` (int), `hit_rate` (float, 0.0..1.0).
+
+### Key Derivation Engine (`src/cache/key_generator.py`)
+
+#### `compute_cache_key(input_text: str, prompt: str, model: str, extra_params: dict[str, Any] | None = None) -> str`
+- **Purpose:** Generates a deterministic 64-character SHA-256 digest from canonical JSON representation.
+- **Logic:**
+  1. Strips whitespace from `input_text` and `prompt`.
+  2. Normalizes `model` identifier to lowercase.
+  3. Sorts `extra_params` keys alphabetically if provided.
+  4. Serializes canonical payload to deterministic JSON with compact separators (`","`, `":"`).
+  5. Computes and returns `hashlib.sha256(payload.encode("utf-8")).hexdigest()`.
+  6. Wraps any unexpected serialization failure in `CacheError(code="CACHE_KEY_ERROR")`.
+
+### Cache Storage Backends (`src/cache/`)
+
+#### `BaseCacheStore(ABC)` (`src/cache/base.py`)
+- **Purpose:** Abstract interface defining asynchronous cache CRUD contracts:
+  - `async def get(self, key: str) -> CacheEntry | None`
+  - `async def set(self, entry: CacheEntry) -> None`
+  - `async def delete(self, key: str) -> bool`
+  - `async def clear(self) -> None`
+  - `async def has(self, key: str) -> bool`
+  - `async def size(self) -> int`
+  - `async def get_stats(self) -> CacheStats`
+  - `async def evict_expired(self) -> int`
+
+#### `InMemoryCacheStore(BaseCacheStore)` (`src/cache/memory_store.py`)
+- **Purpose:** Thread/async-safe in-memory cache with capacity limits (`max_entries`), LRU eviction, and TTL expiration.
+- **Concurrency Control:** Utilizes `asyncio.Lock()` to synchronize state across concurrent coroutines.
+- **Eviction Strategy:** Re-orders accessed keys to the end of an internal `OrderedDict`. When capacity is reached, pops the oldest entry (`last=False`) and increments the eviction counter.
+
+#### `FileCacheStore(BaseCacheStore)` (`src/cache/file_store.py`)
+- **Purpose:** File-backed persistent storage saving JSON serialized `CacheEntry` instances to disk (`<cache_dir>/<key>.json`).
+- **Atomic File Replacement:** Writes serialized JSON into `<key>.tmp` before executing atomic `tmp_path.replace(target_path)` to prevent partial/corrupted reads during concurrent execution.
+- **Resilience:** Safely unlinks corrupt or expired JSON files during lookup without raising unhandled errors.
+
+### Cache Orchestration Service (`src/cache/service.py`)
+
+#### `ResponseCacheService`
+- **Purpose:** High-level service managing key derivation, store interaction, hit/miss structured logging, and lifecycle invalidation.
+- **Methods:**
+  - `compute_key(...)`: Delegates to `compute_cache_key`.
+  - `async get_response(input_text, prompt, model, extra_params) -> CacheEntry | None`: Returns cached entry on hit, or `None` on miss/disabled cache.
+  - `async set_response(input_text, prompt, model, response, citations, ttl_seconds, metadata, extra_params) -> CacheEntry`: Persists generated response and returns created `CacheEntry`.
+  - `async invalidate(input_text, prompt, model, extra_params) -> bool`: Deletes cached entry by canonical parameters.
+  - `async clear() -> None`: Purges all cache store entries.
+  - `async get_stats() -> CacheStats`: Returns telemetry metrics.
+
+### Grounded Generator Integration (`src/generation/engine.py`)
+- `GroundedGenerator` accepts optional `cache_service: ResponseCacheService`.
+- In `generate_with_finops()`: Checks cache before LLM invocation. On cache hit, immediately returns cached response and `FinOpsMetadata(is_cached=True, prompt_tokens=0, completion_tokens=0, estimated_cost_usd=0.0)`. On cache miss, generates response via LLM, persists into cache store, and returns `is_cached=False`.
+- In `generate_stream()`: Checks cache before creating completions stream. On cache hit, yields cached response string directly without calling OpenAI API.
+
+### Unit Test Suites
+- `tests/unit/test_cache_key.py`: Verifies SHA-256 determinism, key component differentiation, whitespace/case normalization, extra params sort invariance, unicode handling, and error wrapping.
+- `tests/unit/test_cache_models.py`: Asserts `CacheEntry` and `CacheStats` validation, immutability (`frozen=True`), and TTL expiration logic.
+- `tests/unit/test_memory_cache.py`: Verifies `InMemoryCacheStore` lifecycle, LRU eviction at capacity, TTL expiration, operational stats, and clear.
+- `tests/unit/test_file_cache.py`: Verifies `FileCacheStore` atomic writing, disk persistence roundtrip, corrupted JSON recovery, TTL pruning, and directory clear.
+- `tests/unit/test_cache_service.py`: Verifies `ResponseCacheService` get/set orchestration, citations caching, invalidation, and disabled cache bypass.
+- `tests/unit/test_grounded_generator_caching.py`: Tests end-to-end cache hit/miss behavior, zero-cost FinOps accounting, and streaming cache hits.
+

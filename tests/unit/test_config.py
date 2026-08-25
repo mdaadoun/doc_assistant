@@ -20,6 +20,10 @@ def test_default_settings_instantiation() -> None:
     assert settings.embedding_model == "text-embedding-3-small"
     assert settings.temperature == 0.0
     assert settings.max_tokens == 2048
+    assert settings.cache_enabled is True
+    assert settings.cache_ttl_seconds == 3600
+    assert settings.cache_dir == ".cache/responses"
+    assert settings.cache_max_entries == 1000
 
 
 def test_production_environment_check() -> None:

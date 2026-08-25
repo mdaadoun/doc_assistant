@@ -1014,3 +1014,44 @@ Running as root means any arbitrary code execution or container escape vulnerabi
 ### Q3: How does .dockerignore contribute to build efficiency, reproducibility, and security?
 **Answer:**
 `.dockerignore` prevents local temporary files (`.venv`, `__pycache__`, `.pytest_cache`, `.coverage`), test fixtures, git histories (`.git`), and secrets (`.env`) from being sent into the Docker build context. This prevents credential leakage, minimizes build context transfer latency, and prevents host platform binaries from polluting the Linux container environment.
+
+---
+
+## Phase 11.2: Complete Docker Compose Orchestration (FastAPI + Qdrant + React + Volumes)
+
+### Q1: Why use named volumes (qdrant_data, cache_data) alongside bind mounts (./data:/app/data) in the Docker Compose architecture?
+**Answer:**
+Named volumes are managed directly by Docker in host-isolated storage directories, providing high-performance I/O, seamless permission handling for non-root containers (UID 10001), and lifecycle persistence across container rebuilds. Bind mounts (`./data`) are selectively reserved for the input corpus where host users need direct filesystem access to upload or modify documents.
+
+---
+
+### Q2: How does the Nginx reverse proxy configuration in the frontend container optimize Server-Sent Events (SSE) streaming from the FastAPI backend?
+**Answer:**
+Nginx configures `proxy_buffering off;` and `proxy_read_timeout 300s;` on the `/api/` route. This prevents Nginx from buffering token chunks in memory, ensuring immediate real-time SSE token delivery to the React client while preventing socket timeouts during complex multi-step RAG generation.
+
+---
+
+### Q3: How does programmatic compose validation (validate_docker_compose) in CI/CD improve deployment reliability?
+**Answer:**
+It statically validates compose file YAML schemas, required service definitions (`api`, `qdrant`, `frontend`), exposed port mappings, persistent volume mounts, and healthcheck configurations during the automated test suite, catching deployment configuration drift before code reaches production.
+
+---
+
+## Phase 11.3: SHA-256 Cache Layer (Keyed on Input + Prompt + Model)
+
+### Q1: Why use deterministic SHA-256 hashing over raw input strings or semantic embedding caching for this corporate assistant?
+**Answer:**
+In corporate and regulated domains (such as financial or legal documents), exact-match SHA-256 caching guarantees that generated answers and citations are 100% faithful to the exact input query and prompt context. Semantic caching using vector cosine similarity risks false-positive cache hits across subtly different policy questions (e.g. differing limits or regional scopes) that require different answers.
+
+---
+
+### Q2: How does the cache key generator ensure determinism when extra parameters or prompt templates are serialized?
+**Answer:**
+The key generator builds a canonical dictionary where keys are sorted, strings are stripped, model names are lowercased, and extra kwargs (like temperature or top_k) are serialized with strict JSON key sorting and compact separators (',', ':') before UTF-8 encoding and SHA-256 hashing.
+
+---
+
+### Q3: How does atomic file replacement in FileCacheStore protect data integrity under concurrent async access?
+**Answer:**
+Writing directly to target cache files risks partial reads or file corruption if a crash or concurrent reader accesses the file mid-write. FileCacheStore writes serialized JSON into a temporary `.tmp` file in the same directory and performs `tmp_path.replace(target_path)`, which is an atomic OS operation on POSIX/Linux filesystems, guarded by an internal async Lock.
+

@@ -77,6 +77,18 @@ class Settings(BaseSettings):
     temperature: float = Field(default=0.0, description="Sampling temperature")
     max_tokens: int = Field(default=2048, description="Max response token limit")
 
+    # SHA-256 Cache settings
+    cache_enabled: bool = Field(default=True, description="Enable response caching")
+    cache_ttl_seconds: int = Field(
+        default=3600, description="Default cache TTL in seconds"
+    )
+    cache_dir: str = Field(
+        default=".cache/responses", description="Cache storage directory"
+    )
+    cache_max_entries: int = Field(
+        default=1000, description="Max in-memory cache entries"
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
