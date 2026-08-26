@@ -9,6 +9,7 @@ import structlog
 from clients.base_reranker import BaseRerankerAdapter
 from core.config import get_settings
 from core.exceptions import ConfigurationError, RetrievalError
+from core.retry import retry_sync_call
 from models.retrieval import RetrievalResult
 
 logger = structlog.get_logger(__name__)
@@ -139,6 +140,17 @@ class CohereRerankerAdapter(BaseRerankerAdapter):
         return final_results
 
     def _call_cohere_api(
+        self, query: str, documents: list[str], top_n: int
+    ) -> list[Any]:
+        """Invoke Cohere API with Tenacity exponential backoff retry policy."""
+        return retry_sync_call(
+            self._raw_call_cohere_api,
+            query,
+            documents,
+            top_n,
+        )
+
+    def _raw_call_cohere_api(
         self, query: str, documents: list[str], top_n: int
     ) -> list[Any]:
         """Invoke Cohere client SDK or direct HTTP request via httpx."""

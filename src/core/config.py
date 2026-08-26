@@ -89,6 +89,17 @@ class Settings(BaseSettings):
         default=1000, description="Max in-memory cache entries"
     )
 
+    # Resilience & Tenacity Retry policies
+    retry_max_attempts: int = Field(
+        default=4, description="Maximum retry attempts for external I/O"
+    )
+    retry_min_wait_seconds: float = Field(
+        default=0.5, description="Initial backoff wait in seconds"
+    )
+    retry_max_wait_seconds: float = Field(
+        default=8.0, description="Maximum backoff wait in seconds"
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )

@@ -2679,3 +2679,63 @@ Implements deterministic SHA-256 response caching for grounded LLM generation an
 - `tests/unit/test_cache_service.py`: Verifies `ResponseCacheService` get/set orchestration, citations caching, invalidation, and disabled cache bypass.
 - `tests/unit/test_grounded_generator_caching.py`: Tests end-to-end cache hit/miss behavior, zero-cost FinOps accounting, and streaming cache hits.
 
+---
+
+## 🔁 43. Tenacity Retry Policies on External I/O (Phase 11.4)
+
+### Overview
+Provides centralized retry policies, transient fault classification, and resilience wrappers across all external I/O boundaries (OpenAI LLM streaming, OpenAI embeddings, Gemini embeddings, and Cohere cross-encoder reranker).
+
+### Core Resilience Module (`src/core/retry.py`)
+
+#### `is_retryable_exception(exc: BaseException) -> bool`
+- **Purpose:** Determines whether an intercepted exception represents a transient, recoverable failure.
+- **Classification Rules:**
+  - `True` for HTTP status codes: 429 (Rate Limit), 500 (Internal Server Error), 502 (Bad Gateway), 503 (Service Unavailable), 504 (Gateway Timeout).
+  - `True` for OpenAI transient exceptions: `RateLimitError`, `InternalServerError`, `APIConnectionError`, `APITimeoutError`.
+  - `True` for httpx transient exceptions: `HTTPStatusError` (with 429 or 5xx), `TimeoutException`, `NetworkError`.
+  - `True` for stdlib `TimeoutError` and `ConnectionError`.
+  - `True` for exceptions containing transient keywords ("rate limit", "timeout", "connection reset", "service unavailable").
+  - `False` for `ConfigurationError` and 4xx client errors (400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found), triggering immediate fail-fast behavior.
+
+#### `_log_retry_attempt(retry_state: RetryCallState) -> None`
+- **Purpose:** Logs structured warning telemetry (`tenacity_retry_attempt`) detailing function name, attempt index, sleep duration, and exception message before each retry interval.
+
+#### `create_sync_retrying(...) -> Retrying` / `create_async_retrying(...) -> AsyncRetrying`
+- **Purpose:** Constructs Tenacity orchestrators configured with `stop_after_attempt`, `wait_random_exponential` (exponential backoff with full jitter), `retry_if_exception(is_retryable_exception)`, and `_log_retry_attempt`.
+- **Default Parameters:** `max_attempts=4`, `min_wait=0.5s`, `max_wait=8.0s` (sourced from active `Settings`).
+
+#### `retry_sync_call(func: Callable[..., T], *args, **kwargs) -> T`
+- **Purpose:** Synchronous wrapper executing `func(*args, **kwargs)` inside Tenacity's `Retrying` context manager.
+
+#### `retry_async_call(func: Callable[..., Awaitable[T]], *args, **kwargs) -> T`
+- **Purpose:** Asynchronous wrapper executing `await func(*args, **kwargs)` inside Tenacity's `AsyncRetrying` context manager.
+
+### Client & Service Integrations
+
+#### OpenAI Embedding Adapter (`src/clients/openai_embedding.py`)
+- In `embed_batch()`: Wraps `self.client.embeddings.create(...)` in `retry_sync_call()`, retrying on rate limits and 5xx errors before mapping terminal exceptions to `RetrievalError`.
+
+#### Gemini Embedding Adapter (`src/clients/gemini_embedding.py`)
+- In `embed_batch()`: Wraps `self.client.models.embed_content(...)` in `retry_sync_call()`, providing transparent retry on transient Google GenAI errors.
+
+#### Cohere Reranker Adapter (`src/clients/cohere_reranker.py`)
+- In `_call_cohere_api()`: Wraps SDK `rerank` and httpx `POST` invocations in `retry_sync_call()`, shielding cross-encoder candidate ranking from network drops.
+
+#### Grounded LLM Generator (`src/generation/engine.py`)
+- In `_create_completion_stream()`: Wraps `self.client.chat.completions.create(stream=True)` in `retry_async_call()`, retrying initial stream connection handshakes before tokens are yielded to SSE consumers.
+
+### Unit Test Verification Suite (`tests/unit/test_retry_policies.py`)
+- `test_is_retryable_status_codes`: Verifies 429, 500, 502, 503, 504 are retryable and 400, 401, 403, 404 fail fast.
+- `test_is_retryable_domain_and_standard_exceptions`: Verifies `ConfigurationError` fails fast while `TimeoutError` and `ConnectionError` are retryable.
+- `test_is_retryable_httpx_errors`: Verifies httpx status codes and network errors.
+- `test_sync_retry_success_on_first_try` & `test_sync_retry_transient_failure_recovery`: Validates synchronous retry recovery.
+- `test_sync_retry_exhaustion_raises` & `test_sync_retry_non_retryable_fails_fast`: Asserts attempt limit enforcement and immediate failure on 401.
+- `test_async_retry_success_and_transient_recovery` & `test_async_retry_exhaustion_and_non_retryable`: Validates asynchronous coroutine retry behaviors.
+- `test_openai_embedding_retry_integration`: Validates OpenAI adapter transient recovery.
+- `test_gemini_embedding_retry_integration`: Validates Gemini adapter transient recovery.
+- `test_cohere_reranker_retry_integration`: Validates Cohere adapter transient recovery.
+- `test_grounded_generator_retry_integration`: Validates GroundedGenerator stream handshake recovery.
+- `test_create_sync_and_async_retrying_instances`: Validates Tenacity factory construction.
+
+

@@ -1055,3 +1055,24 @@ The key generator builds a canonical dictionary where keys are sorted, strings a
 **Answer:**
 Writing directly to target cache files risks partial reads or file corruption if a crash or concurrent reader accesses the file mid-write. FileCacheStore writes serialized JSON into a temporary `.tmp` file in the same directory and performs `tmp_path.replace(target_path)`, which is an atomic OS operation on POSIX/Linux filesystems, guarded by an internal async Lock.
 
+---
+
+## Phase 11.4: Tenacity Retry Policies on External I/O
+
+### Q1: Why is exponential backoff with full jitter preferred over fixed interval retries when integrating third-party LLM and embedding APIs?
+**Answer:**
+Fixed interval retries cause synchronized retry spikes ('thundering herd problem') against throttled or recovering upstream providers (e.g. OpenAI HTTP 429/503). Exponential backoff widens delay intervals exponentially ($t = \text{min} \times 2^{\text{attempt}}$), while randomized jitter decorrelates concurrent clients, spreading request distribution and significantly increasing success rates on rate limits.
+
+---
+
+### Q2: How does the resilience layer guarantee that invalid credentials or malformed requests fail immediately without unnecessary retry delays?
+**Answer:**
+The `is_retryable_exception` gating function explicitly filters out non-retryable 4xx client errors (400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found) and domain `ConfigurationError`. When such an error occurs, the function returns False, causing Tenacity to abort immediately on the first attempt and raise the exception without wasted backoff latency.
+
+---
+
+### Q3: Why is retry logic applied to the stream initialization rather than mid-stream token iteration in SSE streaming generation?
+**Answer:**
+Once token streaming has begun emitting tokens over SSE to the frontend, retrying mid-stream would produce duplicated answer tokens or broken UI text. Retrying during stream creation protects the initial connection and prompt submission before any data is delivered to the presentation layer.
+
+

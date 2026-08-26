@@ -72,6 +72,13 @@ from core.makefile import (
     validate_makefile,
 )
 from core.quality import validate_quality_configs
+from core.retry import (
+    create_async_retrying,
+    create_sync_retrying,
+    is_retryable_exception,
+    retry_async_call,
+    retry_sync_call,
+)
 
 __all__ = [
     "MIN_PYTHON_VERSION",
@@ -106,17 +113,22 @@ __all__ = [
     "Settings",
     "check_python_version",
     "clear_settings_cache",
+    "create_async_retrying",
+    "create_sync_retrying",
     "get_default_eval_dataset_path",
     "get_environment_info",
     "get_project_root",
     "get_python_version_tuple",
     "get_settings",
+    "is_retryable_exception",
     "load_eval_dataset_from_jsonl",
     "parse_docker_compose",
     "parse_dockerfile_stages",
     "parse_frontend_package_json",
     "parse_frontend_tsconfig",
     "parse_makefile_targets",
+    "retry_async_call",
+    "retry_sync_call",
     "save_eval_dataset_to_jsonl",
     "validate_citation_drawer_component",
     "validate_confidence_indicator_component",

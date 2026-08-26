@@ -5,11 +5,13 @@ from collections.abc import AsyncGenerator, Sequence
 from typing import Any
 
 import structlog
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, AsyncStream
+from openai.types.chat import ChatCompletionChunk
 
 from cache.service import ResponseCacheService
 from core.config import get_settings
 from core.exceptions import ConfigurationError, GenerationError
+from core.retry import retry_async_call
 from generation.finops import FinOpsCollector
 from models.chat import FinOpsMetadata
 
@@ -103,6 +105,23 @@ class GroundedGenerator:
             blocks.append(block)
         return "\n".join(blocks)
 
+    async def _create_completion_stream(
+        self, prompt: str
+    ) -> AsyncStream[ChatCompletionChunk]:
+        """Create streaming chat completion with OpenAI client."""
+        stream: AsyncStream[
+            ChatCompletionChunk
+        ] = await self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=self.temperature,
+            stream=True,
+        )
+        return stream
+
     async def generate_stream(
         self, query: str, contexts: Sequence[dict[str, Any] | Any]
     ) -> AsyncGenerator[str, None]:
@@ -126,15 +145,7 @@ class GroundedGenerator:
                 return
 
         try:
-            stream = await self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=self.temperature,
-                stream=True,
-            )
+            stream = await retry_async_call(self._create_completion_stream, prompt)
 
             async for chunk in stream:
                 if chunk.choices and len(chunk.choices) > 0:

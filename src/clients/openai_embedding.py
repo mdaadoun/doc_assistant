@@ -9,6 +9,7 @@ from openai import OpenAI
 from clients.base_embedding import BaseEmbeddingAdapter
 from core.config import get_settings
 from core.exceptions import ConfigurationError, RetrievalError
+from core.retry import retry_sync_call
 
 logger = structlog.get_logger(__name__)
 
@@ -73,7 +74,8 @@ class OpenAIEmbeddingAdapter(BaseEmbeddingAdapter):
         try:
             for batch in batches:
                 processed_batch = [t if t else " " for t in batch]
-                response = self.client.embeddings.create(
+                response = retry_sync_call(
+                    self.client.embeddings.create,
                     model=self._model_name,
                     input=processed_batch,
                 )

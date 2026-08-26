@@ -809,3 +809,17 @@ A caching strategy that matches identical incoming queries and context prompts b
 ### Atomic Cache Persistence
 A file writing technique where cache entries are written to a temporary staging file before being atomically replaced via filesystem rename operations, preventing corrupted reads during concurrent writes.
 
+---
+
+## 🔁 43. Tenacity Retry Policies & I/O Resilience
+
+### Exponential Backoff with Jitter
+A retry pacing algorithm that exponentially increases delay between consecutive failed attempts while adding randomized variance (jitter) to prevent concurrent client retry synchronization and mitigate thundering herd load.
+
+### Transient Fault Handling
+A resilience architectural pattern that detects temporary, recoverable infrastructure failures (e.g., rate limits, network timeouts, 5xx outages) and automatically retries requests.
+
+### Exception Discrimination
+The conditional classification of errors into retryable (e.g. 429, 500, 502, 503, 504, connection drops) vs non-retryable (e.g. 401 unauthorized, 400 bad request, configuration errors) to fail fast on permanent bugs without unnecessary delays.
+
+

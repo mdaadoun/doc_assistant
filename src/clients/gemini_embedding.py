@@ -8,6 +8,7 @@ import structlog
 from clients.base_embedding import BaseEmbeddingAdapter
 from core.config import get_settings
 from core.exceptions import ConfigurationError, RetrievalError
+from core.retry import retry_sync_call
 
 logger = structlog.get_logger(__name__)
 
@@ -70,7 +71,8 @@ class GeminiEmbeddingAdapter(BaseEmbeddingAdapter):
 
         try:
             for batch in batches:
-                response = self.client.models.embed_content(
+                response = retry_sync_call(
+                    self.client.models.embed_content,
                     model=self._model_name,
                     contents=batch,
                 )
