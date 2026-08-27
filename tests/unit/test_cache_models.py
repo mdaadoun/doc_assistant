@@ -40,7 +40,7 @@ def test_cache_entry_instantiation_and_immutability() -> None:
 
     # Immutability check
     with pytest.raises(ValidationError):
-        entry.response = "Mutated response"  # type: ignore[misc]
+        entry.response = "Mutated response"
 
 
 def test_cache_entry_invalid_key_length() -> None:

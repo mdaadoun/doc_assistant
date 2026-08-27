@@ -29,6 +29,7 @@ def test_verify_api_key_configured_missing_key_raises_401() -> None:
 
     assert exc_info.value.status_code == 401
     assert "Invalid or missing API key" in exc_info.value.detail
+    assert exc_info.value.headers is not None
     assert exc_info.value.headers.get("WWW-Authenticate") == "ApiKey"
 
 

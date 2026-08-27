@@ -220,7 +220,7 @@ def test_faithfulness_models_immutability() -> None:
         statement="Test claim", is_faithful=True, reason="Matched"
     )
     with pytest.raises(ValueError):
-        verif.is_faithful = False  # type: ignore[misc]
+        verif.is_faithful = False
 
     with pytest.raises(ValueError):
         StatementVerification(

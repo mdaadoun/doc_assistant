@@ -255,7 +255,7 @@ def test_validation_result_immutability() -> None:
     result = validator.validate(dataset=dataset)
 
     with pytest.raises(ValueError):
-        result.passed = False  # type: ignore[misc]
+        result.passed = False
 
     with pytest.raises(ValueError):
         RetrievalPrecisionValidationResult(extra_field="invalid")  # type: ignore[call-arg]

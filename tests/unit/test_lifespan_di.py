@@ -1,5 +1,6 @@
 """Unit tests for lifespan-scoped dependency injection wiring in FastAPI app."""
 
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from starlette.requests import Request
 
@@ -10,7 +11,7 @@ from api.services.container import ServiceContainer
 from retrieval.debug_retrieval import DebugRetrievalBuilder
 
 
-def _make_request(app) -> Request:
+def _make_request(app: FastAPI) -> Request:
     """Build a minimal Starlette Request bound to the given FastAPI app."""
     scope = {
         "type": "http",

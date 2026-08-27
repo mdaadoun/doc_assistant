@@ -1,6 +1,7 @@
 """Unit tests for BM25 tokenizer and sparse index manager."""
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -153,7 +154,7 @@ def test_search_invalid_top_k(sample_chunks: list[ChunkDocument]) -> None:
 
 
 def test_save_and_load_roundtrip(
-    sample_chunks: list[ChunkDocument], tmp_path: pytest.TempPathFactory
+    sample_chunks: list[ChunkDocument], tmp_path: Path
 ) -> None:
     """Verify save/load roundtrip preserves corpus and search behavior."""
     manager = BM25IndexManager()
@@ -180,7 +181,7 @@ def test_save_and_load_roundtrip(
     ]
 
 
-def test_save_empty_index(tmp_path: pytest.TempPathFactory) -> None:
+def test_save_empty_index(tmp_path: Path) -> None:
     """Verify saving an empty index produces loadable empty state."""
     manager = BM25IndexManager()
     index_path = tmp_path / "empty_index.json"
@@ -191,7 +192,7 @@ def test_save_empty_index(tmp_path: pytest.TempPathFactory) -> None:
     assert not loaded.is_built
 
 
-def test_load_missing_file_raises(tmp_path: pytest.TempPathFactory) -> None:
+def test_load_missing_file_raises(tmp_path: Path) -> None:
     """Verify loading a missing file raises RetrievalError."""
     manager = BM25IndexManager()
     with pytest.raises(RetrievalError, match="Failed to load BM25 index"):
@@ -199,7 +200,7 @@ def test_load_missing_file_raises(tmp_path: pytest.TempPathFactory) -> None:
 
 
 def test_load_invalid_version_raises(
-    sample_chunks: list[ChunkDocument], tmp_path: pytest.TempPathFactory
+    sample_chunks: list[ChunkDocument], tmp_path: Path
 ) -> None:
     """Verify loading an unsupported index version raises RetrievalError."""
     manager = BM25IndexManager()

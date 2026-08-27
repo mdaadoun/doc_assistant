@@ -38,7 +38,7 @@ def test_eval_dataset_item_immutability() -> None:
         file_name="test.pdf", page_number=1, chunk_id="chk-1", excerpt="text"
     )
     with pytest.raises(ValidationError):
-        citation.page_number = 2  # type: ignore[misc]
+        citation.page_number = 2
 
     item = EvalDatasetItem(
         query_id="eval-001",
@@ -49,7 +49,7 @@ def test_eval_dataset_item_immutability() -> None:
         category="sla",
     )
     with pytest.raises(ValidationError):
-        item.query = "Changed"  # type: ignore[misc]
+        item.query = "Changed"
 
 
 def test_validate_eval_dataset_quality_error_branches() -> None:

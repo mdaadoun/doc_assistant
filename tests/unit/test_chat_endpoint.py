@@ -46,7 +46,7 @@ def test_chat_service_stream_chat_success(
 ) -> None:
     """Verify ChatService streams metadata, tokens, and done events for valid confident prompt."""
     guard = ConfidenceGuard(threshold=0.35)
-    generator = MockGroundedGenerator()  # type: ignore[assignment]
+    generator = MockGroundedGenerator()
     service = ChatService(
         confidence_guard=guard,
         grounded_generator=generator,  # type: ignore[arg-type]

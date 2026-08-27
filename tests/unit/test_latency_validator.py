@@ -158,7 +158,7 @@ def test_latency_models_immutability() -> None:
         total_latency_ms=68.0,
     )
     with pytest.raises(ValueError):
-        breakdown.total_latency_ms = 99.0  # type: ignore[misc]
+        breakdown.total_latency_ms = 99.0
 
     with pytest.raises(ValueError):
         LatencyQueryBenchmark(

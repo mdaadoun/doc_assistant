@@ -42,7 +42,7 @@ lint:
 
 typecheck:
 	@echo "--- Strict type check (Mypy) ---"
-	@$(BIN)mypy src/
+	@$(BIN)mypy src/ tests/
 
 format:
 	@echo "--- Auto-formatting source code (Ruff) ---"

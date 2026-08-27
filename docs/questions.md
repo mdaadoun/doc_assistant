@@ -1076,3 +1076,41 @@ The `is_retryable_exception` gating function explicitly filters out non-retryabl
 Once token streaming has begun emitting tokens over SSE to the frontend, retrying mid-stream would produce duplicated answer tokens or broken UI text. Retrying during stream creation protects the initial connection and prompt submission before any data is delivered to the presentation layer.
 
 
+---
+
+## Phase 11.5: Final Ruff + Mypy Strict Pass (0 Errors)
+
+### Q1: Why is it important to enforce strict type checking across test suites as well as application source code?
+**Answer:**
+Typing test suites ensures test mocks, fixtures, and assertions remain strictly aligned with application domain contracts, preventing subtle bugs caused by outdated signatures or mismatched types during refactors.
+
+---
+
+### Q2: How does Mypy's warn_unused_ignores flag improve codebase hygiene?
+**Answer:**
+It flags outdated `# type: ignore` comments that were added to suppress errors that have since been fixed or no longer apply, preventing technical debt from masking new typing regressions.
+
+---
+
+### Q3: What is the trade-off of including tests in `make typecheck`?
+**Answer:**
+It increases typecheck execution time slightly, but guarantees end-to-end contract parity between domain interfaces, infrastructure adapters, and test harnesses before deployment.
+---
+
+## Phase 11.6: Final retrieval_report.md and README.md Generation
+
+### Q1: Why is it valuable to programmatically validate README and benchmark report contents in CI/CD test suites?
+**Answer:**
+Programmatic documentation auditing prevents documentation drift, ensuring that deployment instructions, architecture contracts, required environment flags, and benchmark metrics remain accurate and synchronized with the latest codebase implementations.
+
+---
+
+### Q2: How does the final retrieval benchmark report prove that the RAG pipeline is production-ready?
+**Answer:**
+It provides empirical proof of retrieval precision@5 = 1.000, honesty filter precision = 0.900, zero hallucination on out-of-corpus queries, and sub-millisecond p95 latency across a diverse 52-query corpus.
+
+---
+
+### Q3: Why should architectural layer boundaries be prominently documented in the project README?
+**Answer:**
+Explicitly documenting strict layer isolation (e.g. presentation never invoking DB/LLMs directly; core domain remaining pure) guides contributors and automated code reviews to maintain clean separation of concerns.

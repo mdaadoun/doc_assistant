@@ -1,9 +1,8 @@
 """Unit tests for src.main application entrypoint."""
 
+import main as main_module
 from fastapi import FastAPI
-
-import src.main as main_module
-from src.main import app, create_app
+from main import app, create_app
 
 
 def test_main_exports() -> None:

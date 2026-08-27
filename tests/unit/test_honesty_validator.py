@@ -200,7 +200,7 @@ def test_honesty_models_immutability() -> None:
         is_correctly_classified=True,
     )
     with pytest.raises(ValueError):
-        item.is_correctly_classified = False  # type: ignore[misc]
+        item.is_correctly_classified = False
 
     with pytest.raises(ValueError):
         HonestyConfusionMatrix(true_refusals=1, unknown_field=123)  # type: ignore[call-arg]

@@ -144,8 +144,8 @@
 - [x] 11.2: Complete docker-compose.yml (FastAPI + Qdrant + React + volumes)
 - [x] 11.3: Implement SHA-256 cache layer (keyed on input + prompt + model)
 - [x] 11.4: Add Tenacity retry policies on all external I/O (LLM, embedding, reranker APIs)
-- [ ] 11.5: Final Ruff + Mypy strict pass (0 errors)
-- [ ] 11.6: Generate final retrieval_report.md and README.md
+- [x] 11.5: Final Ruff + Mypy strict pass (0 errors)
+- [x] 11.6: Generate final retrieval_report.md and README.md
 **Deliverables:** Production-ready containerized deployment, complete documentation.
 **Verification:** `docker-compose up` deploys full stack, all health checks pass.
 

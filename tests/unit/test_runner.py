@@ -61,6 +61,7 @@ ALL_TEST_SUITES: Final[list[str]] = [
     "tests/unit/test_cache_service.py",
     "tests/unit/test_grounded_generator_caching.py",
     "tests/unit/test_main.py",
+    "tests/unit/test_documentation.py",
 ]
 
 

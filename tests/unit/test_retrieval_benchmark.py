@@ -96,7 +96,7 @@ def test_evaluation_domain_models_immutability() -> None:
         is_out_of_corpus=False,
     )
     with pytest.raises(ValueError):
-        res.query_id = "modified"  # type: ignore[misc]
+        res.query_id = "modified"
 
     with pytest.raises(ValueError):
         RetrievalMetricThresholds(extra_field="invalid")  # type: ignore[call-arg]

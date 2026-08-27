@@ -13,6 +13,14 @@ from core.docker import (
     validate_docker_setup,
     validate_dockerfile,
 )
+from core.documentation import (
+    REQUIRED_README_KEYWORDS,
+    REQUIRED_README_SECTIONS,
+    REQUIRED_REPORT_SECTIONS,
+    validate_project_documentation,
+    validate_readme_content,
+    validate_retrieval_report_content,
+)
 from core.environment import (
     MIN_PYTHON_VERSION,
     check_python_version,
@@ -101,6 +109,9 @@ __all__ = [
     "REQUIRED_PACKAGES",
     "REQUIRED_PACKAGE_SCRIPTS",
     "REQUIRED_PORT_MAPPINGS",
+    "REQUIRED_README_KEYWORDS",
+    "REQUIRED_README_SECTIONS",
+    "REQUIRED_REPORT_SECTIONS",
     "REQUIRED_TS_INTERFACES",
     "REQUIRED_VOLUMES",
     "AppBaseError",
@@ -142,8 +153,11 @@ __all__ = [
     "validate_makefile",
     "validate_package_layout",
     "validate_poetry_config",
+    "validate_project_documentation",
     "validate_quality_configs",
     "validate_query_input_component",
+    "validate_readme_content",
     "validate_resilience_and_confidence_components",
     "validate_response_view_component",
+    "validate_retrieval_report_content",
 ]
